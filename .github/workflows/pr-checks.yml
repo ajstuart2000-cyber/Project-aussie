@@ -1,5 +1,5 @@
 # Code-validation checks for every pull request into main. Needs no API keys.
-# Also called by ai-daily-dev.yml for the AI branch (pull requests opened with
+# Also called by ai-daily-dev.yml and ai-pr-gate.yml for AI branches (pull requests opened with
 # the default GITHUB_TOKEN do not trigger pull_request workflows by themselves).
 name: PR checks
 
