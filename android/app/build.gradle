@@ -49,3 +49,131 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.webkit:webkit:1.11.0'
 }
+
+// ---------------------------------------------------------------------------
+// Game asset packaging (GitHub Issue #1, P0)
+//
+// The game lives in <repo>/www. android/app/src/main/assets/ is a generated,
+// gitignored copy of it. Before any variant is built, verifyGameSources checks
+// that the game is present, then syncGameAssets mirrors the whole www/ folder
+// into src/main/assets/ (Sync also removes stale files there). After packaging,
+// verify<Variant>ApkGameAssets opens the APK and checks the game made it in.
+// A fresh clone therefore builds a complete APK, or the build fails loudly.
+// ---------------------------------------------------------------------------
+def gameSrcDir = rootProject.file('../www')
+def gameAssetsDir = file('src/main/assets')
+
+// Files the game cannot start or render without, relative to www/.
+// Taken from what www/index.html loads: the three.js import map
+// ("three" -> vendor/three/build/three.module.js, "three/addons/" ->
+// vendor/three/examples/), the addon modules it imports, the car models,
+// materials and part swaps for every body (vf, vs, au, au ute, falcon base,
+// wheels), the shared textures and the traffic bodies. Engine sound files are
+// deliberately not listed here so this check never gates on audio content;
+// they are still copied because the whole www/ folder is synced.
+def requiredGameFiles = [
+    'index.html',
+    'vendor/three/build/three.module.js',
+    'vendor/three/examples/loaders/GLTFLoader.js',
+    'vendor/three/examples/environments/RoomEnvironment.js',
+    'vendor/three/examples/postprocessing/EffectComposer.js',
+    'vendor/three/examples/postprocessing/RenderPass.js',
+    'vendor/three/examples/postprocessing/ShaderPass.js',
+    'vendor/three/examples/postprocessing/OutputPass.js',
+    'vendor/three/examples/postprocessing/UnrealBloomPass.js',
+    'assets/falcon.model.json',
+    'assets/wheel.model.json',
+    'assets/swap.json',
+    'assets/vf/base.json',
+    'assets/vf/mats.json',
+    'assets/vf/swap.json',
+    'assets/vs/base.json',
+    'assets/vs/mats.json',
+    'assets/vs/swap.json',
+    'assets/au/au_base.json',
+    'assets/au/auute_base.json',
+    'assets/au/mats.json',
+    'assets/au/swap.json',
+    'assets/au/ute_swap.json',
+    'assets/traffic/traffic.json',
+    'assets/boot.jpg',
+    'assets/carpet.jpg',
+    'assets/prib.jpg',
+    'assets/salon.jpg',
+    'assets/seats.jpg',
+    'assets/palette.png',
+    'assets/lights.png',
+    'assets/logo.png',
+    'assets/etk800_d.png',
+]
+
+// Not part of the game: local editor backups and OS junk.
+def gameExcludes = ['index.*.bak.html', '**/.DS_Store', '**/Thumbs.db', '**/desktop.ini']
+
+def verifyGameSources = tasks.register('verifyGameSources') {
+    group = 'build'
+    description = 'Fails the build if www/index.html or required game assets are missing.'
+    outputs.upToDateWhen { false }
+    doLast {
+        if (!gameSrcDir.isDirectory()) {
+            throw new GradleException("Project Aussie: game folder not found at ${gameSrcDir}. " +
+                "The APK would contain no game. Restore www/ before building.")
+        }
+        def missing = requiredGameFiles.findAll { !new File(gameSrcDir, it).isFile() }
+        if (!missing.isEmpty()) {
+            throw new GradleException("Project Aussie: ${missing.size()} required game file(s) missing from " +
+                "${gameSrcDir}:\n  - " + missing.join('\n  - ') +
+                "\nThe APK would ship without the game. Restore these files before building.")
+        }
+        logger.lifecycle("Project Aussie: verified ${requiredGameFiles.size()} required game files in ${gameSrcDir}")
+    }
+}
+
+def syncGameAssets = tasks.register('syncGameAssets', Sync) {
+    group = 'build'
+    description = 'Mirrors the complete www/ game folder into src/main/assets/ before packaging.'
+    dependsOn verifyGameSources
+    // Always re-mirror: Gradle's up-to-date check ignores files that someone
+    // else dropped into src/main/assets/, and those must not reach the APK.
+    outputs.upToDateWhen { false }
+    from(gameSrcDir) {
+        exclude gameExcludes
+    }
+    into gameAssetsDir
+    includeEmptyDirs = false
+}
+
+android.applicationVariants.all { variant ->
+    def variantName = variant.name.capitalize()
+
+    // Sync before anything else in the variant, and before assets are merged.
+    variant.preBuildProvider.configure { dependsOn syncGameAssets }
+    variant.mergeAssetsProvider.configure { dependsOn syncGameAssets }
+
+    def verifyApk = tasks.register("verify${variantName}ApkGameAssets") {
+        group = 'verification'
+        description = "Checks the ${variant.name} APK contains assets/index.html and the required game assets."
+        doLast {
+            def apks = variant.outputs.collect { it.outputFile }.findAll { it.name.endsWith('.apk') && it.isFile() }
+            if (apks.isEmpty()) {
+                throw new GradleException("Project Aussie: no ${variant.name} APK found to verify.")
+            }
+            apks.each { apk ->
+                def zip = new java.util.zip.ZipFile(apk)
+                try {
+                    def missing = requiredGameFiles.findAll { zip.getEntry("assets/${it}") == null }
+                    if (!missing.isEmpty()) {
+                        throw new GradleException("Project Aussie: ${apk.name} is missing game assets:\n  - " +
+                            missing.collect { "assets/${it}" }.join('\n  - '))
+                    }
+                    def count = zip.entries().findAll { it.name.startsWith('assets/') && !it.isDirectory() }.size()
+                    logger.lifecycle("Project Aussie: ${apk.name} contains ${count} game asset files " +
+                        "(${String.format('%.1f', apk.length() / 1048576.0)} MB)")
+                } finally {
+                    zip.close()
+                }
+            }
+        }
+    }
+    variant.packageApplicationProvider.configure { finalizedBy verifyApk }
+}
