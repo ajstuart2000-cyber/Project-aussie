@@ -1,0 +1,176 @@
+# Project Aussie — automated AI development
+
+> **Status: NOT ACTIVE YET.** The infrastructure is in place but daily AI development is
+> not running. It only counts as active after a real scheduled or manually started run has
+> called the configured AI APIs, opened a development pull request and finished the
+> required checks. Until the API keys are added and `AI_DEV_ENABLED` is set to `true`,
+> scheduled runs are dry runs: they plan, run the checks and build the test APK, and they
+> make no AI calls.
+
+## What runs
+
+| Workflow | When | What it does | Needs keys? |
+|---|---|---|---|
+| `.github/workflows/ai-daily-dev.yml` | 02:00 AWST daily (+04:00 backup), or by hand | Checks issues and PRs, picks **one** approved task, runs Grok or Claude, applies guardrails, commits to `ai/<role>/issue-N-…`, opens/updates a PR, runs validation + Android build, gets a ChatGPT review, publishes the daily report | Yes, for the AI steps |
+| `.github/workflows/pr-checks.yml` | Every PR into `main` (and called by the daily run) | Unit tests, protected-area guardrails, JS syntax check, actionlint, Gradle wrapper validation | No |
+| `.github/workflows/android-build.yml` | Every PR, every push to `main` (and called by the daily run) | Copies `www/` into the APK assets, builds a debug **test** APK, checks it contains all game files, uploads it as an artifact | No |
+
+Nothing here merges into `main`, approves PRs, or publishes releases. There is a unit test
+(`automation/tests/test_workflows.py`) that fails if a merge or release command shows up in
+the workflows or scripts.
+
+## The AI team
+
+| Role | Provider / API | Secret | Model variable (default) | Works on |
+|---|---|---|---|---|
+| **Grok** — gameplay developer | xAI Responses API `https://api.x.ai/v1/responses` | `XAI_API_KEY` | `AI_GROK_MODEL` (`grok-4.7`) | New features, burnout, drag and roll racing, free roam |
+| **Claude** — technical developer | Anthropic Messages API `https://api.anthropic.com/v1/messages` | `ANTHROPIC_API_KEY` | `AI_CLAUDE_MODEL` (`claude-sonnet-5-5`) | Driving physics, memory, graphics optimisation, Android performance, **sound/audio (only on issues you label `audio-approved`)** |
+| **ChatGPT** — code reviewer | OpenAI Chat Completions `https://api.openai.com/v1/chat/completions` | `OPENAI_API_KEY` | `AI_CHATGPT_MODEL` (`gpt-6.1-sol`) | Reviews the AI PR: integration problems, Android compatibility, protected areas, recommended fixes |
+
+- There is **no fallback between providers**. If a key is missing or a call fails, that role
+  is reported as *skipped* or *failed*. Another model never stands in for it.
+- The report records who actually answered: the endpoint host that was called, the model
+  name **the API returned**, the response id and the token usage. If an API reports a
+  model from the wrong family (for example a non-`claude` model from the Anthropic
+  endpoint), the answer is rejected and not credited to that role.
+- The default model names were checked against each provider's public docs on 2026-11-09.
+  Check them again before you turn this on. You can change them with repository variables
+  and no code change.
+- Each run does one development task, so on a given day either Grok or Claude develops,
+  never both. ChatGPT reviews whatever PR that run produced.
+
+## Approval rules (how a task gets picked)
+
+See [AI_TASK_RULES.md](AI_TASK_RULES.md). In short, the AI only touches an issue that
+**you** labelled `ai-approved`, plus exactly one of `ai:grok` / `ai:claude`. Sound work also
+needs `audio-approved` and goes to Claude only.
+
+## Protected areas (enforced in code)
+
+`automation/aidev/guardrails.py` checks the diff of every AI patch before it is committed,
+and checks every PR again in `pr-checks.yml`. An AI patch that breaks a rule is thrown away
+and the run fails with a report.
+
+| Area | Rule |
+|---|---|
+| Audio system | Frozen. This covers the whole `/* ===== audio ===== */` section of `www/index.html`, `getPack`, `setEngineSound`, `setEngineSound0`, `sirenOn`, `thud`, `loadSoundData`, `ensurePack`, `startAudio`, `updateAudio`, any line with AudioContext / `AC` / `master` / volume / sfx / `.wav`, every `.wav` file, the `*_voice.json` files and the engine sound packs. **Only Claude, only on an `audio-approved` issue** can change audio code. Grok audio patches are always rejected, even with the label. No AI may add or replace `.wav` files. On human PRs, the owner's `audio-approved` label on the PR allows it. |
+| Vehicle models and graphics | `www/assets/**` (models, parts, rims, textures, traffic) and `www/vendor/**` are off-limits to AI. Human PRs need `protected-change-approved`. |
+| BF Falcon XR6 Turbo vs AU Falcons | `VEHICLES.falcon` must keep `assets/falcon.model.json` / `assets/swap.json` / `assets/parts/`. `VEHICLES.au` and `VEHICLES.auute` must keep their own `assets/au/...` model, swap and parts files, and the three must stay distinct. |
+| Save keys | No existing `barra.*` localStorage key may disappear or be renamed: `barra.best`, `bestSect`, `buildIdx`, `career`, `dragBest`, `dragGhost`, `garage`, `ghost`, `hesiBest`, `judged`, `mbest.*`, `mdrift.*`, `meetBest`, `mybuild`, `mybuilds`, `names`, `rollBest`, `series`, `settings`, `sprintBest`, `touch`. |
+| Android package and signing | `applicationId "com.barrarun.game"`, `namespace`, the signing config lines, the manifest `package` and Java `package` lines. Keystores (`*.keystore`, `*.jks`, `*.p12`, `keystore.properties`) can never be committed. |
+| Automation itself | AI patches can't touch `.github/**`, `automation/**`, Gradle files or the wrapper. Grok may edit only `www/index.html` and `docs/**`. Claude may also edit `MainActivity.java`, `AndroidManifest.xml` and `res/values/**`. |
+| Size | At most `AI_MAX_CHANGED_LINES` (default 400) changed lines per AI patch. |
+
+Every AI patch that changes `www/index.html` must also pass `node --check` on the inline scripts.
+
+## Safety and cost controls
+
+- **Secrets.** Keys live only in GitHub Actions secrets. Each key is passed only into the
+  one step that needs it: `XAI_API_KEY` to the Grok step, `ANTHROPIC_API_KEY` to the Claude
+  step, `OPENAI_API_KEY` to the review step. The code masks keys with `::add-mask::` and
+  scrubs them from error messages. Keys never go into files, commits or the report.
+- **Budget.** `AI_DAILY_BUDGET_USD` (default `2.00`) is checked before every call against a
+  worst-case estimate: prompt size plus `AI_MAX_OUTPUT_TOKENS`. After each call, the real
+  usage numbers from the API are priced and added to the day's total, and the total goes
+  into the report marker. When the budget is used up, later calls that day are skipped.
+  Prices are in `automation/ai-config.json` (`pricing_usd_per_mtok`). You can override them
+  with `AI_PRICING_JSON`. Unknown models use a deliberately high fallback price. These are
+  **estimates**; your provider bill is the real number.
+- **Call limits.** `AI_MAX_CALLS_PER_RUN` (default 2: one developer call and one review
+  call). There are no automatic retries.
+- **No overlap.** `concurrency: ai-daily-development` with `cancel-in-progress: false` means
+  only one daily run at a time. A second trigger waits, then sees today's report and does
+  nothing.
+- **Failures stop the run.** A rejected or failed developer step marks the run failed, skips
+  the build and review for that patch, and the report says why.
+- **Honest results.** The report only shows results taken from that run's job conclusions,
+  the APK check output and the API responses. A dry run or a skipped role is never shown
+  as success.
+
+## Schedule and GitHub delays
+
+GitHub cron runs in UTC. Perth is UTC+8 all year with no daylight saving.
+
+- `0 18 * * *` → **02:00 AWST** (primary).
+- `0 20 * * *` → **04:00 AWST** (backup). GitHub can start scheduled runs late, sometimes by
+  an hour or more, or drop them when it is busy. Any scheduled run first reads today's
+  report markers (by Perth date) on the reports issue. If a live run already reported, it
+  does nothing, so you get at most one live run per Perth day.
+- Scheduled workflows only run from the default branch, so **nothing is scheduled until
+  this PR is merged into `main`**. GitHub also turns off schedules after 60 days with no
+  repository activity.
+
+## Android build, signing and your installed app
+
+- `android/gradlew` (Gradle 8.7, distribution SHA-256 pinned) makes the build reproducible.
+  `android/app/build.gradle` is **unchanged**.
+- CI runs `automation/android/ci_build.sh`, which:
+  1. checks the required game files (the same list as PR #2), then copies the complete
+     `www/` into `android/app/src/main/assets/`, leaving out `index.*.bak.html` and OS junk;
+  2. makes a **throwaway debug keystore** inside the job, which is never stored or committed;
+  3. runs `./gradlew -I automation/android/ci-init.gradle assembleDebug`. The init script
+     points debug signing at the throwaway key and adds `applicationIdSuffix ".ci"` /
+     `versionNameSuffix "-ci"`;
+  4. runs `verify_apk.py`, which checks `assets/index.html` is there, every `www/` file is in
+     the APK with an identical CRC-32, there are no extra files, and `aapt2` reports the
+     package as `com.barrarun.game.ci`.
+- The CI test APK is **`com.barrarun.game.ci`**, labelled Project Aussie, version `1.0.8-ci`.
+  It installs **next to** your real app (`com.barrarun.game`) and cannot overwrite or update
+  it. Its saves are separate. Your real app's saves are untouched.
+- Download it from the run page → *Artifacts* → `project-aussie-ci-apk` (kept 14 days).
+- This works on `main` today. After PR #2 is merged, its Gradle `syncGameAssets` /
+  `verify*ApkGameAssets` tasks run as well. That was tested locally with PR #2 merged into
+  this branch, and the result was identical.
+- **Portable release signing (proposed, not done):** issue #1 P1 suggests moving the keystore
+  path and passwords out of `build.gradle` into environment variables or secrets
+  (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`,
+  `ANDROID_KEY_PASSWORD`). That edits the signing config, which is a protected area, so it
+  needs its own PR with your approval. Use your existing key so phone updates keep working.
+
+## Manual setup (owner)
+
+1. **Review and merge PR #2** (P0 packaging fix) if you are happy with it. It is independent
+   of this PR. Neither PR is merged automatically.
+2. **Review and merge this PR.** Workflows only get the `workflow` permission and schedules
+   only start once they are on `main`.
+3. **Let the workflow open PRs.** Do one of these:
+   - Settings → Actions → General → Workflow permissions → tick **"Allow GitHub Actions to
+     create and approve pull requests"**. It is currently off. Our workflows never approve
+     anything. Or:
+   - add a fine-grained token as secret `AI_DEV_PR_TOKEN` (this repository only; Contents:
+     read and write, Pull requests: read and write). PRs opened with it also trigger
+     `pr-checks.yml` and `android-build.yml` on the PR itself, which `GITHUB_TOKEN`-opened
+     PRs don't.
+4. **API keys (done by you on 2026-11-09).** The secrets `XAI_API_KEY` (console.x.ai),
+   `ANTHROPIC_API_KEY` (console.anthropic.com) and `OPENAI_API_KEY` (platform.openai.com)
+   exist under Settings → Secrets and variables → Actions → *Secrets*. Whether they are
+   valid is only known after the first live run calls each API. Also set a spending limit
+   at each provider.
+5. **Set variables** (same page → *Variables*), all optional except the first:
+   - `AI_DEV_ENABLED` = `true` turns on live scheduled runs. Leave it unset to keep dry runs.
+   - `AI_DAILY_BUDGET_USD` (default `2.00`), `AI_MAX_CALLS_PER_RUN` (default `2`),
+     `AI_MAX_OUTPUT_TOKENS` (default `16000`), `AI_MAX_INPUT_CHARS` (default `160000`),
+     `AI_MAX_CHANGED_LINES` (default `400`).
+   - `AI_GROK_MODEL`, `AI_CLAUDE_MODEL`, `AI_CHATGPT_MODEL` override the default model names.
+   - `AI_PRICING_JSON`, for example `{"grok-4.7":{"in":2,"out":6}}`, updates the price table.
+6. **Protect `main`** (recommended): Settings → Branches → add a rule for `main` that
+   requires a pull request before merging and requires the status checks *Automation unit
+   tests*, *Protected areas…*, *JS syntax…*, *Workflow lint* and *Debug test APK*. Also
+   block force pushes. This hasn't been turned on; that's your call.
+7. **Approve work.** Create or choose issues and add `ai-approved`, one of `ai:grok` /
+   `ai:claude`, and optionally `priority:P0`–`P3`. For sound work, use `ai:claude` +
+   `audio` + `audio-approved`.
+8. **First real test.** Actions → *AI daily development* → *Run workflow*, with dry run
+   **unticked** and the issue number. Only after that run has called the APIs, opened the
+   PR and passed the checks can daily AI development be called active.
+9. Optionally pin the *Daily AI development reports* issue. It is created on the first live
+   run.
+
+## Running the tests locally
+
+```bash
+python3 -m unittest discover -s automation/tests -t automation/tests -v   # needs node for the JS check
+PYTHONPATH=automation python3 -m aidev guard --base origin/main --head HEAD --branch "$(git branch --show-current)"
+PYTHONPATH=automation python3 -m aidev jscheck
+ANDROID_HOME=... JAVA_HOME=... automation/android/ci_build.sh /tmp/apk-out
+```

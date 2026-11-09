@@ -1,0 +1,39 @@
+// Project Aussie - CI-only Gradle init script.
+//
+// Used ONLY by GitHub Actions (passed with `-I automation/android/ci-init.gradle`).
+// It does NOT edit android/app/build.gradle. At build time it:
+//   1. Points the debug signing config at a throwaway keystore generated inside
+//      the CI job (path from env CI_DEBUG_KEYSTORE). The box keystore path and the
+//      real signing config in build.gradle are left exactly as they are.
+//   2. Adds applicationIdSuffix ".ci" and versionNameSuffix "-ci" to the debug
+//      build type, so the CI test APK installs as com.barrarun.game.ci next to
+//      the real com.barrarun.game app and can never overwrite it.
+// The Android `namespace` (com.barrarun.game, used for R and MainActivity) is
+// not changed. Game files and save keys are not touched.
+
+def ciKeystore = System.getenv('CI_DEBUG_KEYSTORE')
+if (!ciKeystore) {
+    throw new GradleException('ci-init.gradle: CI_DEBUG_KEYSTORE is not set (path to the CI throwaway debug keystore).')
+}
+def ciStorePass = System.getenv('CI_DEBUG_KEYSTORE_PASSWORD') ?: 'android'
+def ciAlias = System.getenv('CI_DEBUG_KEY_ALIAS') ?: 'androiddebugkey'
+
+gradle.beforeProject { p ->
+    p.pluginManager.withPlugin('com.android.application') {
+        def components = p.extensions.getByName('androidComponents')
+        components.finalizeDsl { ext ->
+            def sc = ext.signingConfigs.findByName('debug')
+            if (sc == null) {
+                throw new GradleException('ci-init.gradle: no debug signingConfig found')
+            }
+            sc.storeFile = new File(ciKeystore)
+            sc.storePassword = ciStorePass
+            sc.keyAlias = ciAlias
+            sc.keyPassword = ciStorePass
+            def dbg = ext.buildTypes.getByName('debug')
+            dbg.applicationIdSuffix = '.ci'
+            dbg.versionNameSuffix = '-ci'
+            p.logger.lifecycle("[ci-init] debug signing -> CI throwaway keystore; applicationIdSuffix '.ci' (real package id untouched)")
+        }
+    }
+}

@@ -1,0 +1,338 @@
+# Project Aussie - daily AI development run.
+#
+# Schedule (GitHub cron is UTC; Perth is UTC+8 all year, no daylight saving):
+#   18:00 UTC = 02:00 AWST  primary trigger
+#   20:00 UTC = 04:00 AWST  backup trigger - GitHub can start scheduled runs late or
+#                           drop them at busy times. The backup does nothing if a live
+#                           run already reported for today's Perth date.
+# Scheduled runs are DRY RUNS (no AI calls) until the repo variable AI_DEV_ENABLED=true.
+#
+# Safety: one run at a time (concurrency), one task per run, budget + call limits in
+# code, guardrails reject protected changes, never merges, never publishes releases.
+name: AI daily development
+
+on:
+  schedule:
+    - cron: '0 18 * * *'
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Dry run (plan + checks + build, no AI API calls, no PR)
+        type: boolean
+        default: true
+      issue:
+        description: Only consider this issue number (blank = pick by priority)
+        type: string
+        default: ''
+
+permissions: {}
+
+concurrency:
+  group: ai-daily-development
+  cancel-in-progress: false
+
+env:
+  PYTHONPATH: automation
+  AI_DAILY_BUDGET_USD: ${{ vars.AI_DAILY_BUDGET_USD }}
+  AI_MAX_CALLS_PER_RUN: ${{ vars.AI_MAX_CALLS_PER_RUN }}
+  AI_MAX_OUTPUT_TOKENS: ${{ vars.AI_MAX_OUTPUT_TOKENS }}
+  AI_MAX_INPUT_CHARS: ${{ vars.AI_MAX_INPUT_CHARS }}
+  AI_MAX_CHANGED_LINES: ${{ vars.AI_MAX_CHANGED_LINES }}
+  AI_GROK_MODEL: ${{ vars.AI_GROK_MODEL }}
+  AI_CLAUDE_MODEL: ${{ vars.AI_CLAUDE_MODEL }}
+  AI_CHATGPT_MODEL: ${{ vars.AI_CHATGPT_MODEL }}
+  AI_PRICING_JSON: ${{ vars.AI_PRICING_JSON }}
+
+jobs:
+  plan:
+    name: Check issues/PRs and select one approved task
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    outputs:
+      should_run: ${{ steps.plan.outputs.should_run }}
+      dry_run: ${{ steps.plan.outputs.dry_run }}
+      duplicate: ${{ steps.plan.outputs.duplicate }}
+      role: ${{ steps.plan.outputs.role }}
+      issue: ${{ steps.plan.outputs.issue }}
+      branch: ${{ steps.plan.outputs.branch }}
+      mode: ${{ steps.plan.outputs.mode }}
+      pr_number: ${{ steps.plan.outputs.pr_number }}
+      audio_approved: ${{ steps.plan.outputs.audio_approved }}
+      report_issue: ${{ steps.plan.outputs.report_issue }}
+      date: ${{ steps.plan.outputs.date }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: plan
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AI_DEV_ENABLED: ${{ vars.AI_DEV_ENABLED }}
+          IN_DRY_RUN: ${{ inputs.dry_run }}
+          IN_ISSUE: ${{ inputs.issue }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          args=()
+          if [[ "$GITHUB_EVENT_NAME" == "schedule" && "$SCHEDULE" == "0 20 * * *" ]]; then args+=(--backup); fi
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "$IN_DRY_RUN" == "true" ]]; then args+=(--dry-run); fi
+          if [[ -n "$IN_ISSUE" ]]; then
+            [[ "$IN_ISSUE" =~ ^[0-9]+$ ]] || { echo "::error::issue input must be a number"; exit 1; }
+            args+=(--issue "$IN_ISSUE")
+          fi
+          python3 -m aidev plan --out plan.json "${args[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plan
+          path: plan.json
+          retention-days: 30
+
+  develop:
+    name: AI developer (${{ needs.plan.outputs.role }})
+    needs: plan
+    if: needs.plan.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    outputs:
+      status: ${{ steps.dev.outputs.status }}
+      branch: ${{ needs.plan.outputs.branch }}
+      head_sha: ${{ steps.pr.outputs.head_sha }}
+      pr_number: ${{ steps.pr.outputs.pr_number }}
+      pr_url: ${{ steps.pr.outputs.pr_url }}
+    env:
+      ROLE: ${{ needs.plan.outputs.role }}
+      BRANCH: ${{ needs.plan.outputs.branch }}
+      MODE: ${{ needs.plan.outputs.mode }}
+      EXISTING_PR: ${{ needs.plan.outputs.pr_number }}
+      ISSUE: ${{ needs.plan.outputs.issue }}
+      DRY_RUN: ${{ needs.plan.outputs.dry_run }}
+      AUDIO_APPROVED: ${{ needs.plan.outputs.audio_approved }}
+      GH_TOKEN: ${{ secrets.AI_DEV_PR_TOKEN || github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.AI_DEV_PR_TOKEN || github.token }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: plan
+          path: ${{ runner.temp }}/plan
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare branch
+        run: |
+          if [[ "$MODE" == "update" ]]; then
+            git fetch --no-tags origin "$BRANCH"
+            git checkout -B "$BRANCH" "origin/$BRANCH"
+            gh pr view "$EXISTING_PR" --json comments,reviews \
+              --jq '[.comments[], .reviews[]] | map(select(.author.login != "github-actions")) | .[] | "### \(.author.login)\n\(.body)\n"' \
+              > "$RUNNER_TEMP/feedback.md" || true
+          else
+            git checkout -B "$BRANCH"
+          fi
+      - name: Grok - gameplay developer (xAI API)
+        id: dev_grok
+        if: env.ROLE == 'grok'
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+        run: python3 -m aidev develop --plan "$RUNNER_TEMP/plan/plan.json" --out "$RUNNER_TEMP/dev-result.json" --feedback "$RUNNER_TEMP/feedback.md"
+      - name: Claude - technical developer (Anthropic API)
+        id: dev_claude
+        if: env.ROLE == 'claude'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python3 -m aidev develop --plan "$RUNNER_TEMP/plan/plan.json" --out "$RUNNER_TEMP/dev-result.json" --feedback "$RUNNER_TEMP/feedback.md"
+      - id: dev
+        if: always()
+        run: echo "status=$(jq -r '.status // "failed"' "$RUNNER_TEMP/dev-result.json" 2>/dev/null || echo failed)" >> "$GITHUB_OUTPUT"
+      - name: Commit to the feature branch and open/update the pull request (never merges)
+        id: pr
+        if: steps.dev.outputs.status == 'changed' && env.DRY_RUN != 'true'
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(jq -r '.changed_files[]' "$RUNNER_TEMP/dev-result.json")
+          git add -- "${files[@]}"
+          if [[ -n "$(git status --porcelain --untracked-files=no | grep -v '^[AM] ' || true)" ]]; then
+            echo "::error::unexpected working-tree changes outside the approved patch"; git status --short; exit 1
+          fi
+          model=$(jq -r '.provider.model_reported' "$RUNNER_TEMP/dev-result.json")
+          git -c user.name="project-aussie-ai-$ROLE" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "AI ($ROLE via $model): issue #$ISSUE" -m "$(jq -r '.summary' "$RUNNER_TEMP/dev-result.json")"
+          git push origin "HEAD:refs/heads/$BRANCH"
+          echo "head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          python3 -m aidev prbody --plan "$RUNNER_TEMP/plan/plan.json" --dev-result "$RUNNER_TEMP/dev-result.json" \
+            --out "$RUNNER_TEMP/pr-body.md" > "$RUNNER_TEMP/prbody.out"
+          title=$(sed -n 's/^title=//p' "$RUNNER_TEMP/prbody.out")
+          labels="ai-generated,ai:$ROLE"
+          if [[ "$AUDIO_APPROVED" == "true" ]]; then labels="$labels,audio-approved"; fi
+          if [[ "$MODE" == "update" ]]; then
+            gh pr comment "$EXISTING_PR" --body-file "$RUNNER_TEMP/pr-body.md"
+            gh pr edit "$EXISTING_PR" --remove-label ai-revise || true
+            num="$EXISTING_PR"
+          else
+            url=$(gh pr create --base main --head "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/pr-body.md" --label "$labels")
+            num="${url##*/}"
+          fi
+          echo "pr_number=$num" >> "$GITHUB_OUTPUT"
+          echo "pr_url=$(gh pr view "$num" --json url --jq .url)" >> "$GITHUB_OUTPUT"
+      - name: Save developer result
+        if: always()
+        env:
+          PR_URL_OUT: ${{ steps.pr.outputs.pr_url }}
+        run: |
+          f="$RUNNER_TEMP/dev-result.json"
+          [[ -f "$f" ]] || echo '{"status":"failed","error":"developer step did not produce a result"}' > "$f"
+          jq --arg url "$PR_URL_OUT" '.pr_url=$url' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dev-result
+          path: ${{ runner.temp }}/dev-result.json
+          retention-days: 30
+
+  validate:
+    name: Code validation
+    needs: [plan, develop]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.duplicate != 'true' && needs.develop.result != 'failure' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/pr-checks.yml
+    with:
+      ref: ${{ needs.develop.outputs.head_sha || github.sha }}
+      branch: ${{ needs.develop.outputs.head_sha && needs.develop.outputs.branch || '' }}
+      labels: ${{ needs.plan.outputs.audio_approved == 'true' && 'audio-approved' || '' }}
+
+  android:
+    name: Android build test
+    needs: [plan, develop]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.duplicate != 'true' && needs.develop.result != 'failure' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/android-build.yml
+    with:
+      ref: ${{ needs.develop.outputs.head_sha || github.sha }}
+
+  review:
+    name: ChatGPT code review (OpenAI API)
+    needs: [plan, develop, validate, android]
+    if: ${{ !cancelled() && needs.develop.outputs.pr_number != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      PR: ${{ needs.develop.outputs.pr_number }}
+      GH_TOKEN: ${{ github.token }}
+      CI_RESULTS: 'validation=${{ needs.validate.result }}, android-build=${{ needs.android.result }}'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.develop.outputs.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '{plan,dev-result}'
+          path: ${{ runner.temp }}/in
+          merge-multiple: true
+      - name: Review the diff
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          git fetch --no-tags origin main
+          git diff origin/main...HEAD -- . ':(exclude)www/assets' ':(exclude)www/vendor' > "$RUNNER_TEMP/pr.diff"
+          python3 -m aidev review --plan "$RUNNER_TEMP/in/plan.json" --dev-result "$RUNNER_TEMP/in/dev-result.json" \
+            --diff "$RUNNER_TEMP/pr.diff" --ci-results "$CI_RESULTS" --out "$RUNNER_TEMP/review.json"
+      - name: Post the review as a PR comment (advisory, never approves or merges)
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/review.json.md" ]]; then gh pr comment "$PR" --body-file "$RUNNER_TEMP/review.json.md"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: review
+          path: ${{ runner.temp }}/review.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+  report:
+    name: Daily development report
+    needs: [plan, develop, validate, android, review]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DRY_RUN: ${{ needs.plan.outputs.dry_run }}
+      DUPLICATE: ${{ needs.plan.outputs.duplicate }}
+      REPORT_ISSUE: ${{ needs.plan.outputs.report_issue }}
+      PR_URL: ${{ needs.develop.outputs.pr_url }}
+      JOBS: >-
+        {"plan": "${{ needs.plan.result }}", "developer": "${{ needs.develop.result }}",
+        "code validation (unit tests, guardrails, JS syntax, actionlint, wrapper)": "${{ needs.validate.result }}",
+        "android build + APK check": "${{ needs.android.result }}", "chatgpt review job": "${{ needs.review.result }}"}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: '{plan,dev-result,review,apk-verify}'
+          path: ${{ runner.temp }}/in
+          merge-multiple: true
+      - name: Build the report
+        id: report
+        run: |
+          in="$RUNNER_TEMP/in"
+          if [[ ! -f "$in/plan.json" ]]; then
+            printf '# Project Aussie daily AI report\n\nThe planning step failed before a plan was written. See %s\n' \
+              "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > "$RUNNER_TEMP/report.md"
+            cat "$RUNNER_TEMP/report.md" >> "$GITHUB_STEP_SUMMARY"; exit 1
+          fi
+          args=()
+          for f in dev-result review apk-verify; do
+            opt="--$f"; [[ "$f" == "apk-verify" ]] && opt="--apk"
+            [[ -f "$in/$f.json" ]] && args+=("$opt" "$in/$f.json")
+          done
+          set +e
+          python3 -m aidev report --plan "$in/plan.json" "${args[@]}" --jobs "$JOBS" --pr-url "$PR_URL" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --run-id "$GITHUB_RUN_ID" \
+            --event "$GITHUB_EVENT_NAME" --out "$RUNNER_TEMP/report.md" > /dev/null
+          echo "exit=$?" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/report.md" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-report
+          path: ${{ runner.temp }}/report.md
+          retention-days: 90
+      - name: Publish to the "Daily AI development reports" issue (live runs only)
+        if: env.DRY_RUN != 'true' && env.DUPLICATE != 'true' && steps.report.outcome == 'success'
+        run: |
+          n="$REPORT_ISSUE"
+          if [[ -z "$n" ]]; then
+            url=$(gh issue create --title "Daily AI development reports" --label ai-report \
+              --body "Daily reports from the AI development workflow are posted here as comments. Pin this issue to keep it handy.")
+            n="${url##*/}"
+          fi
+          gh issue comment "$n" --body-file "$RUNNER_TEMP/report.md"
+      - name: Stop and report failures
+        if: steps.report.outputs.exit != '0'
+        run: |
+          echo "::error::The daily run had failures; see the report in the job summary."
+          exit 1
