@@ -1,0 +1,387 @@
+# Project Aussie - AI pull request checks, ChatGPT review and MERGE GATE.
+#
+# AUTO-MERGE WAS ENABLED AT THE OWNER'S REQUEST ON 2026-11-10 (ajstuart2000-cyber:
+# "approve all updates" -> "Both"). It only merges when the repository variable
+# AI_AUTO_MERGE is exactly 'true'. Set AI_AUTO_MERGE to 'false' (or delete it) to turn
+# it off; AI PRs then wait for the owner again. See docs/AI_AUTOMATION.md.
+#
+# A PR is squash-merged into main (pinned to the tested head SHA) only when ALL of these
+# hold (enforced in automation/aidev/mergegate.py, unit-tested):
+#   - opened by this automation: github-actions[bot], label ai-generated, branch
+#     ai/<role>/issue-<N>-..., aidev-pr marker, every commit by project-aussie-ai-<role>;
+#   - code validation (unit tests, protected areas, JS syntax, actionlint, Gradle wrapper),
+#     the Android build + APK verification and a guardrail re-run all passed on GitHub's
+#     test-merge commit of the PR into main;
+#   - a real ChatGPT review (api.openai.com response) of that head says APPROVE;
+#   - no conflicts, and neither the PR head nor main moved since the checks ran;
+#   - no ai-revise / ai-blocked / do-not-merge / wontfix label.
+# Audio stays frozen: the guardrails only get audio-approved when the OWNER put it on the
+# linked issue AND the role is Claude. Releases are never published.
+#
+# The checks run INSIDE this workflow (workflow_call), so they never sit waiting for a
+# manual "Approve and run" the way pull_request runs on bot-opened PRs do.
+#
+# Triggers: called by ai-daily-dev.yml for the PR it just opened or updated; a daily sweep
+# at 05:30 AWST for older AI PRs (for example one whose review failed earlier); by hand.
+name: AI PR merge gate
+
+on:
+  schedule:
+    - cron: '30 21 * * *'   # 21:30 UTC = 05:30 AWST, after the 02:00 run and the 04:00 backup
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: AI pull request number (blank = oldest open AI PR that needs the gate)
+        type: string
+        default: ''
+      dry_run:
+        description: Dry run (checks + Android build only; no OpenAI call; never merges)
+        type: boolean
+        default: true
+      force_review:
+        description: Ask ChatGPT again even if the workflow already reviewed this commit
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      pr:
+        type: string
+        required: true
+      dry_run:
+        type: boolean
+        default: false
+      extra_spent_usd:
+        description: Spend so far in the calling run (developer call)
+        type: string
+        default: '0'
+      calls_used:
+        type: string
+        default: '0'
+      caller:
+        type: string
+        default: daily
+    secrets:
+      OPENAI_API_KEY:
+        required: false
+    outputs:
+      validation:
+        value: ${{ jobs.gate.outputs.validation }}
+      android:
+        value: ${{ jobs.gate.outputs.android }}
+      review:
+        value: ${{ jobs.gate.outputs.review }}
+      guardrails:
+        value: ${{ jobs.gate.outputs.guardrails }}
+      merge:
+        value: ${{ jobs.gate.outputs.merge }}
+      merged:
+        value: ${{ jobs.gate.outputs.merged }}
+      merge_sha:
+        value: ${{ jobs.gate.outputs.merge_sha }}
+
+permissions: {}
+
+# Stand-alone runs share the daily run's group, so the gate never overlaps a development
+# run. When called from the daily run it is already inside that run's lock.
+concurrency:
+  group: ${{ inputs.caller == 'daily' && format('ai-gate-in-daily-{0}', github.run_id) || 'ai-daily-development' }}
+  cancel-in-progress: false
+
+env:
+  PYTHONPATH: automation
+  AI_DAILY_BUDGET_USD: ${{ vars.AI_DAILY_BUDGET_USD }}
+  AI_MAX_CALLS_PER_RUN: ${{ vars.AI_MAX_CALLS_PER_RUN }}
+  AI_MAX_OUTPUT_TOKENS: ${{ vars.AI_MAX_OUTPUT_TOKENS }}
+  AI_CHATGPT_MODEL: ${{ vars.AI_CHATGPT_MODEL }}
+  AI_PRICING_JSON: ${{ vars.AI_PRICING_JSON }}
+
+jobs:
+  meta:
+    name: Find the AI pull request and its test-merge commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+      actions: write
+    outputs:
+      found: ${{ steps.meta.outputs.found }}
+      eligible: ${{ steps.meta.outputs.eligible }}
+      pr_number: ${{ steps.meta.outputs.pr_number }}
+      head_sha: ${{ steps.meta.outputs.head_sha }}
+      check_ref: ${{ steps.meta.outputs.check_ref }}
+      branch: ${{ steps.meta.outputs.branch }}
+      guard_labels: ${{ steps.meta.outputs.guard_labels }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: meta
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AI_DEV_ENABLED: ${{ vars.AI_DEV_ENABLED }}
+          IN_PR: ${{ inputs.pr }}
+          IN_DRY: ${{ inputs.dry_run }}
+          IN_CALLER: ${{ inputs.caller }}
+          IN_EXTRA: ${{ inputs.extra_spent_usd }}
+          IN_CALLS: ${{ inputs.calls_used }}
+        run: |
+          args=()
+          dry=false
+          if [[ "$IN_CALLER" != "daily" && "$GITHUB_EVENT_NAME" == "schedule" ]]; then
+            [[ "${AI_DEV_ENABLED,,}" == "true" ]] || dry=true
+          elif [[ "$IN_DRY" == "true" ]]; then
+            dry=true
+          fi
+          [[ "$dry" == "true" ]] && args+=(--dry-run)
+          if [[ -n "$IN_PR" ]]; then
+            [[ "$IN_PR" =~ ^[0-9]+$ ]] || { echo "::error::pr input must be a number"; exit 1; }
+            args+=(--pr "$IN_PR")
+          fi
+          python3 -m aidev prmeta --out pr-meta.json --extra-spent "${IN_EXTRA:-0}" --calls-used "${IN_CALLS:-0}" "${args[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr-meta
+          path: pr-meta.json
+          retention-days: 30
+      - name: Approve held pull_request runs for this AI PR head (best effort; the gate does not rely on them)
+        if: steps.meta.outputs.eligible == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ steps.meta.outputs.head_sha }}
+        run: |
+          ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$HEAD_SHA&status=action_required" --jq '.workflow_runs[].id')
+          for id in $ids; do
+            if gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$id/approve" > /dev/null; then echo "approved run $id"
+            else echo "::warning::could not approve held run $id (the gate runs its own checks anyway)"; fi
+          done
+
+  validate:
+    name: Code validation
+    needs: meta
+    if: needs.meta.outputs.found == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/pr-checks.yml
+    with:
+      ref: ${{ needs.meta.outputs.check_ref }}
+      branch: ${{ needs.meta.outputs.branch }}
+      labels: ${{ needs.meta.outputs.guard_labels }}
+
+  android:
+    name: Android build test
+    needs: meta
+    if: needs.meta.outputs.found == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/android-build.yml
+    with:
+      ref: ${{ needs.meta.outputs.check_ref }}
+
+  review:
+    name: ChatGPT code review (OpenAI API)
+    needs: [meta, validate, android]
+    if: ${{ !cancelled() && needs.meta.outputs.eligible == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      PR: ${{ needs.meta.outputs.pr_number }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      CI_RESULTS: 'validation=${{ needs.validate.result }}, android-build=${{ needs.android.result }}'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.meta.outputs.check_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr-meta
+          path: ${{ runner.temp }}/in
+      - name: Review the diff
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FORCE: ${{ inputs.force_review }}
+        run: |
+          git fetch --no-tags origin main
+          git diff origin/main...HEAD -- . ':(exclude)www/assets' ':(exclude)www/vendor' > "$RUNNER_TEMP/pr.diff"
+          args=()
+          [[ "$FORCE" == "true" ]] && args+=(--force)
+          python3 -m aidev review --pr-meta "$RUNNER_TEMP/in/pr-meta.json" --diff "$RUNNER_TEMP/pr.diff" \
+            --ci-results "$CI_RESULTS" --out "$RUNNER_TEMP/review.json" "${args[@]}"
+      - name: Post the review as a PR comment
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/review.json.md" ]]; then gh pr comment "$PR" --body-file "$RUNNER_TEMP/review.json.md"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: review
+          path: ${{ runner.temp }}/review.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+  gate:
+    name: Merge gate (squash-merge only if every check passed and ChatGPT approved)
+    needs: [meta, validate, android, review]
+    if: ${{ always() && needs.meta.outputs.found == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      statuses: write
+    outputs:
+      validation: ${{ needs.validate.result }}
+      android: ${{ needs.android.result }}
+      review: ${{ needs.review.result }}
+      guardrails: ${{ steps.guard.outcome }}
+      merge: ${{ steps.gate.outputs.merge }}
+      merged: ${{ steps.merge.outputs.merged }}
+      merge_sha: ${{ steps.merge.outputs.merge_sha }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      GITHUB_TOKEN: ${{ github.token }}
+      PR: ${{ needs.meta.outputs.pr_number }}
+      HEAD_SHA: ${{ needs.meta.outputs.head_sha }}
+      BRANCH: ${{ needs.meta.outputs.branch }}
+      GUARD_LABELS: ${{ needs.meta.outputs.guard_labels }}
+      AI_AUTO_MERGE: ${{ vars.AI_AUTO_MERGE }}
+      VALIDATION: ${{ needs.validate.result }}
+      ANDROID: ${{ needs.android.result }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.meta.outputs.check_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: '{pr-meta,review,apk-verify}'
+          path: ${{ runner.temp }}/in
+          merge-multiple: true
+      - name: Re-run the protected-area check on the tested commit
+        id: guard
+        continue-on-error: true
+        run: |
+          git fetch --no-tags origin main
+          python3 -m aidev guard --base origin/main --head HEAD --branch "$BRANCH" --labels "$GUARD_LABELS" --summary "$GITHUB_STEP_SUMMARY"
+      - name: Decide (every gate must pass; anything missing or unclear means no merge)
+        id: gate
+        env:
+          GUARD: ${{ steps.guard.outcome }}
+        run: |
+          in="$RUNNER_TEMP/in"
+          args=()
+          [[ -f "$in/review.json" ]] && args+=(--review "$in/review.json")
+          [[ -f "$in/apk-verify.json" ]] && args+=(--apk "$in/apk-verify.json")
+          checks=$(jq -nc --arg v "$VALIDATION" --arg a "$ANDROID" --arg g "$GUARD" '{validation:$v, android:$a, guardrails:$g}')
+          python3 -m aidev gate --pr-meta "$in/pr-meta.json" --checks "$checks" --out "$RUNNER_TEMP/merge-result.json" "${args[@]}"
+      - name: Squash-merge into main, pinned to the tested head (only when the gate said yes)
+        id: merge
+        if: steps.gate.outputs.merge == 'true'
+        run: |
+          set -uo pipefail
+          f="$RUNNER_TEMP/merge-result.json"
+          title=$(gh pr view "$PR" --json title --jq .title)
+          msg="Auto-merged by the AI PR merge gate (owner-enabled 2026-11-10, AI_AUTO_MERGE=true): code validation, Android build + APK check, guardrails and the ChatGPT review all passed for $HEAD_SHA. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if out=$(gh api -X PUT "repos/$GITHUB_REPOSITORY/pulls/$PR/merge" -f merge_method=squash -f sha="$HEAD_SHA" -f commit_title="$title (#$PR)" -f commit_message="$msg" 2>&1); then
+            sha=$(jq -r '.sha' <<<"$out")
+            jq --arg sha "$sha" '.merged=true | .merge_commit_sha=$sha' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+            echo "merged=true" >> "$GITHUB_OUTPUT"
+            echo "merge_sha=$sha" >> "$GITHUB_OUTPUT"
+            gh pr comment "$PR" --body "✅ Auto-merged into \`main\` as $sha by the merge gate: every check passed and ChatGPT approved head \`$HEAD_SHA\`. Turn this off with the repository variable \`AI_AUTO_MERGE=false\`." || true
+          else
+            jq --arg e "$out" '.error=$e' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            echo "::error::The gate passed but the merge call failed: $out"
+            exit 1
+          fi
+      - name: Commit statuses on the PR head
+        if: always() && steps.gate.outcome == 'success'
+        continue-on-error: true
+        env:
+          GUARD: ${{ steps.guard.outcome }}
+          REASON: ${{ steps.gate.outputs.reason }}
+        run: |
+          url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          st=failure
+          [[ "$VALIDATION" == success && "$ANDROID" == success && "$GUARD" == success ]] && st=success
+          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f state="$st" -f context="AI gate / checks" \
+            -f description="validation=$VALIDATION android=$ANDROID guardrails=$GUARD" -f target_url="$url" > /dev/null
+          [[ "$(jq -r .dry_run "$RUNNER_TEMP/in/pr-meta.json")" == true ]] && exit 0   # dry runs only report the checks
+          if [[ "$(jq -r .merged "$RUNNER_TEMP/merge-result.json")" == true ]]; then gst=success; desc="merged"
+          else gst=failure; desc="not merged: ${REASON:0:120}"; fi
+          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f state="$gst" -f context="AI gate / merge" \
+            -f description="$desc" -f target_url="$url" > /dev/null
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: merge-result
+          path: ${{ runner.temp }}/merge-result.json
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Stop and report failures
+        if: always()
+        run: |
+          rs=$(jq -r '.status // ""' "$RUNNER_TEMP/in/review.json" 2>/dev/null || true)
+          bad=""
+          for x in "validation=$VALIDATION" "android=$ANDROID"; do [[ "${x#*=}" == success ]] || bad="$bad ${x}"; done
+          [[ "$rs" == failed ]] && bad="$bad review=failed"
+          if [[ -n "$bad" ]]; then echo "::error::Gate inputs failed:$bad (nothing was merged)"; exit 1; fi
+
+  report:
+    name: Merge-gate report
+    needs: [meta, review, gate]
+    if: ${{ always() && inputs.caller != 'daily' && needs.meta.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      FOUND: ${{ needs.meta.outputs.found }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: '{pr-meta,review,merge-result}'
+          path: ${{ runner.temp }}/in
+          merge-multiple: true
+      - name: Build the report
+        id: report
+        run: |
+          in="$RUNNER_TEMP/in"
+          args=()
+          [[ -f "$in/review.json" ]] && args+=(--review "$in/review.json")
+          [[ -f "$in/merge-result.json" ]] && args+=(--decision "$in/merge-result.json")
+          set +e
+          python3 -m aidev gatereport --pr-meta "$in/pr-meta.json" "${args[@]}" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --run-id "$GITHUB_RUN_ID" \
+            --event "$GITHUB_EVENT_NAME" --out "$RUNNER_TEMP/gate-report.md" > /dev/null
+          cat "$RUNNER_TEMP/gate-report.md" >> "$GITHUB_STEP_SUMMARY"
+          echo "dry=$(jq -r '.dry_run' "$in/pr-meta.json")" >> "$GITHUB_OUTPUT"
+          echo "issue=$(jq -r '.report_issue' "$in/pr-meta.json")" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gate-report
+          path: ${{ runner.temp }}/gate-report.md
+          retention-days: 90
+      - name: Publish to the "Daily AI development reports" issue (live runs on a PR only)
+        if: env.FOUND == 'true' && steps.report.outputs.dry != 'true' && steps.report.outputs.issue != ''
+        env:
+          N: ${{ steps.report.outputs.issue }}
+        run: gh issue comment "$N" --body-file "$RUNNER_TEMP/gate-report.md"

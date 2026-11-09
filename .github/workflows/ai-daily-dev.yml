@@ -8,7 +8,10 @@
 # Scheduled runs are DRY RUNS (no AI calls) until the repo variable AI_DEV_ENABLED=true.
 #
 # Safety: one run at a time (concurrency), one task per run, budget + call limits in
-# code, guardrails reject protected changes, never merges, never publishes releases.
+# code, guardrails reject protected changes, never publishes releases.
+# Merging: the AI PR goes through ai-pr-gate.yml (checks + ChatGPT review + merge gate).
+# Auto-merge was enabled at the owner's request on 2026-11-10 and only acts when the repo
+# variable AI_AUTO_MERGE is 'true'; set it to 'false' to turn it off.
 name: AI daily development
 
 on:
@@ -107,6 +110,8 @@ jobs:
       head_sha: ${{ steps.pr.outputs.head_sha }}
       pr_number: ${{ steps.pr.outputs.pr_number }}
       pr_url: ${{ steps.pr.outputs.pr_url }}
+      cost_usd: ${{ steps.dev_grok.outputs.cost_usd || steps.dev_claude.outputs.cost_usd }}
+      calls: ${{ steps.dev_grok.outputs.calls || steps.dev_claude.outputs.calls }}
     env:
       ROLE: ${{ needs.plan.outputs.role }}
       BRANCH: ${{ needs.plan.outputs.branch }}
@@ -154,7 +159,7 @@ jobs:
       - id: dev
         if: always()
         run: echo "status=$(jq -r '.status // "failed"' "$RUNNER_TEMP/dev-result.json" 2>/dev/null || echo failed)" >> "$GITHUB_OUTPUT"
-      - name: Commit to the feature branch and open/update the pull request (never merges)
+      - name: Commit to the feature branch and open/update the pull request
         id: pr
         if: steps.dev.outputs.status == 'changed' && env.DRY_RUN != 'true'
         run: |
@@ -200,10 +205,14 @@ jobs:
           path: ${{ runner.temp }}/dev-result.json
           retention-days: 30
 
+  # Without a PR (dry runs, no-change runs) the daily run still checks main / the branch.
+  # With a PR, ai-pr-gate.yml runs the same checks on the PR's test-merge commit instead.
   validate:
     name: Code validation
     needs: [plan, develop]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.duplicate != 'true' && needs.develop.result != 'failure' }}
+    if: >-
+      ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.duplicate != 'true'
+      && needs.develop.result != 'failure' && needs.develop.outputs.pr_number == '' }}
     permissions:
       contents: read
     uses: ./.github/workflows/pr-checks.yml
@@ -215,60 +224,38 @@ jobs:
   android:
     name: Android build test
     needs: [plan, develop]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.duplicate != 'true' && needs.develop.result != 'failure' }}
+    if: >-
+      ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.duplicate != 'true'
+      && needs.develop.result != 'failure' && needs.develop.outputs.pr_number == '' }}
     permissions:
       contents: read
     uses: ./.github/workflows/android-build.yml
     with:
       ref: ${{ needs.develop.outputs.head_sha || github.sha }}
 
-  review:
-    name: ChatGPT code review (OpenAI API)
-    needs: [plan, develop, validate, android]
-    if: ${{ !cancelled() && needs.develop.outputs.pr_number != '' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+  gate:
+    name: PR checks, ChatGPT review and merge gate
+    needs: [plan, develop]
+    if: ${{ !cancelled() && needs.develop.result == 'success' && needs.develop.outputs.pr_number != '' }}
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
-    env:
-      PR: ${{ needs.develop.outputs.pr_number }}
-      GH_TOKEN: ${{ github.token }}
-      CI_RESULTS: 'validation=${{ needs.validate.result }}, android-build=${{ needs.android.result }}'
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.develop.outputs.head_sha }}
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: '{plan,dev-result}'
-          path: ${{ runner.temp }}/in
-          merge-multiple: true
-      - name: Review the diff
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          git fetch --no-tags origin main
-          git diff origin/main...HEAD -- . ':(exclude)www/assets' ':(exclude)www/vendor' > "$RUNNER_TEMP/pr.diff"
-          python3 -m aidev review --plan "$RUNNER_TEMP/in/plan.json" --dev-result "$RUNNER_TEMP/in/dev-result.json" \
-            --diff "$RUNNER_TEMP/pr.diff" --ci-results "$CI_RESULTS" --out "$RUNNER_TEMP/review.json"
-      - name: Post the review as a PR comment (advisory, never approves or merges)
-        if: always()
-        run: |
-          if [[ -f "$RUNNER_TEMP/review.json.md" ]]; then gh pr comment "$PR" --body-file "$RUNNER_TEMP/review.json.md"; fi
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: review
-          path: ${{ runner.temp }}/review.json
-          if-no-files-found: ignore
-          retention-days: 30
+      issues: write
+      statuses: write
+      actions: write
+    uses: ./.github/workflows/ai-pr-gate.yml
+    with:
+      pr: ${{ needs.develop.outputs.pr_number }}
+      dry_run: false
+      extra_spent_usd: ${{ needs.develop.outputs.cost_usd || '0' }}
+      calls_used: ${{ needs.develop.outputs.calls || '0' }}
+      caller: daily
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
   report:
     name: Daily development report
-    needs: [plan, develop, validate, android, review]
+    needs: [plan, develop, validate, android, gate]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -283,8 +270,12 @@ jobs:
       PR_URL: ${{ needs.develop.outputs.pr_url }}
       JOBS: >-
         {"plan": "${{ needs.plan.result }}", "developer": "${{ needs.develop.result }}",
-        "code validation (unit tests, guardrails, JS syntax, actionlint, wrapper)": "${{ needs.validate.result }}",
-        "android build + APK check": "${{ needs.android.result }}", "chatgpt review job": "${{ needs.review.result }}"}
+        "code validation (unit tests, guardrails, JS syntax, actionlint, wrapper)":
+        "${{ needs.gate.outputs.validation || needs.validate.result }}",
+        "android build + APK check": "${{ needs.gate.outputs.android || needs.android.result }}",
+        "chatgpt review job": "${{ needs.gate.outputs.review || 'skipped' }}",
+        "merge-gate guardrail re-check": "${{ needs.gate.outputs.guardrails || 'skipped' }}",
+        "merge gate": "${{ needs.gate.result }}"}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -292,7 +283,7 @@ jobs:
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
-          pattern: '{plan,dev-result,review,apk-verify}'
+          pattern: '{plan,dev-result,review,apk-verify,merge-result}'
           path: ${{ runner.temp }}/in
           merge-multiple: true
       - name: Build the report
@@ -305,8 +296,8 @@ jobs:
             cat "$RUNNER_TEMP/report.md" >> "$GITHUB_STEP_SUMMARY"; exit 1
           fi
           args=()
-          for f in dev-result review apk-verify; do
-            opt="--$f"; [[ "$f" == "apk-verify" ]] && opt="--apk"
+          for f in dev-result review apk-verify merge-result; do
+            opt="--$f"; [[ "$f" == "apk-verify" ]] && opt="--apk"; [[ "$f" == "merge-result" ]] && opt="--merge"
             [[ -f "$in/$f.json" ]] && args+=("$opt" "$in/$f.json")
           done
           set +e
