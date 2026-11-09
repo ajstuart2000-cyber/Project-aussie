@@ -5162,6 +5162,13 @@ let tipTimer=0; function showTips(ms=7000){ document.body.classList.add('tipson'
 function openMenu(){ setMenuTab(menuTab); menuOpen=true; $('menu').hidden=false; $('menuTitle').textContent=state==='drive'?'Paused':'Settings'; $('resume').textContent=state==='drive'?'Resume':'Close';
   document.querySelectorAll('#menu .drive-only').forEach(e=>e.hidden=state!=='drive'); for(const k in touch) touch[k]=0; refreshSegs(); }
 function closeMenu(){ menuOpen=false; $('menu').hidden=true; last=performance.now(); }
+// Android Back button hook (called from MainActivity): returns true if the game handled it, false to let the app exit
+window.__paBack=function(){ if(state!=='drive') return false;
+  if(photo){ exitPhoto(); return true; }
+  if(editing){ $('ebDone').onclick(); return true; }
+  if(!$('tuneSheet').hidden){ $('tuneDone').onclick(); return true; }
+  if(menuOpen) closeMenu(); else openMenu();
+  return true; };
 let photo=null; const phPtr=new Map();
 function enterPhoto(){ if(state!=='drive') return; closeMenu(); photo={prev:camMode, yaw:car.h+2.4, pitch:.16, dist:6.5, fov:50, pinch:0}; camMode=9; document.body.classList.add('photo'); $('photobar').hidden=false; $('pFov').value=50; }
 function exitPhoto(){ if(!photo) return; camMode=photo.prev; photo=null; phPtr.clear(); document.body.classList.remove('photo'); $('photobar').hidden=true; camInit=false; last=performance.now(); }

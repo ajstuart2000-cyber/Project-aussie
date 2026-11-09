@@ -10,6 +10,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebViewAssetLoader;
 
@@ -59,6 +60,24 @@ public class MainActivity extends AppCompatActivity {
         });
 
         webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
+
+        // Back pauses/resumes a drive via the game's JS hook; anything else (garage, hook missing) exits as before
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (webView == null) {
+                    finish();
+                    return;
+                }
+                webView.evaluateJavascript(
+                        "(function(){try{return typeof window.__paBack==='function'&&window.__paBack()===true;}catch(e){return false;}})()",
+                        value -> {
+                            if (!"true".equals(value)) {
+                                finish();
+                            }
+                        });
+            }
+        });
     }
 
     /**
