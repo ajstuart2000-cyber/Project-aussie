@@ -170,7 +170,8 @@ jobs:
             commit -m "AI ($ROLE via $model): issue #$ISSUE" -m "$(jq -r '.summary' "$RUNNER_TEMP/dev-result.json")"
           git push origin "HEAD:refs/heads/$BRANCH"
           echo "head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          python3 -m aidev prbody --plan "$RUNNER_TEMP/plan/plan.json" --dev-result "$RUNNER_TEMP/dev-result.json" --out "$RUNNER_TEMP/pr-body.md" > "$RUNNER_TEMP/prbody.out"
+          python3 -m aidev prbody --plan "$RUNNER_TEMP/plan/plan.json" --dev-result "$RUNNER_TEMP/dev-result.json" \
+            --out "$RUNNER_TEMP/pr-body.md" > "$RUNNER_TEMP/prbody.out"
           title=$(sed -n 's/^title=//p' "$RUNNER_TEMP/prbody.out")
           labels="ai-generated,ai:$ROLE"
           if [[ "$AUDIO_APPROVED" == "true" ]]; then labels="$labels,audio-approved"; fi
