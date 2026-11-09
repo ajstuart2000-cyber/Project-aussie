@@ -182,12 +182,23 @@ def cmd_prmeta(a, cfg):
             events = gh_api.get(f'/repos/{rp}/issues/{info["issue"]}/events', token, 'per_page=100')
         head = pr['head']['sha']
         check_ref, tested_base = head, ''
-        msha = pr.get('merge_commit_sha')
-        if pr.get('mergeable') is True and msha:
-            mc = gh_api.get(f'/repos/{rp}/commits/{msha}', token)
-            parents = [x['sha'] for x in mc.get('parents', [])]
-            if len(parents) == 2 and parents[1] == head:
-                check_ref, tested_base = msha, parents[0]
+        main_sha = gh_api.get(f'/repos/{rp}/branches/{cfg["auto_merge"]["base"]}', token)['commit']['sha']
+        for attempt in range(12):
+            # GitHub recomputes the test-merge commit lazily after main moves; wait for a fresh one.
+            msha = pr.get('merge_commit_sha')
+            if pr.get('mergeable') is True and msha:
+                mc = gh_api.get(f'/repos/{rp}/commits/{msha}', token)
+                parents = [x['sha'] for x in mc.get('parents', [])]
+                if len(parents) == 2 and parents[1] == head:
+                    check_ref, tested_base = msha, parents[0]
+                    if tested_base == main_sha:
+                        break
+            elif pr.get('mergeable') is False:
+                break
+            time.sleep(5)
+            pr = _get_pr_settled(gh_api, rp, num, token)
+            head = pr['head']['sha']
+            check_ref, tested_base = head, ''
         meta.update(found=True, number=num, title=pr.get('title', ''), body=pr.get('body') or '', branch=pr['head']['ref'],
                     head_sha=head, check_ref=check_ref, tested_base=tested_base, role=info['role'], issue=info['issue'],
                     guard_labels=MG.guard_labels(info['role'], issue, events, cfg),

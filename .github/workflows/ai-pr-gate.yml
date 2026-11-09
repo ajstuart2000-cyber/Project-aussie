@@ -195,9 +195,15 @@ jobs:
       GH_REPO: ${{ github.repository }}
       CI_RESULTS: 'validation=${{ needs.validate.result }}, android-build=${{ needs.android.result }}'
     steps:
+      # Trusted automation code comes from this workflow's own commit (main); the PR's
+      # test-merge commit is checked out separately into pr/ and only read.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.meta.outputs.check_ref }}
+          path: pr
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/download-artifact@v4
@@ -209,8 +215,8 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           FORCE: ${{ inputs.force_review }}
         run: |
-          git fetch --no-tags origin main
-          git diff origin/main...HEAD -- . ':(exclude)www/assets' ':(exclude)www/vendor' > "$RUNNER_TEMP/pr.diff"
+          git -C pr fetch --no-tags origin main
+          git -C pr diff origin/main...HEAD -- . ':(exclude)www/assets' ':(exclude)www/vendor' > "$RUNNER_TEMP/pr.diff"
           args=()
           [[ "$FORCE" == "true" ]] && args+=(--force)
           python3 -m aidev review --pr-meta "$RUNNER_TEMP/in/pr-meta.json" --diff "$RUNNER_TEMP/pr.diff" \
@@ -257,9 +263,14 @@ jobs:
       VALIDATION: ${{ needs.validate.result }}
       ANDROID: ${{ needs.android.result }}
     steps:
+      # Trusted gate code from this workflow's commit; the tested commit goes into pr/ (read only).
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.meta.outputs.check_ref }}
+          path: pr
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/download-artifact@v4
@@ -268,12 +279,14 @@ jobs:
           pattern: '{pr-meta,review,apk-verify}'
           path: ${{ runner.temp }}/in
           merge-multiple: true
-      - name: Re-run the protected-area check on the tested commit
+      - name: Re-run the protected-area check on the tested commit (with main's guardrail code)
         id: guard
         continue-on-error: true
         run: |
+          cd pr
           git fetch --no-tags origin main
-          python3 -m aidev guard --base origin/main --head HEAD --branch "$BRANCH" --labels "$GUARD_LABELS" --summary "$GITHUB_STEP_SUMMARY"
+          PYTHONPATH="$GITHUB_WORKSPACE/automation" python3 -m aidev guard --base origin/main --head HEAD \
+            --branch "$BRANCH" --labels "$GUARD_LABELS" --summary "$GITHUB_STEP_SUMMARY"
       - name: Decide (every gate must pass; anything missing or unclear means no merge)
         id: gate
         env:
