@@ -44,12 +44,12 @@ def cmd_plan(a, cfg):
         events = {}
         for it in items:
             names = tasks.label_names(it)
-            if 'pull_request' not in it and cfg['labels']['approved'] in names:
+            if it.get('pull_request') is None and cfg['labels']['approved'] in names:
                 events[it['number']] = gh_api.get(f'/repos/{rp}/issues/{it["number"]}/events', token, 'per_page=100')
-        rep = next((i for i in items if cfg['labels']['report'] in tasks.label_names(i) and 'pull_request' not in i), None)
+        rep = next((i for i in items if cfg['labels']['report'] in tasks.label_names(i) and i.get('pull_request') is None), None)
         comments = [c['body'] for c in gh_api.get(f'/repos/{rp}/issues/{rep["number"]}/comments', token, 'per_page=100')] if rep else []
-    issues = [i for i in items if 'pull_request' not in i and cfg['labels']['report'] not in tasks.label_names(i)]
-    rep_issue = next((i['number'] for i in items if cfg['labels']['report'] in tasks.label_names(i) and 'pull_request' not in i), '')
+    issues = [i for i in items if i.get('pull_request') is None and cfg['labels']['report'] not in tasks.label_names(i)]
+    rep_issue = next((i['number'] for i in items if cfg['labels']['report'] in tasks.label_names(i) and i.get('pull_request') is None), '')
     ran, spent = B.today_status(comments, date)
     plan = {'date': date, 'event': event, 'dry_run': dry, 'note': note, 'report_issue': rep_issue,
             'open_issues': len(issues), 'approved_issues': sum(cfg['labels']['approved'] in tasks.label_names(i) for i in issues),

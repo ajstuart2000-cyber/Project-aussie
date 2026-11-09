@@ -6,7 +6,8 @@ SCRIPT_RE = re.compile(r'<script(?P<attrs>[^>]*)>(?P<body>.*?)</script>', re.S |
 
 def check_html(path):
     """Return (ok, results). Each result: {index, type, lines, ok, error}."""
-    src = open(path, encoding='utf-8').read()
+    with open(path, encoding='utf-8') as fh:
+        src = fh.read()
     results = []
     for i, m in enumerate(SCRIPT_RE.finditer(src)):
         attrs = m.group('attrs')
