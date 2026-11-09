@@ -13,7 +13,8 @@
     "report": "ai-report",
     "blocked": ["ai-blocked", "ai-done", "wontfix", "duplicate", "invalid"],
     "audio_topic": ["audio", "sound"],
-    "priority_prefix": "priority:"
+    "priority_prefix": "priority:",
+    "merge_block": ["ai-revise", "ai-blocked", "do-not-merge", "wontfix"]
   },
   "roles": {
     "grok": {
@@ -71,6 +72,21 @@
     "max_review_diff_chars": 60000,
     "max_changed_lines": 400,
     "request_timeout_s": 600
+  },
+  "auto_merge": {
+    "_comment": "Auto-merge of AI pull requests was enabled at the owner's request (ajstuart2000-cyber) on 2026-11-10. It only acts when the repository variable AI_AUTO_MERGE is exactly \"true\". Set AI_AUTO_MERGE to false (or delete it) to turn it off; AI PRs then wait for the owner again. Every gate below is enforced in automation/aidev/mergegate.py.",
+    "enabled_var": "AI_AUTO_MERGE",
+    "enabled_by_owner_on": "2026-11-10",
+    "base": "main",
+    "merge_method": "squash",
+    "required_label": "ai-generated",
+    "branch_prefix": "ai/",
+    "allowed_authors": ["github-actions[bot]"],
+    "commit_author_prefix": "project-aussie-ai-",
+    "commit_email": "41898282+github-actions[bot]@users.noreply.github.com",
+    "required_checks": ["validation", "android", "guardrails"],
+    "reviewer_endpoint_host": "api.openai.com",
+    "max_pr_commits": 20
   },
   "protect": {
     "package_id": "com.barrarun.game",

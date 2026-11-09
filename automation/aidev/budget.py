@@ -19,12 +19,13 @@ def parse_markers(comment_bodies):
 
 
 def today_status(comment_bodies, date):
-    """(already_ran_live_today, spent_usd_today) from report markers."""
+    """(already_ran_live_today, spent_usd_today) from report markers (all kinds count toward spend)."""
     ran, spent = False, 0.0
     for mk in parse_markers(comment_bodies):
         if mk.get('date') != date or mk.get('mode') == 'dry-run':
             continue
-        ran = True
+        if mk.get('kind', 'daily') == 'daily':
+            ran = True   # merge-gate runs (kind=gate) count toward spend, not as the day's development run
         try:
             spent += float(mk.get('cost_usd', '0'))
         except ValueError:
