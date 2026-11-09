@@ -68,6 +68,12 @@ class DevelopTests(unittest.TestCase):
         self.assertEqual(res['status'], 'rejected')
         self.assertIn('audio_frozen', res['error'])
 
+    def test_unverified_audio_label_does_not_unlock_audio(self):
+        t = task('claude', ['ai-approved', 'ai:claude', 'audio', 'audio-approved'], False, 'Siren fade')
+        res = self.run_dev(t, answer([{'path': 'www/index.html', 'search': SET_ENGINE, 'replace': 'function setEngineSound(/*x*/)'}],
+                                     ('claude-sonnet-5-5', 'anthropic')), {'ANTHROPIC_API_KEY': 'k'})
+        self.assertEqual(res['status'], 'rejected')
+
     def test_missing_key_skips_without_any_call_or_fallback(self):
         res = self.run_dev(task(), answer([]), {'ANTHROPIC_API_KEY': 'k', 'OPENAI_API_KEY': 'k'})
         self.assertEqual(res['status'], 'skipped')

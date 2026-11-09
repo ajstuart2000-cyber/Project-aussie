@@ -97,7 +97,9 @@ def evaluate(issue, events, open_prs, cfg):
         else:
             return False, {**info, 'role': role, 'audio': audio,
                            'reason': f'AI PR #{pr["number"]} is waiting for owner review (add `{L["revise"]}` to request changes)'}
-    return True, {**info, 'role': role, 'audio': audio, 'audio_approved': audio and L['audio_approved'] in labels,
+    audio_ok = (L['audio_approved'] in labels and last_labeler(events, L['audio_approved']) == owner
+                and bool(cfg['roles'][role].get('may_touch_audio')))
+    return True, {**info, 'role': role, 'audio': audio, 'audio_approved': audio_ok,
                   'priority': priority_of(labels, cfg), 'created_at': issue.get('created_at', ''),
                   'mode': mode, 'branch': branch, 'pr_number': pr['number'] if pr else None,
                   'body': issue.get('body') or '', 'reason': 'eligible'}

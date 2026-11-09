@@ -226,7 +226,9 @@ def run(task, cfg, spent_today=0.0, dry_run=False, root='.', feedback='', transp
         res.update(status='rejected', error=f'patch could not be applied: {e}')
         return res
     changes = G.parse_unified_diff(repo.diff('HEAD', cwd=root))
-    ctx = G.Context(mode='ai', role=task['role'], labels=frozenset(task['labels']), branch=task['branch'])
+    # audio-approved only counts when the plan verified the owner applied it
+    labels = {l for l in task['labels'] if l != cfg['labels']['audio_approved'] or task.get('audio_approved')}
+    ctx = G.Context(mode='ai', role=task['role'], labels=frozenset(labels), branch=task['branch'])
     viol = G.check(changes, lambda p: repo.show('HEAD', p, root), lambda p: repo.read_worktree(p, root), cfg, ctx)
     res['violations'] = viol
     if INDEX in res['changed_files']:

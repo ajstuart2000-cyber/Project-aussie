@@ -71,6 +71,11 @@ class TaskSelectionTests(unittest.TestCase):
         chosen, cons = self.sel([i], {10: ev(('ai-approved', OWNER), ('audio-approved', 'mallory'))})
         self.assertIsNone(chosen)
 
+    def test_grok_never_gets_audio_approved_flag(self):
+        i = issue(18, ['ai-approved', 'ai:grok', 'audio-approved'], 'Faster drag tree')
+        chosen, _ = self.sel([i], {18: ev(('ai-approved', OWNER), ('audio-approved', OWNER))})
+        self.assertFalse(chosen['audio_approved'])
+
     def test_priority_then_age(self):
         a = issue(11, ['ai-approved', 'ai:grok', 'priority:P2'], 'A', created='2026-01-01T00:00:00Z')
         b = issue(12, ['ai-approved', 'ai:claude', 'priority:P1'], 'B', created='2026-06-01T00:00:00Z')
