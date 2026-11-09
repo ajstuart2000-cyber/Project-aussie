@@ -1,0 +1,9 @@
+_extract/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.apk
+*.keystore
+www/index.*.bak.html
+android/app/src/main/assets/

@@ -1,0 +1,1248 @@
+{
+"CGC_Evoke": {
+"name": "CGC_Evoke",
+"color": [
+0.587610006,
+0.587610006,
+0.587610006
+],
+"metal": 1,
+"rough": 0.510999978,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_R8Clubby_Ali": {
+"name": "CGC_R8Clubby_Ali",
+"color": [
+0.719345987,
+0.715225995,
+0.715225995
+],
+"metal": 1,
+"rough": 0.201000005,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_R8Clubby_Black": {
+"name": "CGC_R8Clubby_Black",
+"color": [
+0.238224,
+0.238224,
+0.238224
+],
+"metal": 1,
+"rough": 0.301999986,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_R8Clubby_Cap": {
+"name": "CGC_R8Clubby_Cap",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0.504999995,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_R8Clubby_Cap.jpg",
+"alpha": false
+},
+"CGC_R8Clubby_Lugs": {
+"name": "CGC_R8Clubby_Lugs",
+"color": [
+0.800000012,
+0.800000012,
+0.800000012
+],
+"metal": 1,
+"rough": 0.104000002,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_Rapier": {
+"name": "CGC_Rapier",
+"color": [
+0.335593998,
+0.335593998,
+0.335593998
+],
+"metal": 1,
+"rough": 0.433999985,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_Senysigs_Brushed": {
+"name": "CGC_Senysigs_Brushed",
+"color": [
+0.719345987,
+0.698745012,
+0.698745012
+],
+"metal": 1,
+"rough": 0.330000013,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_Stockies": {
+"name": "CGC_Stockies",
+"color": [
+0.48865509,
+0.48865509,
+0.48865509
+],
+"metal": 1,
+"rough": 0.50999999,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_VF_BlackGlass": {
+"name": "CGC_VF_BlackGlass",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"CGC_VF_Carbon": {
+"name": "CGC_VF_Carbon",
+"color": [
+1,
+1,
+1
+],
+"metal": 0.504000008,
+"rough": 0.504000008,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_Carbon.jpg",
+"alpha": false
+},
+"CGC_VF_Chrome": {
+"name": "CGC_VF_Chrome",
+"color": [
+0.800000012,
+0.800000012,
+0.800000012
+],
+"metal": 1,
+"rough": 0.0520000011,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_VF_Cloth": {
+"name": "CGC_VF_Cloth",
+"color": [
+0.243952006,
+0.243952006,
+0.243952006
+],
+"metal": 1,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_VF_Deforst": {
+"name": "CGC_VF_Deforst",
+"color": [
+0.36996001,
+0.177995995,
+0
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": true,
+"cutout": true
+},
+"CGC_VF_DigiGauge": {
+"name": "CGC_VF_DigiGauge",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_DigiGauge.jpg",
+"alpha": false
+},
+"CGC_VF_Exterior_Black": {
+"name": "CGC_VF_Exterior_Black",
+"color": [
+0.238224,
+0.238224,
+0.238224
+],
+"metal": 0.5,
+"rough": 0.5,
+"cc": 0.509000003,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_VF_Gauges": {
+"name": "CGC_VF_Gauges",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_Gauges.jpg",
+"alpha": false
+},
+"CGC_VF_Glass": {
+"name": "CGC_VF_Glass",
+"color": [
+0.324138999,
+0.324138999,
+0.324138999
+],
+"metal": 1,
+"rough": 0.503000021,
+"cc": 1,
+"opacity": 0.5,
+"trans": true,
+"double": false
+},
+"CGC_VF_Glass_Red": {
+"name": "CGC_VF_Glass_Red",
+"color": [
+1,
+0.00143499998,
+0
+],
+"metal": 1,
+"rough": 0.5,
+"cc": 1,
+"opacity": 0.800999999,
+"trans": true,
+"double": false
+},
+"CGC_VF_Grill16": {
+"name": "CGC_VF_Grill16",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_Grill16.png",
+"alpha": true
+},
+"CGC_VF_GrillSpeaker": {
+"name": "CGC_VF_GrillSpeaker",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0.5,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_GrillSpeaker.png",
+"alpha": true
+},
+"CGC_VF_INT_Trim": {
+"name": "CGC_VF_INT_Trim",
+"color": [
+0.828171015,
+0.828171015,
+0.828171015
+],
+"metal": 1,
+"rough": 0.208000004,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_VF_Int_Symbols": {
+"name": "CGC_VF_Int_Symbols",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 1,
+"opacity": 1,
+"trans": true,
+"double": false,
+"map": "tex/CGC_VF_Int_Symbols.png",
+"alpha": true
+},
+"CGC_VF_Interior_Plastic": {
+"name": "CGC_VF_Interior_Plastic",
+"color": [
+0.238224,
+0.238224,
+0.238224
+],
+"metal": 0.779999971,
+"rough": 0.509000003,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_VF_Keyhole": {
+"name": "CGC_VF_Keyhole",
+"color": [
+0.455873996,
+0.455873996,
+0.455873996
+],
+"metal": 1,
+"rough": 0.505999982,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_Keyhole.jpg",
+"alpha": false
+},
+"CGC_VF_Leathe02": {
+"name": "CGC_VF_Leathe02",
+"color": [
+0.324138999,
+0.324138999,
+0.324138999
+],
+"metal": 1,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_VF_Leather2": {
+"name": "CGC_VF_Leather2",
+"color": [
+0.719345987,
+0.719345987,
+0.719345987
+],
+"metal": 0.741999984,
+"rough": 0.5,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_Leather2.jpg",
+"alpha": false
+},
+"CGC_VF_Leather2Perf": {
+"name": "CGC_VF_Leather2Perf",
+"color": [
+0.85680902,
+0.85680902,
+0.85680902
+],
+"metal": 1,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_Leather2Perf.jpg",
+"alpha": false
+},
+"CGC_VF_Leather3": {
+"name": "CGC_VF_Leather3",
+"color": [
+1,
+1,
+1
+],
+"metal": 0.686999977,
+"rough": 0.5,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_Leather3.jpg",
+"alpha": false
+},
+"CGC_VF_LeatherDark": {
+"name": "CGC_VF_LeatherDark",
+"color": [
+0.684979975,
+0.684979975,
+0.684979975
+],
+"metal": 1,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_LeatherDark.jpg",
+"alpha": false
+},
+"CGC_VF_Paint1": {
+"name": "CGC_VF_Paint1",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0.5,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false,
+"kind": "paint"
+},
+"CGC_VF_Plastic_Detail": {
+"name": "CGC_VF_Plastic_Detail",
+"color": [
+0.180948004,
+0.180948004,
+0.180948004
+],
+"metal": 0.792999983,
+"rough": 0.505999982,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"CGC_VF_Red": {
+"name": "CGC_VF_Red",
+"color": [
+1,
+0,
+0
+],
+"metal": 1,
+"rough": 0.500999987,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_VF_RoofPanel": {
+"name": "CGC_VF_RoofPanel",
+"color": [
+0.800000012,
+0.800000012,
+0.800000012
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_VF_RubberTrim": {
+"name": "CGC_VF_RubberTrim",
+"color": [
+0.461602002,
+0.461602002,
+0.461602002
+],
+"metal": 1,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_VF_Rug_004": {
+"name": "CGC_VF_Rug_004",
+"color": [
+0.79953301,
+0.79953301,
+0.79953301
+],
+"metal": 1,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_Rug_004.jpg",
+"alpha": false
+},
+"CGC_VF_Shifter": {
+"name": "CGC_VF_Shifter",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": false,
+"cutout": true
+},
+"CGC_VF_Stich3": {
+"name": "CGC_VF_Stich3",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": false,
+"map": "tex/CGC_VF_Stich3.png",
+"alpha": true
+},
+"CGC_VF_Stitch01": {
+"name": "CGC_VF_Stitch01",
+"color": [
+0.278317004,
+0.278317004,
+0.278317004
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": false,
+"cutout": true
+},
+"CGC_VF_Stitch5": {
+"name": "CGC_VF_Stitch5",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": false,
+"map": "tex/CGC_VF_Stitch5.png",
+"alpha": true
+},
+"CGC_VF_Symbols_Embossed": {
+"name": "CGC_VF_Symbols_Embossed",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_VF_Symbols_Embossed.png",
+"alpha": true
+},
+"CGC_VF_Trim": {
+"kind": "unknown"
+},
+"CGC_VF_Windows": {
+"name": "CGC_VF_Windows",
+"color": [
+0,
+0,
+0
+],
+"metal": 1,
+"rough": 0.499000013,
+"cc": 1,
+"opacity": 0.601000011,
+"trans": true,
+"double": false
+},
+"CGC_VF_Windsheild": {
+"name": "CGC_VF_Windsheild",
+"color": [
+0,
+0,
+0
+],
+"metal": 1,
+"rough": 0.504999995,
+"cc": 1,
+"opacity": 0.47299999,
+"trans": true,
+"double": false
+},
+"CGC_VF_Yellow": {
+"name": "CGC_VF_Yellow",
+"color": [
+1,
+0.962243021,
+0
+],
+"metal": 1,
+"rough": 0.505999982,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_VF_int_doortags": {
+"name": "CGC_VF_int_doortags",
+"color": [
+1,
+1,
+1
+],
+"metal": 0.822000027,
+"rough": 0.351999998,
+"cc": 1,
+"opacity": 1,
+"trans": true,
+"double": false,
+"map": "tex/CGC_VF_int_doortags.png",
+"alpha": true
+},
+"CGC_W1_Black": {
+"name": "CGC_W1_Black",
+"color": [
+0.306955993,
+0.299923003,
+0.299923003
+],
+"metal": 1,
+"rough": 0.603999972,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_W1_Red": {
+"name": "CGC_W1_Red",
+"color": [
+0.639159024,
+0,
+0.00260800007
+],
+"metal": 1,
+"rough": 0.501999974,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_belts": {
+"name": "CGC_belts",
+"color": [
+1,
+1,
+1
+],
+"metal": 0.501999974,
+"rough": 0.500999987,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_belts.jpg",
+"alpha": false
+},
+"CGC_ls1_int": {
+"name": "CGC_ls1_int",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0.500999987,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_ls1_int.jpg",
+"alpha": false
+},
+"CGC_ls1_set1_stock": {
+"name": "CGC_ls1_set1_stock",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0.507000029,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_ls1_set1_stock.jpg",
+"alpha": false
+},
+"CGC_ls1_set2_stock": {
+"name": "CGC_ls1_set2_stock",
+"color": [
+1,
+1,
+1
+],
+"metal": 0.505999982,
+"rough": 0.504000008,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "tex/CGC_ls1_set2_stock.jpg",
+"alpha": false
+},
+"JSD_Camoz_vf_commodore_LED_brakeglass": {
+"name": "JSD_Camoz_vf_commodore_LED_brakeglass",
+"color": [
+0.805891991,
+0,
+0
+],
+"metal": 0.629999995,
+"rough": 0.25999999,
+"cc": 0,
+"opacity": 0.398999989,
+"trans": true,
+"double": false,
+"light": "brake"
+},
+"JSD_Camoz_vf_commodore_LED_brakelight": {
+"name": "JSD_Camoz_vf_commodore_LED_brakelight",
+"color": [
+1,
+0.911617994,
+0.406477004
+],
+"metal": 0,
+"rough": 0.275000006,
+"cc": 0,
+"opacity": 0.699999988,
+"trans": true,
+"double": false,
+"light": "brake"
+},
+"JSD_Camoz_vf_commodore_black_m": {
+"name": "JSD_Camoz_vf_commodore_black_m",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0.625999987,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"JSD_Camoz_vf_commodore_brakeglass_inner": {
+"name": "JSD_Camoz_vf_commodore_brakeglass_inner",
+"color": [
+1,
+0.488599986,
+0.488599986
+],
+"metal": 0.595000029,
+"rough": 0.180000007,
+"cc": 0,
+"opacity": 0.848999977,
+"trans": true,
+"double": false,
+"light": "brake",
+"map": "tex/JSD_Camoz_vf_commodore_brakeglass_inner.jpg",
+"alpha": false
+},
+"JSD_Camoz_vf_commodore_brakelight": {
+"name": "JSD_Camoz_vf_commodore_brakelight",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0.0989999995,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": true,
+"light": "brake"
+},
+"JSD_Camoz_vf_commodore_brakelight_trunk": {
+"name": "JSD_Camoz_vf_commodore_brakelight_trunk",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": false,
+"light": "brake"
+},
+"JSD_Camoz_vf_commodore_chrome": {
+"name": "JSD_Camoz_vf_commodore_chrome",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": false
+},
+"JSD_Camoz_vf_commodore_glass": {
+"name": "JSD_Camoz_vf_commodore_glass",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.300000012,
+"trans": true,
+"double": false,
+"cutout": true
+},
+"JSD_Camoz_vf_commodore_glass_dark": {
+"name": "JSD_Camoz_vf_commodore_glass_dark",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.816999972,
+"trans": true,
+"double": false
+},
+"JSD_Camoz_vf_commodore_headglass": {
+"name": "JSD_Camoz_vf_commodore_headglass",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0.300000012,
+"trans": true,
+"double": false
+},
+"JSD_Camoz_vf_commodore_headlight_black": {
+"name": "JSD_Camoz_vf_commodore_headlight_black",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0.225999987,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"JSD_Camoz_vf_commodore_headlight_chrome_emis": {
+"name": "JSD_Camoz_vf_commodore_headlight_chrome_emis",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": false,
+"light": "drl"
+},
+"JSD_Camoz_vf_commodore_high": {
+"name": "JSD_Camoz_vf_commodore_high",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": false,
+"light": "drl"
+},
+"JSD_Camoz_vf_commodore_low": {
+"name": "JSD_Camoz_vf_commodore_low",
+"color": [
+0,
+0,
+0
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": false,
+"light": "drl"
+},
+"JSD_Camoz_vf_commodore_reverse_trunk": {
+"name": "JSD_Camoz_vf_commodore_reverse_trunk",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": false,
+"light": "reverse"
+},
+"JSD_Camoz_vf_commodore_runninglight": {
+"name": "JSD_Camoz_vf_commodore_runninglight",
+"color": [
+0.800000012,
+0.800000012,
+0.800000012
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false,
+"light": "drl"
+},
+"JSD_Camoz_vf_commodore_runninglight_LED": {
+"name": "JSD_Camoz_vf_commodore_runninglight_LED",
+"color": [
+1,
+0.911617994,
+0.406477004
+],
+"metal": 0,
+"rough": 0.275000006,
+"cc": 0,
+"opacity": 0.699999988,
+"trans": true,
+"double": false,
+"light": "drl"
+},
+"JSD_Camoz_vf_commodore_runninglight_head": {
+"name": "JSD_Camoz_vf_commodore_runninglight_head",
+"color": [
+0.667777002,
+0.667777002,
+0.667777002
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": false,
+"light": "drl",
+"cutout": true
+},
+"JSD_Camoz_vf_commodore_screen_dr": {
+"name": "JSD_Camoz_vf_commodore_screen_dr",
+"color": [
+0.800000012,
+0.800000012,
+0.800000012
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"JSD_Camoz_vf_commodore_sig_RR": {
+"name": "JSD_Camoz_vf_commodore_sig_RR",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": true
+},
+"JSD_Camoz_vf_commodore_sig_glass_inner": {
+"name": "JSD_Camoz_vf_commodore_sig_glass_inner",
+"color": [
+0.705105007,
+0,
+0
+],
+"metal": 0.785000026,
+"rough": 0.180000007,
+"cc": 0,
+"opacity": 0.848999977,
+"trans": true,
+"double": false
+},
+"JSD_Camoz_vf_commodore_signal_L": {
+"name": "JSD_Camoz_vf_commodore_signal_L",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": false,
+"light": "signal"
+},
+"JSD_Camoz_vf_commodore_signal_L_rev": {
+"name": "JSD_Camoz_vf_commodore_signal_L_rev",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": false,
+"light": "reverse"
+},
+"JSD_Camoz_vf_commodore_signal_R": {
+"name": "JSD_Camoz_vf_commodore_signal_R",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": false,
+"light": "signal"
+},
+"JSD_Camoz_vf_commodore_signal_R_rev": {
+"name": "JSD_Camoz_vf_commodore_signal_R_rev",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": false,
+"light": "reverse"
+},
+"JSD_Camoz_vf_commodore_signalglass_L": {
+"name": "JSD_Camoz_vf_commodore_signalglass_L",
+"color": [
+0.667777002,
+0.667777002,
+0.667777002
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0.660000026,
+"trans": true,
+"double": false,
+"light": "signal"
+},
+"JSD_Camoz_vf_commodore_signalglass_R": {
+"name": "JSD_Camoz_vf_commodore_signalglass_R",
+"color": [
+0.667777002,
+0.667777002,
+0.667777002
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0.660000026,
+"trans": true,
+"double": false,
+"light": "signal"
+},
+"JSD_Camoz_vf_commodore_taillights_2nd": {
+"name": "JSD_Camoz_vf_commodore_taillights_2nd",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0.625,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": true
+},
+"JSD_Camoz_vf_commodore_trunk_LED": {
+"name": "JSD_Camoz_vf_commodore_trunk_LED",
+"color": [
+1,
+0.909803987,
+0.407842994
+],
+"metal": 0,
+"rough": 0.273999989,
+"cc": 0,
+"opacity": 0.700999975,
+"trans": true,
+"double": false,
+"light": "drl"
+},
+"JSD_Camoz_vf_commodore_trunk_LED_brake": {
+"name": "JSD_Camoz_vf_commodore_trunk_LED_brake",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0.625999987,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "brake"
+},
+"JSD_Camoz_vf_commodore_trunk_LED_brakeglass": {
+"name": "JSD_Camoz_vf_commodore_trunk_LED_brakeglass",
+"color": [
+1,
+0,
+0
+],
+"metal": 0.629999995,
+"rough": 0.25999999,
+"cc": 0,
+"opacity": 0.398999989,
+"trans": true,
+"double": false,
+"light": "brake"
+},
+"JSD_Camoz_vf_commodore_trunk_LED_reverse": {
+"name": "JSD_Camoz_vf_commodore_trunk_LED_reverse",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0.0989999995,
+"cc": 0,
+"opacity": 0,
+"trans": false,
+"double": true,
+"light": "reverse"
+},
+"Vehiclelights": {
+"name": "Vehiclelights",
+"color": [
+0.800000012,
+0.800000012,
+0.800000012
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"mirror_CE": {
+"kind": "unknown"
+},
+"mirror_CX": {
+"kind": "unknown"
+},
+"mirror_F": {
+"kind": "unknown"
+}
+}

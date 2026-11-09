@@ -1,0 +1,2016 @@
+{
+"material_0_m_carpaint_4c6eb": {
+"name": "material_0_m_carpaint_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 1,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/stamp.png",
+"kind": "paint"
+},
+"material_1_mi_carwindows_transparent_4c6eb": {
+"name": "material_1_mi_carwindows_transparent_4c6eb",
+"color": [
+0.05,
+0.07,
+0.07
+],
+"metal": 1,
+"rough": 0.02,
+"cc": 0,
+"opacity": 0.5,
+"trans": true,
+"double": false,
+"alphaMap": "vs/tex/stamp.png"
+},
+"material_2_mp_plastic_inst_4c6eb": {
+"name": "material_2_mp_plastic_inst_4c6eb",
+"color": [
+0.054902,
+0.054902,
+0.054902
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/stamp.png"
+},
+"material_3_mp_plastic_inst_4c6eb": {
+"name": "material_3_mp_plastic_inst_4c6eb",
+"color": [
+0.0509804,
+0.0509804,
+0.0509804
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/stamp.png"
+},
+"material_23_fixturemat_blackplastic_002_4c6eb": {
+"name": "material_23_fixturemat_blackplastic_002_4c6eb",
+"color": [
+0.239216,
+0.239216,
+0.239216
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_24_m_numberplate_inst3_4c6eb": {
+"name": "material_24_m_numberplate_inst3_4c6eb",
+"color": [
+0.9,
+0.9,
+0.86
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_25_fixtureopaque_chrome_003_4c6eb": {
+"name": "material_25_fixtureopaque_chrome_003_4c6eb",
+"color": [
+0.85,
+0.86,
+0.88
+],
+"metal": 1,
+"rough": 0.08,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_22_mi_plastic_matte_black_4c6eb": {
+"name": "material_22_mi_plastic_matte_black_4c6eb",
+"color": [
+0.0627451,
+0.0627451,
+0.0627451
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_26_chromefixture_4c6eb": {
+"name": "material_26_chromefixture_4c6eb",
+"color": [
+0.85,
+0.86,
+0.88
+],
+"metal": 1,
+"rough": 0.08,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_27_fixturebulb_light_003_4c6eb_F": {
+"name": "material_27_fixturebulb_light_003_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_28_m_carpaint_4c6eb": {
+"name": "material_28_m_carpaint_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 1,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true,
+"kind": "paint"
+},
+"material_29_fixtureglass_indicatorlight_001_4c6eb_F": {
+"name": "material_29_fixtureglass_indicatorlight_001_4c6eb_F",
+"color": [
+0.913725,
+0.490196,
+0.14902
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.94902,
+"trans": true,
+"double": false,
+"light": "signal"
+},
+"material_30_fixturebulb_light_003_4c6eb_F": {
+"name": "material_30_fixturebulb_light_003_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_31_fixtureglass_indicatorlight_001_4c6eb_F": {
+"name": "material_31_fixtureglass_indicatorlight_001_4c6eb_F",
+"color": [
+0.913725,
+0.490196,
+0.14902
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.94902,
+"trans": true,
+"double": false,
+"light": "signal"
+},
+"material_32_m_blackplastic_4c6eb": {
+"name": "material_32_m_blackplastic_4c6eb",
+"color": [
+0.0627451,
+0.0627451,
+0.0627451
+],
+"metal": 0,
+"rough": 0.281651,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_33_fixtureopaque_chrome_001_4c6eb": {
+"name": "material_33_fixtureopaque_chrome_001_4c6eb",
+"color": [
+0.85,
+0.86,
+0.88
+],
+"metal": 1,
+"rough": 0.08,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_34_fixturereflector_010_4c6eb_R": {
+"name": "material_34_fixturereflector_010_4c6eb_R",
+"color": [
+0.45,
+0.05,
+0.04
+],
+"metal": 0.4,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_35_fixturereflector_010_4c6eb_R": {
+"name": "material_35_fixturereflector_010_4c6eb_R",
+"color": [
+0.45,
+0.05,
+0.04
+],
+"metal": 0.4,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_36_m_carpaint_4c6eb": {
+"name": "material_36_m_carpaint_4c6eb",
+"color": [
+0.847059,
+0.0941176,
+0
+],
+"metal": 0.752381,
+"rough": 0.263333,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true,
+"kind": "paint"
+},
+"material_37_fixtureglass_reversinglight_005_4c6eb_R": {
+"name": "material_37_fixtureglass_reversinglight_005_4c6eb_R",
+"color": [
+0.890196,
+0.894118,
+0.894118
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.74902,
+"trans": true,
+"double": false,
+"light": "reverse"
+},
+"material_38_m_numberplate_inst3_4c6eb": {
+"name": "material_38_m_numberplate_inst3_4c6eb",
+"color": [
+0.9,
+0.9,
+0.86
+],
+"metal": 0,
+"rough": 0.5,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_39_mi_plastic_matte_black_4c6eb": {
+"name": "material_39_mi_plastic_matte_black_4c6eb",
+"color": [
+0.0627451,
+0.0627451,
+0.0627451
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_40_chromefixture_4c6eb": {
+"name": "material_40_chromefixture_4c6eb",
+"color": [
+0.85,
+0.86,
+0.88
+],
+"metal": 1,
+"rough": 0.08,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_41_mp_plastic_4c6eb": {
+"name": "material_41_mp_plastic_4c6eb",
+"color": [
+0.0509804,
+0.0509804,
+0.0509804
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_42_fixtureglass_headlight_004_4c6eb_R": {
+"name": "material_42_fixtureglass_headlight_004_4c6eb_R",
+"color": [
+0.8,
+0.82,
+0.85
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.25,
+"trans": true,
+"double": false
+},
+"material_43_m_blackplastic_4c6eb": {
+"name": "material_43_m_blackplastic_4c6eb",
+"color": [
+0.0627451,
+0.0627451,
+0.0627451
+],
+"metal": 0,
+"rough": 0.281651,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_44_m_blackplastic_4c6eb": {
+"name": "material_44_m_blackplastic_4c6eb",
+"color": [
+0.372549,
+0.333333,
+0.309804
+],
+"metal": 0,
+"rough": 0.297247,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_45_m_logo_inst_4c6eb": {
+"name": "material_45_m_logo_inst_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 1,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_46_fixtureglass_reversinglight_008_4c6eb_F": {
+"name": "material_46_fixtureglass_reversinglight_008_4c6eb_F",
+"color": [
+0.94902,
+0.94902,
+0.94902
+],
+"metal": 1,
+"rough": 0,
+"cc": 0,
+"opacity": 0.698039,
+"trans": true,
+"double": false,
+"light": "reverse"
+},
+"material_47_fixturebulb_light_005_4c6eb_F": {
+"name": "material_47_fixturebulb_light_005_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_48_fixturebulb_light_001_4c6eb_F": {
+"name": "material_48_fixturebulb_light_001_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_49_m_carpaint_4c6eb": {
+"name": "material_49_m_carpaint_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 1,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true,
+"kind": "paint"
+},
+"material_50_mi_plastic_matte_4c6eb": {
+"name": "material_50_mi_plastic_matte_4c6eb",
+"color": [
+0.172549,
+0.172549,
+0.172549
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_51_mi_plastic_matte_4c6eb": {
+"name": "material_51_mi_plastic_matte_4c6eb",
+"color": [
+0.172549,
+0.172549,
+0.172549
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_52_mi_plastic_matte_4c6eb": {
+"name": "material_52_mi_plastic_matte_4c6eb",
+"color": [
+0.172549,
+0.172549,
+0.172549
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_53_mi_gaugecustom1_inst_4c6eb": {
+"name": "material_53_mi_gaugecustom1_inst_4c6eb",
+"color": [
+0,
+0.247059,
+0.0588235
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": false
+},
+"material_54_mi_gaugecustom1_inst_4c6eb": {
+"name": "material_54_mi_gaugecustom1_inst_4c6eb",
+"color": [
+1,
+0.133333,
+0
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": false
+},
+"material_55_m_carpaint_4c6eb": {
+"name": "material_55_m_carpaint_4c6eb",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0.74,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true,
+"kind": "paint"
+},
+"material_56_lightgreymat_4c6eb": {
+"name": "material_56_lightgreymat_4c6eb",
+"color": [
+0.909804,
+0.909804,
+0.909804
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_57_mi_plastic_matte_4c6eb": {
+"name": "material_57_mi_plastic_matte_4c6eb",
+"color": [
+0.172549,
+0.172549,
+0.172549
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_58_m_alcantara_inst1_4c6eb": {
+"name": "material_58_m_alcantara_inst1_4c6eb",
+"color": [
+0.184314,
+0.2,
+0.207843
+],
+"metal": 0,
+"rough": 2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_59_mp_plastic_inst_4c6eb": {
+"name": "material_59_mp_plastic_inst_4c6eb",
+"color": [
+0.054902,
+0.054902,
+0.054902
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_60_mp_plastic_inst_4c6eb": {
+"name": "material_60_mp_plastic_inst_4c6eb",
+"color": [
+0.054902,
+0.054902,
+0.054902
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_61_gauge_signal_l_4c6eb": {
+"name": "material_61_gauge_signal_l_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": true
+},
+"material_62_m_carpaint_4c6eb": {
+"name": "material_62_m_carpaint_4c6eb",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0.74,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true,
+"kind": "paint"
+},
+"material_63_m_badge_custom_0106_4c6eb": {
+"name": "material_63_m_badge_custom_0106_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0106.png"
+},
+"material_64_m_badge_custom_0087_4c6eb": {
+"name": "material_64_m_badge_custom_0087_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0087.png"
+},
+"material_65_m_badge_custom_0085_4c6eb": {
+"name": "material_65_m_badge_custom_0085_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0085.png"
+},
+"material_66_m_badge_custom_0103_4c6eb": {
+"name": "material_66_m_badge_custom_0103_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0103.png"
+},
+"material_67_m_badge_custom_0102_4c6eb": {
+"name": "material_67_m_badge_custom_0102_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0102.png"
+},
+"material_68_m_badge_custom_0091_4c6eb": {
+"name": "material_68_m_badge_custom_0091_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0091.png"
+},
+"material_69_m_badge_custom_0104_4c6eb": {
+"name": "material_69_m_badge_custom_0104_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0104.png"
+},
+"material_70_fixtureglass_headlight_001_4c6eb_F": {
+"name": "material_70_fixtureglass_headlight_001_4c6eb_F",
+"color": [
+0.8,
+0.82,
+0.85
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.25,
+"trans": true,
+"double": false
+},
+"material_71_fixturebulb_light_005_4c6eb_F": {
+"name": "material_71_fixturebulb_light_005_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_72_m_blackplastic_4c6eb": {
+"name": "material_72_m_blackplastic_4c6eb",
+"color": [
+0.0627451,
+0.0627451,
+0.0627451
+],
+"metal": 0,
+"rough": 0.281651,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_73_fixturebulb_light_001_4c6eb_F": {
+"name": "material_73_fixturebulb_light_001_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_74_fixtureglass_headlight_004_4c6eb_F": {
+"name": "material_74_fixtureglass_headlight_004_4c6eb_F",
+"color": [
+0.8,
+0.82,
+0.85
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.25,
+"trans": true,
+"double": false
+},
+"material_75_fixtureglass_headlight_001_4c6eb_F": {
+"name": "material_75_fixtureglass_headlight_001_4c6eb_F",
+"color": [
+0.8,
+0.82,
+0.85
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.25,
+"trans": true,
+"double": false
+},
+"material_76_fixturebulb_light_005_4c6eb_F": {
+"name": "material_76_fixturebulb_light_005_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_76_fixturebulb_light_005_4c6eb_R": {
+"name": "material_76_fixturebulb_light_005_4c6eb_R",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_77_fixturebulb_light_001_4c6eb_F": {
+"name": "material_77_fixturebulb_light_001_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_77_fixturebulb_light_001_4c6eb_R": {
+"name": "material_77_fixturebulb_light_001_4c6eb_R",
+"color": [
+0.984314,
+0.984314,
+0.980392
+],
+"metal": 1,
+"rough": 0.02,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "brake"
+},
+"material_78_fixtureglass_headlight_004_4c6eb_F": {
+"name": "material_78_fixtureglass_headlight_004_4c6eb_F",
+"color": [
+0.8,
+0.82,
+0.85
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.25,
+"trans": true,
+"double": false
+},
+"material_79_fixtureglass_headlight_001_4c6eb_F": {
+"name": "material_79_fixtureglass_headlight_001_4c6eb_F",
+"color": [
+0.8,
+0.82,
+0.85
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.25,
+"trans": true,
+"double": false
+},
+"material_80_fixturebulb_light_005_4c6eb_F": {
+"name": "material_80_fixturebulb_light_005_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_81_fixturebulb_light_007_4c6eb_F": {
+"name": "material_81_fixturebulb_light_007_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_82_fixturebulb_light_003_4c6eb_F": {
+"name": "material_82_fixturebulb_light_003_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_83_fixtureglass_headlight_001_4c6eb_F": {
+"name": "material_83_fixtureglass_headlight_001_4c6eb_F",
+"color": [
+0.8,
+0.82,
+0.85
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.25,
+"trans": true,
+"double": false
+},
+"material_84_fixturebulb_light_005_4c6eb_F": {
+"name": "material_84_fixturebulb_light_005_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_85_fixturebulb_light_007_4c6eb_F": {
+"name": "material_85_fixturebulb_light_007_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_86_fixturebulb_light_003_4c6eb_F": {
+"name": "material_86_fixturebulb_light_003_4c6eb_F",
+"color": [
+0.75,
+0.75,
+0.75
+],
+"metal": 0.6,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "drl"
+},
+"material_87_fixtureglass_headlight_004_4c6eb_F": {
+"name": "material_87_fixtureglass_headlight_004_4c6eb_F",
+"color": [
+0.8,
+0.82,
+0.85
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.25,
+"trans": true,
+"double": false
+},
+"material_88_fixtureglass_headlight_004_4c6eb_F": {
+"name": "material_88_fixtureglass_headlight_004_4c6eb_F",
+"color": [
+0.8,
+0.82,
+0.85
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.25,
+"trans": true,
+"double": false
+},
+"material_89_fixtureopaque_chrome_001_4c6eb": {
+"name": "material_89_fixtureopaque_chrome_001_4c6eb",
+"color": [
+0.85,
+0.86,
+0.88
+],
+"metal": 1,
+"rough": 0.08,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_90_mi_plastic_matte_4c6eb": {
+"name": "material_90_mi_plastic_matte_4c6eb",
+"color": [
+0.172549,
+0.172549,
+0.172549
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_91_m_carpaint_4c6eb": {
+"name": "material_91_m_carpaint_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 1,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true,
+"kind": "paint"
+},
+"material_92_m_carpaint_4c6eb": {
+"name": "material_92_m_carpaint_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 1,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true,
+"kind": "paint"
+},
+"material_93_fixturemat_blackplastic_001_4c6eb": {
+"name": "material_93_fixturemat_blackplastic_001_4c6eb",
+"color": [
+0.0509804,
+0.0509804,
+0.0509804
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_94_m_metal_4c6eb": {
+"name": "material_94_m_metal_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_95_mi_dash_rouge_emissive_4c6eb": {
+"name": "material_95_mi_dash_rouge_emissive_4c6eb",
+"color": [
+0.905882,
+0.137255,
+0
+],
+"metal": 0,
+"rough": 0.3,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_96_m_chrome_4c6eb": {
+"name": "material_96_m_chrome_4c6eb",
+"color": [
+0.85,
+0.86,
+0.88
+],
+"metal": 1,
+"rough": 0.08,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_97_fixturemat_blackplastic_001_4c6eb": {
+"name": "material_97_fixturemat_blackplastic_001_4c6eb",
+"color": [
+0.0509804,
+0.0509804,
+0.0509804
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_98_mi_gaugecustom1_inst_4c6eb": {
+"name": "material_98_mi_gaugecustom1_inst_4c6eb",
+"color": [
+0,
+0.247059,
+0.0588235
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": false
+},
+"material_99_m_metal_4c6eb": {
+"name": "material_99_m_metal_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_100_mi_plastic_matte_4c6eb": {
+"name": "material_100_mi_plastic_matte_4c6eb",
+"color": [
+0.172549,
+0.172549,
+0.172549
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_101_m_alcantara_inst1_4c6eb": {
+"name": "material_101_m_alcantara_inst1_4c6eb",
+"color": [
+0.184314,
+0.2,
+0.207843
+],
+"metal": 0,
+"rough": 2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_102_cartestcolours_red_4c6eb": {
+"name": "material_102_cartestcolours_red_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_103_mp_plastic_4c6eb": {
+"name": "material_103_mp_plastic_4c6eb",
+"color": [
+0.0509804,
+0.0509804,
+0.0509804
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_104_mi_gaugecustom1_inst_4c6eb": {
+"name": "material_104_mi_gaugecustom1_inst_4c6eb",
+"color": [
+0,
+0.247059,
+0.0588235
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": false
+},
+"material_105_chromefixture_4c6eb": {
+"name": "material_105_chromefixture_4c6eb",
+"color": [
+0.85,
+0.86,
+0.88
+],
+"metal": 1,
+"rough": 0.08,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_106_mi_metal_chrome_01_bright_4c6eb": {
+"name": "material_106_mi_metal_chrome_01_bright_4c6eb",
+"color": [
+0.85,
+0.86,
+0.88
+],
+"metal": 1,
+"rough": 0.08,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_107_mp_plastic_4c6eb": {
+"name": "material_107_mp_plastic_4c6eb",
+"color": [
+0.0509804,
+0.0509804,
+0.0509804
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_108_fixturemat_blackplastic_002_4c6eb": {
+"name": "material_108_fixturemat_blackplastic_002_4c6eb",
+"color": [
+0.239216,
+0.239216,
+0.239216
+],
+"metal": 0,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_109_fixtureopaque_chrome_003_4c6eb": {
+"name": "material_109_fixtureopaque_chrome_003_4c6eb",
+"color": [
+0.85,
+0.86,
+0.88
+],
+"metal": 1,
+"rough": 0.08,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_110_m_carpaint_4c6eb": {
+"name": "material_110_m_carpaint_4c6eb",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0.74,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true,
+"kind": "paint"
+},
+"material_111_fixtureopaque_chrome_001_4c6eb": {
+"name": "material_111_fixtureopaque_chrome_001_4c6eb",
+"color": [
+0.85,
+0.86,
+0.88
+],
+"metal": 1,
+"rough": 0.08,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_112_m_badge_custom_0090_4c6eb": {
+"name": "material_112_m_badge_custom_0090_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0090.png"
+},
+"material_113_m_badge_custom_0097_4c6eb": {
+"name": "material_113_m_badge_custom_0097_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0097.png"
+},
+"material_114_m_badge_custom_0094_4c6eb": {
+"name": "material_114_m_badge_custom_0094_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0094.png"
+},
+"material_115_m_badge_custom_0086_4c6eb": {
+"name": "material_115_m_badge_custom_0086_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0086.png"
+},
+"material_116_m_badge_custom_0096_4c6eb": {
+"name": "material_116_m_badge_custom_0096_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0096.png"
+},
+"material_117_m_badge_custom_0095_4c6eb": {
+"name": "material_117_m_badge_custom_0095_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0095.png"
+},
+"material_118_m_badge_custom_0100_4c6eb": {
+"name": "material_118_m_badge_custom_0100_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0100.png"
+},
+"material_119_fixtureopaque_chrome_001_4c6eb": {
+"name": "material_119_fixtureopaque_chrome_001_4c6eb",
+"color": [
+0.85,
+0.86,
+0.88
+],
+"metal": 1,
+"rough": 0.08,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_120_m_badge_custom_0083_4c6eb": {
+"name": "material_120_m_badge_custom_0083_4c6eb",
+"color": [
+0.75,
+0.76,
+0.78
+],
+"metal": 1,
+"rough": 0.15,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"alphaMap": "vs/tex/m_badge_custom_0083.png"
+},
+"material_121_fixtureglass_brakelight_001_4c6eb_R": {
+"name": "material_121_fixtureglass_brakelight_001_4c6eb_R",
+"color": [
+0.47451,
+0.0666667,
+0.0470588
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.988235,
+"trans": true,
+"double": false,
+"light": "brake"
+},
+"material_122_m_carpaint_4c6eb": {
+"name": "material_122_m_carpaint_4c6eb",
+"color": [
+0,
+0,
+0
+],
+"metal": 0,
+"rough": 0.74,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true,
+"kind": "paint"
+},
+"material_123_fixturereflector_001_4c6eb_R": {
+"name": "material_123_fixturereflector_001_4c6eb_R",
+"color": [
+0.45,
+0.05,
+0.04
+],
+"metal": 0.4,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_124_gauge_signal_r_4c6eb": {
+"name": "material_124_gauge_signal_r_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": true
+},
+"material_125_panel_0_4c6eb": {
+"name": "material_125_panel_0_4c6eb",
+"color": [
+0.129412,
+0.129412,
+0.129412
+],
+"metal": 0,
+"rough": 0.6,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_126_0white_4c6eb": {
+"name": "material_126_0white_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 1,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_127_mi_gaugecustom1_inst_4c6eb": {
+"name": "material_127_mi_gaugecustom1_inst_4c6eb",
+"color": [
+1,
+0.133333,
+0
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": false
+},
+"material_128_0white_4c6eb": {
+"name": "material_128_0white_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 1,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_130_gauge_battery_4c6eb": {
+"name": "material_130_gauge_battery_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": true
+},
+"material_131_gauge_checkengine_4c6eb": {
+"name": "material_131_gauge_checkengine_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": true
+},
+"material_132_gauge_lowpressure_4c6eb": {
+"name": "material_132_gauge_lowpressure_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": true
+},
+"material_133_gauge_pbrake_4c6eb": {
+"name": "material_133_gauge_pbrake_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": true
+},
+"material_134_gauge_highbeam_4c6eb": {
+"name": "material_134_gauge_highbeam_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": true
+},
+"material_135_gauge_lowbeam_4c6eb": {
+"name": "material_135_gauge_lowbeam_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": true,
+"double": true
+},
+"material_136_fixtureglass_brakelight_001_4c6eb_R": {
+"name": "material_136_fixtureglass_brakelight_001_4c6eb_R",
+"color": [
+0.47451,
+0.0666667,
+0.0470588
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.988235,
+"trans": true,
+"double": false,
+"light": "brake"
+},
+"material_137_fixturebulb_light_006_4c6eb_R": {
+"name": "material_137_fixturebulb_light_006_4c6eb_R",
+"color": [
+0.984314,
+0.984314,
+0.980392
+],
+"metal": 1,
+"rough": 0.02,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true,
+"light": "brake"
+},
+"material_138_fixtureglass_brakelight_001_4c6eb_R": {
+"name": "material_138_fixtureglass_brakelight_001_4c6eb_R",
+"color": [
+0.47451,
+0.0666667,
+0.0470588
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 0.988235,
+"trans": true,
+"double": false,
+"light": "brake"
+},
+"material_4_chassis_steel_4c6eb": {
+"name": "material_4_chassis_steel_4c6eb",
+"color": [
+0.560784,
+0.560784,
+0.560784
+],
+"metal": 1,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_5_m_seamsealer_4c6eb": {
+"name": "material_5_m_seamsealer_4c6eb",
+"color": [
+1,
+1,
+1
+],
+"metal": 0,
+"rough": 0,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_6_m_blackrubber_4c6eb": {
+"name": "material_6_m_blackrubber_4c6eb",
+"color": [
+0.0470588,
+0.0470588,
+0.0470588
+],
+"metal": 0,
+"rough": 0,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_7_chassis_corrosionresist_4c6eb": {
+"name": "material_7_chassis_corrosionresist_4c6eb",
+"color": [
+0.423529,
+0.431373,
+0.431373
+],
+"metal": 0.8,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_8_m_bolt_morphable_4c6eb": {
+"name": "material_8_m_bolt_morphable_4c6eb",
+"color": [
+0.709804,
+0.670588,
+0.611765
+],
+"metal": 1,
+"rough": 0.4,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_10_mp_plastic_inst_4c6eb": {
+"name": "material_10_mp_plastic_inst_4c6eb",
+"color": [
+0.62,
+0.63,
+0.65
+],
+"metal": 0.7,
+"rough": 0.35,
+"cc": 0.5,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_17_m_castiron_forged_4c6eb": {
+"name": "material_17_m_castiron_forged_4c6eb",
+"color": [
+0.372549,
+0.372549,
+0.372549
+],
+"metal": 1,
+"rough": 0.9,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"material_14_m_machinedmetal_4c6eb": {
+"name": "material_14_m_machinedmetal_4c6eb",
+"color": [
+0.654902,
+0.654902,
+0.654902
+],
+"metal": 1,
+"rough": 0.2,
+"cc": 0,
+"opacity": 1,
+"trans": false,
+"double": true
+},
+"CGC_Evoke": {
+"name": "CGC_Evoke",
+"color": [
+0.587610006,
+0.587610006,
+0.587610006
+],
+"metal": 1,
+"rough": 0.510999978,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_R8Clubby_Ali": {
+"name": "CGC_R8Clubby_Ali",
+"color": [
+0.719345987,
+0.715225995,
+0.715225995
+],
+"metal": 1,
+"rough": 0.201000005,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_R8Clubby_Black": {
+"name": "CGC_R8Clubby_Black",
+"color": [
+0.238224,
+0.238224,
+0.238224
+],
+"metal": 1,
+"rough": 0.301999986,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_R8Clubby_Cap": {
+"name": "CGC_R8Clubby_Cap",
+"color": [
+1,
+1,
+1
+],
+"metal": 1,
+"rough": 0.504999995,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false,
+"map": "vf/tex/CGC_R8Clubby_Cap.jpg",
+"alpha": false
+},
+"CGC_R8Clubby_Lugs": {
+"name": "CGC_R8Clubby_Lugs",
+"color": [
+0.800000012,
+0.800000012,
+0.800000012
+],
+"metal": 1,
+"rough": 0.104000002,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_Rapier": {
+"name": "CGC_Rapier",
+"color": [
+0.335593998,
+0.335593998,
+0.335593998
+],
+"metal": 1,
+"rough": 0.433999985,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_Senysigs_Brushed": {
+"name": "CGC_Senysigs_Brushed",
+"color": [
+0.719345987,
+0.698745012,
+0.698745012
+],
+"metal": 1,
+"rough": 0.330000013,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_Stockies": {
+"name": "CGC_Stockies",
+"color": [
+0.48865509,
+0.48865509,
+0.48865509
+],
+"metal": 1,
+"rough": 0.50999999,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_W1_Black": {
+"name": "CGC_W1_Black",
+"color": [
+0.306955993,
+0.299923003,
+0.299923003
+],
+"metal": 1,
+"rough": 0.603999972,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+},
+"CGC_W1_Red": {
+"name": "CGC_W1_Red",
+"color": [
+0.639159024,
+0,
+0.00260800007
+],
+"metal": 1,
+"rough": 0.501999974,
+"cc": 1,
+"opacity": 1,
+"trans": false,
+"double": false
+}
+}
