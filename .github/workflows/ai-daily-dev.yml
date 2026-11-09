@@ -165,7 +165,8 @@ jobs:
             echo "::error::unexpected working-tree changes outside the approved patch"; git status --short; exit 1
           fi
           model=$(jq -r '.provider.model_reported' "$RUNNER_TEMP/dev-result.json")
-          git -c user.name="project-aussie-ai-$ROLE" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+          git -c user.name="project-aussie-ai-$ROLE" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -m "AI ($ROLE via $model): issue #$ISSUE" -m "$(jq -r '.summary' "$RUNNER_TEMP/dev-result.json")"
           git push origin "HEAD:refs/heads/$BRANCH"
           echo "head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
