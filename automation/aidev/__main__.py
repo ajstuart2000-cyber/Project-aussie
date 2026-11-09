@@ -57,8 +57,11 @@ def cmd_plan(a, cfg):
                           'ai': p['head']['ref'].startswith('ai/')} for p in prs],
             'budget': {'daily_usd': cfg['limits']['daily_budget_usd'], 'spent_before_usd': spent},
             'task': None, 'considered': [], 'skip_reason': ''}
-    if event == 'schedule' and ran and not dry:
-        plan['skip_reason'] = f'A live run already reported for {date} (Perth); this later trigger is the backup and does nothing.'
+    if a.backup and dry:
+        plan['skip_reason'] = 'Backup trigger while automation is not enabled (dry run): nothing to do.'
+        plan['duplicate'] = True
+    elif event == 'schedule' and ran:
+        plan['skip_reason'] = f'A live run already reported for {date} (Perth); this scheduled trigger (late primary or backup) does nothing.'
         plan['duplicate'] = True
     elif spent >= cfg['limits']['daily_budget_usd'] and not dry:
         plan['skip_reason'] = f'Daily budget already used (${spent:.4f} of ${cfg["limits"]["daily_budget_usd"]:.2f}).'
@@ -178,6 +181,7 @@ def main(argv=None):
     p = sub.add_parser('plan'); p.add_argument('--repo', default=os.environ.get('GITHUB_REPOSITORY', ''))
     p.add_argument('--out', default='plan.json'); p.add_argument('--dry-run', action='store_true')
     p.add_argument('--issue', type=int); p.add_argument('--event'); p.add_argument('--fixtures')
+    p.add_argument('--backup', action='store_true', help='this is the later backup schedule trigger')
     p = sub.add_parser('develop'); p.add_argument('--plan', default='plan.json'); p.add_argument('--out', default='dev-result.json')
     p.add_argument('--root', default='.'); p.add_argument('--feedback'); p.add_argument('--dry-run', action='store_true')
     p = sub.add_parser('review'); p.add_argument('--plan', default='plan.json'); p.add_argument('--dev-result', default='dev-result.json')
