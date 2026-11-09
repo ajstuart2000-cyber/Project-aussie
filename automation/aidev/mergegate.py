@@ -9,11 +9,13 @@ data or unparseable answer means "do not merge":
                 repository (no forks), opened by the workflow (github-actions[bot]),
                 label `ai-generated`, no blocking label (ai-revise, ai-blocked, ...),
                 the `<!-- aidev-pr issue=N role=R -->` marker matching the branch,
-                role grok or claude, every commit a non-merge commit authored by
-                `project-aussie-ai-<role>` with the Actions bot e-mail.
+                role grok or claude, every commit authored by `project-aussie-ai-<role>`
+                with the Actions bot e-mail, except "update branch" merge commits made by
+                the workflow whose other parents are already in main.
   Checks        code validation (unit tests, protected areas, JS syntax, actionlint,
                 Gradle wrapper), the Android build + APK verification, and the gate's
-                own guardrail re-run all concluded `success` for the tested commit.
+                own guardrail re-run all concluded `success` for the tested PR head,
+                which must contain the current main (the gate updates the branch first).
   APK           apk-verify.json says ok, the CI package (com.barrarun.game.ci).
   Review        a real ChatGPT review from api.openai.com (response id, gpt/o model)
                 of exactly this head SHA whose verdict parses as APPROVE.
@@ -81,8 +83,10 @@ def find_prior_review(comments, head_sha, cfg):
 
 
 # --------------------------------------------------------------------------- PR shape
-def pr_eligibility(pr, commits, cfg):
-    """(info, reasons). commits=None skips the commit checks (used for candidate listing)."""
+def pr_eligibility(pr, commits, cfg, main_ancestors=frozenset()):
+    """(info, reasons). commits=None skips the commit checks (used for candidate listing).
+    main_ancestors: SHAs verified (via the compare API) to be already contained in main; a merge
+    commit is allowed only when it was made by the workflow bot and all its extra parents are there."""
     am, L = cfg['auto_merge'], cfg['labels']
     reasons = []
     labels = tasks.label_names(pr)
@@ -130,9 +134,12 @@ def pr_eligibility(pr, commits, cfg):
         want = am['commit_author_prefix'] + (info['role'] or '?')
         for c in commits:
             sha = (c.get('sha') or '')[:10]
-            if len(c.get('parents') or []) > 1:
-                reasons.append(f'commit {sha} is a merge commit')
             a = (c.get('commit') or {}).get('author') or {}
+            parents = [p.get('sha') for p in (c.get('parents') or [])]
+            if len(parents) > 1:
+                if a.get('email') != am['commit_email'] or not all(p in main_ancestors for p in parents[1:]):
+                    reasons.append(f'commit {sha} is a merge commit that does not just bring in main')
+                continue
             if a.get('name') != want or a.get('email') != am['commit_email']:
                 reasons.append(f'commit {sha} was not made by the automation ({a.get("name")!r} <{a.get("email")}>)')
     return info, reasons
@@ -190,9 +197,11 @@ def review_ok(review, head_sha, cfg):
     return reasons
 
 
-def decide(pr, commits, checks, apk, review, cfg, *, enabled, dry_run, tested_head, tested_base, current_base):
-    """Return {'merge': bool, 'reasons': [...], ...}. Pure function; unit-tested."""
-    info, reasons = pr_eligibility(pr, commits, cfg)
+def decide(pr, commits, checks, apk, review, cfg, *, enabled, dry_run, tested_head, tested_base, current_base,
+           main_ancestors=frozenset()):
+    """Return {'merge': bool, 'reasons': [...], ...}. Pure function; unit-tested.
+    tested_base is the main SHA the tested head was verified to contain ('' if it was behind)."""
+    info, reasons = pr_eligibility(pr, commits, cfg, main_ancestors)
     if dry_run:
         reasons.append('dry run: never merges')
     if not enabled:
@@ -201,7 +210,7 @@ def decide(pr, commits, checks, apk, review, cfg, *, enabled, dry_run, tested_he
     if not tested_head or head != tested_head:
         reasons.append('the PR head changed after the checks ran')
     if not tested_base or not current_base or current_base != tested_base:
-        reasons.append('main moved after the checks ran (re-checked on the next run)')
+        reasons.append('the tested head did not contain the current main (main moved or the branch is behind)')
     if pr.get('mergeable') is not True or pr.get('mergeable_state') == 'dirty':
         reasons.append(f'GitHub does not report the PR as mergeable (mergeable={pr.get("mergeable")}, state={pr.get("mergeable_state")})')
     for name in cfg['auto_merge']['required_checks']:

@@ -10,8 +10,8 @@
 #   - opened by this automation: github-actions[bot], label ai-generated, branch
 #     ai/<role>/issue-<N>-..., aidev-pr marker, every commit by project-aussie-ai-<role>;
 #   - code validation (unit tests, protected areas, JS syntax, actionlint, Gradle wrapper),
-#     the Android build + APK verification and a guardrail re-run all passed on GitHub's
-#     test-merge commit of the PR into main;
+#     the Android build + APK verification and a guardrail re-run all passed on the PR head,
+#     which must contain the current main (live runs first "Update branch" the AI PR);
 #   - a real ChatGPT review (api.openai.com response) of that head says APPROVE;
 #   - no conflicts, and neither the PR head nor main moved since the checks ran;
 #   - no ai-revise / ai-blocked / do-not-merge / wontfix label.
@@ -97,13 +97,13 @@ env:
 
 jobs:
   meta:
-    name: Find the AI pull request and its test-merge commit
+    name: Find the AI pull request (and bring its branch up to date with main)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read
+      contents: write        # "Update branch" on the AI PR so the checks test what the squash merge produces
       issues: read
-      pull-requests: read
+      pull-requests: write
       actions: write
     outputs:
       found: ${{ steps.meta.outputs.found }}
