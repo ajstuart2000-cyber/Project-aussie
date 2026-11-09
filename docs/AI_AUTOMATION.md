@@ -141,10 +141,11 @@ GitHub cron runs in UTC. Perth is UTC+8 all year with no daylight saving.
      read and write, Pull requests: read and write). PRs opened with it also trigger
      `pr-checks.yml` and `android-build.yml` on the PR itself, which `GITHUB_TOKEN`-opened
      PRs don't.
-4. **Add the API keys** under Settings → Secrets and variables → Actions → *Secrets*:
-   `XAI_API_KEY` (console.x.ai), `ANTHROPIC_API_KEY` (console.anthropic.com),
-   `OPENAI_API_KEY` (platform.openai.com). Use keys with a spending limit set at the
-   provider as well.
+4. **API keys (done by you on 2026-11-09).** The secrets `XAI_API_KEY` (console.x.ai),
+   `ANTHROPIC_API_KEY` (console.anthropic.com) and `OPENAI_API_KEY` (platform.openai.com)
+   exist under Settings → Secrets and variables → Actions → *Secrets*. Whether they are
+   valid is only known after the first live run calls each API. Also set a spending limit
+   at each provider.
 5. **Set variables** (same page → *Variables*), all optional except the first:
    - `AI_DEV_ENABLED` = `true` turns on live scheduled runs. Leave it unset to keep dry runs.
    - `AI_DAILY_BUDGET_USD` (default `2.00`), `AI_MAX_CALLS_PER_RUN` (default `2`),
