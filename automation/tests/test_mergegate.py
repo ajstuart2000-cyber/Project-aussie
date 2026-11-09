@@ -37,10 +37,11 @@ APK = {'ok': True, 'package': 'com.barrarun.game.ci'}
 
 
 def decide(p=None, c=None, checks=None, apk=APK, rev=None, enabled=True, dry_run=False, tested_head=HEAD,
-           tested_base=BASE, current_base=BASE):
+           tested_base=BASE, current_base=BASE, main_ancestors=frozenset()):
     return MG.decide(p or pr(), commits() if c is None else c, CHECKS if checks is None else checks, apk,
                      review() if rev is None else rev, CFG, enabled=enabled, dry_run=dry_run,
-                     tested_head=tested_head, tested_base=tested_base, current_base=current_base)
+                     tested_head=tested_head, tested_base=tested_base, current_base=current_base,
+                     main_ancestors=main_ancestors)
 
 
 class VerdictTests(unittest.TestCase):
@@ -90,7 +91,18 @@ class DecideTests(unittest.TestCase):
         self.assertBlocked(decide(c=commits(name='ajstuart2000-cyber')), 'not made by the automation')
         self.assertBlocked(decide(c=commits(email='x@example.com')), 'not made by the automation')
         self.assertBlocked(decide(c=commits(parents=2)), 'merge commit')
+        self.assertBlocked(decide(c=commits(name='github-actions[bot]', parents=2)), 'merge commit')
         self.assertBlocked(decide(c=[]), 'no commits')
+
+    def test_update_branch_merge_commit_allowed_only_if_it_just_brings_in_main(self):
+        own = commits()[0]
+        upd = {'sha': 'u' * 40, 'parents': [{'sha': own['sha']}, {'sha': BASE}],
+               'commit': {'author': {'name': 'github-actions[bot]', 'email': '41898282+github-actions[bot]@users.noreply.github.com'}}}
+        self.assertTrue(decide(c=[own, upd], main_ancestors=frozenset({BASE}))['merge'])
+        self.assertFalse(decide(c=[own, upd], main_ancestors=frozenset())['merge'])
+        bad = copy.deepcopy(upd)
+        bad['commit']['author']['email'] = 'someone@example.com'
+        self.assertFalse(decide(c=[own, bad], main_ancestors=frozenset({BASE}))['merge'])
 
     def test_marker_must_match_branch_and_role(self):
         self.assertBlocked(decide(pr(body='<!-- aidev-pr issue=9 role=claude -->')), 'does not match')
@@ -108,8 +120,8 @@ class DecideTests(unittest.TestCase):
         self.assertBlocked(decide(pr(mergeable=False, mergeable_state='dirty')), 'mergeable')
         self.assertBlocked(decide(pr(mergeable=None)), 'mergeable')
         self.assertBlocked(decide(tested_head='c' * 40), 'head changed')
-        self.assertBlocked(decide(current_base='d' * 40), 'main moved')
-        self.assertBlocked(decide(tested_base=''), 'main moved')
+        self.assertBlocked(decide(current_base='d' * 40), 'current main')
+        self.assertBlocked(decide(tested_base=''), 'current main')
 
     def test_every_required_check(self):
         for name in ('validation', 'android', 'guardrails'):

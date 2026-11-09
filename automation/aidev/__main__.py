@@ -173,32 +173,40 @@ def cmd_prmeta(a, cfg):
         num, meta['considered'] = MG.select_candidate(prs, comments_by, cfg)
     if num:
         pr = _get_pr_settled(gh_api, rp, num, token)
+        main_sha = gh_api.get(f'/repos/{rp}/branches/{cfg["auto_merge"]["base"]}', token)['commit']['sha']
+        head = pr['head']['sha']
+        updated = ''
+        behind = gh_api.get(f'/repos/{rp}/compare/{main_sha}...{head}', token).get('behind_by', 1)
+        if behind and not a.dry_run and pr.get('mergeable') is True and not MG.pr_eligibility(pr, None, cfg)[1]:
+            # Bring the AI branch up to date with main ("Update branch"), so the checks test exactly
+            # what the squash merge will produce. Live runs only; conflicts leave it behind (no merge).
+            try:
+                gh_api.put(f'/repos/{rp}/pulls/{num}/update-branch', token, {'expected_head_sha': head})
+                for _ in range(24):
+                    time.sleep(5)
+                    pr = _get_pr_settled(gh_api, rp, num, token)
+                    if pr['head']['sha'] != head:
+                        break
+                updated = f'updated {head[:10]} -> {pr["head"]["sha"][:10]}'
+                head = pr['head']['sha']
+                behind = gh_api.get(f'/repos/{rp}/compare/{main_sha}...{head}', token).get('behind_by', 1)
+            except Exception as e:  # noqa: BLE001 - reported, never fatal; the gate then refuses
+                updated = f'update-branch failed: {e}'
         commits = gh_api.get(f'/repos/{rp}/pulls/{num}/commits', token, 'per_page=100')
+        anc = set()
+        for c in commits:
+            for p in [x['sha'] for x in c.get('parents', [])][1:]:
+                if gh_api.get(f'/repos/{rp}/compare/{p}...{main_sha}', token).get('behind_by', 1) == 0:
+                    anc.add(p)
         comments = gh_api.get(f'/repos/{rp}/issues/{num}/comments', token, 'per_page=100')
-        info, reasons = MG.pr_eligibility(pr, commits, cfg)
+        info, reasons = MG.pr_eligibility(pr, commits, cfg, anc)
         issue, events = None, []
         if info['issue']:
             issue = gh_api.get(f'/repos/{rp}/issues/{info["issue"]}', token)
             events = gh_api.get(f'/repos/{rp}/issues/{info["issue"]}/events', token, 'per_page=100')
-        head = pr['head']['sha']
-        check_ref, tested_base = head, ''
-        main_sha = gh_api.get(f'/repos/{rp}/branches/{cfg["auto_merge"]["base"]}', token)['commit']['sha']
-        for attempt in range(12):
-            # GitHub recomputes the test-merge commit lazily after main moves; wait for a fresh one.
-            msha = pr.get('merge_commit_sha')
-            if pr.get('mergeable') is True and msha:
-                mc = gh_api.get(f'/repos/{rp}/commits/{msha}', token)
-                parents = [x['sha'] for x in mc.get('parents', [])]
-                if len(parents) == 2 and parents[1] == head:
-                    check_ref, tested_base = msha, parents[0]
-                    if tested_base == main_sha:
-                        break
-            elif pr.get('mergeable') is False:
-                break
-            time.sleep(5)
-            pr = _get_pr_settled(gh_api, rp, num, token)
-            head = pr['head']['sha']
-            check_ref, tested_base = head, ''
+        check_ref, tested_base = head, (main_sha if behind == 0 else '')
+        meta['main_ancestors'] = sorted(anc)
+        meta['branch_update'] = updated
         meta.update(found=True, number=num, title=pr.get('title', ''), body=pr.get('body') or '', branch=pr['head']['ref'],
                     head_sha=head, check_ref=check_ref, tested_base=tested_base, role=info['role'], issue=info['issue'],
                     guard_labels=MG.guard_labels(info['role'], issue, events, cfg),
@@ -222,7 +230,8 @@ def cmd_gate(a, cfg):
     main_sha = gh_api.get(f'/repos/{rp}/branches/{cfg["auto_merge"]["base"]}', token)['commit']['sha']
     enabled = os.environ.get(cfg['auto_merge']['enabled_var'], '').strip().lower() == 'true'
     dec = MG.decide(pr, commits, checks, apk, rev, cfg, enabled=enabled, dry_run=bool(meta.get('dry_run')),
-                    tested_head=meta.get('head_sha'), tested_base=meta.get('tested_base'), current_base=main_sha)
+                    tested_head=meta.get('head_sha'), tested_base=meta.get('tested_base'), current_base=main_sha,
+                    main_ancestors=frozenset(meta.get('main_ancestors') or []))
     dec.update(checks=checks, auto_merge_enabled=enabled, url=meta.get('url', ''), merged=False, merge_commit_sha='', error='')
     _dump(dec, a.out)
     print(json.dumps(dec, indent=2))
