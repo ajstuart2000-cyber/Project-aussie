@@ -63,7 +63,7 @@ def evaluate(issue, events, open_prs, cfg):
     L, owner = cfg['labels'], cfg['owner']
     labels = label_names(issue)
     info = {'number': issue['number'], 'title': issue.get('title', ''), 'labels': sorted(labels)}
-    if issue.get('pull_request'):
+    if 'pull_request' in issue:
         return False, {**info, 'reason': 'is a pull request'}
     if L['approved'] not in labels:
         return False, {**info, 'reason': f'no `{L["approved"]}` label'}
