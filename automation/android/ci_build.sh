@@ -28,7 +28,7 @@ GRADLE_CMD="${GRADLE_CMD:-./gradlew}"
 $GRADLE_CMD --no-daemon --stacktrace -I "$ROOT/automation/android/ci-init.gradle" assembleDebug
 
 # 4. Verify the APK really contains the game and has the CI package id.
-APK="$(ls "$ROOT"/android/app/build/outputs/apk/debug/*.apk | head -1)"
+APK="$(find "$ROOT/android/app/build/outputs/apk/debug" -name "*.apk" | head -1)"
 SHA="$(sha256sum "$APK" | cut -d' ' -f1)"
 NAME="ProjectAussie-ci-$(git -C "$ROOT" rev-parse --short HEAD).apk"
 cp "$APK" "$OUT/$NAME"

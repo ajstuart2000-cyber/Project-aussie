@@ -15,7 +15,10 @@ while IFS= read -r f; do
 done < "$REQ"
 if [[ $missing -ne 0 ]]; then echo "Game sources incomplete; refusing to build an APK without the game." >&2; exit 1; fi
 
+# Mirror (delete anything stale), then drop editor backups / OS junk.
+rm -rf "$DST"
 mkdir -p "$DST"
-rsync -a --delete --exclude 'index.*.bak.html' --exclude '.DS_Store' --exclude 'Thumbs.db' --exclude 'desktop.ini' "$SRC/" "$DST/"
+cp -a "$SRC/." "$DST/"
+find "$DST" -type f \( -name 'index.*.bak.html' -o -name '.DS_Store' -o -name 'Thumbs.db' -o -name 'desktop.ini' \) -delete
 count=$(find "$DST" -type f | wc -l)
 echo "Synced www/ -> android/app/src/main/assets ($count files)"
