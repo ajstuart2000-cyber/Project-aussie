@@ -1,0 +1,108 @@
+# Code-validation checks for every pull request into main. Needs no API keys.
+# Also called by ai-daily-dev.yml for the AI branch (pull requests opened with
+# the default GITHUB_TOKEN do not trigger pull_request workflows by themselves).
+name: PR checks
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit or branch to check
+        type: string
+        required: true
+      labels:
+        description: Comma-separated labels that apply (owner approval labels)
+        type: string
+        default: ''
+      branch:
+        description: Branch name (ai/<role>/... switches the guardrails to strict AI mode)
+        type: string
+        default: ''
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: Automation unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || '' }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run unit tests (task rules, guardrails, budget, providers with fake transports, report)
+        run: python3 -m unittest discover -s automation/tests -t automation/tests -v
+
+  guardrails:
+    name: Protected areas (audio, models, package/signing, save keys, Falcon split)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || '' }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Diff against main and enforce the protection rules
+        env:
+          PYTHONPATH: automation
+          PR_LABELS: ${{ inputs.ref && inputs.labels || join(github.event.pull_request.labels.*.name, ',') }}
+          PR_BRANCH: ${{ inputs.ref && inputs.branch || github.head_ref }}
+        run: |
+          git fetch --no-tags origin main
+          python3 -m aidev guard --base origin/main --head HEAD \
+            --branch "$PR_BRANCH" --labels "$PR_LABELS" --summary "$GITHUB_STEP_SUMMARY"
+
+  js-syntax:
+    name: JS syntax (inline scripts of www/index.html)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || '' }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: node --check on every inline script
+        env:
+          PYTHONPATH: automation
+        run: python3 -m aidev jscheck --file www/index.html
+
+  workflow-lint:
+    name: Workflow lint (actionlint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || '' }}
+          persist-credentials: false
+      - name: Install actionlint 1.7.7 (checksum pinned)
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/al.tgz" https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz
+          echo "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757  $RUNNER_TEMP/al.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/al.tgz" -C "$RUNNER_TEMP" actionlint
+      - name: actionlint
+        run: '"$RUNNER_TEMP/actionlint" -color'
+
+  gradle-wrapper:
+    name: Gradle wrapper validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || '' }}
+          persist-credentials: false
+      - uses: gradle/actions/wrapper-validation@v4

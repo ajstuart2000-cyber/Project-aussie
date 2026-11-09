@@ -1,0 +1,74 @@
+# Builds a debug TEST APK containing the complete game and uploads it as an artifact.
+# The CI APK is package com.barrarun.game.ci, signed with a throwaway key made in
+# the job, so it installs NEXT TO the real app and can never overwrite it.
+# android/app/build.gradle is not edited; see automation/android/ci-init.gradle.
+name: Android build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit or branch to build
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit or branch to build (blank = the selected branch)
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    name: Debug test APK (com.barrarun.game.ci)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || '' }}
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Sync www/ into assets, build with the CI init script, verify the APK
+        run: automation/android/ci_build.sh "$RUNNER_TEMP/apk"
+      - name: Upload test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-aussie-ci-apk
+          path: |
+            ${{ runner.temp }}/apk/*.apk
+            ${{ runner.temp }}/apk/*.sha256
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload APK verification result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-verify
+          path: ${{ runner.temp }}/apk/apk-verify.json
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Job summary
+        if: always()
+        run: |
+          f="$RUNNER_TEMP/apk/apk-verify.json"
+          {
+            echo "### Android test APK"
+            if [[ -f "$f" ]]; then echo '```json'; cat "$f"; echo '```'; else echo "No APK was produced (see the log above)."; fi
+            echo "Package \`com.barrarun.game.ci\`, signed with a throwaway CI key: installs beside your real app and cannot overwrite it."
+          } >> "$GITHUB_STEP_SUMMARY"

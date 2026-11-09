@@ -121,6 +121,32 @@ def cmd_report(a, cfg):
     return 1 if status == 'failure' else 0
 
 
+def cmd_prbody(a, cfg):
+    plan, dev = _load(a.plan), _load(a.dev_result)
+    t = plan['task']
+    p = dev.get('provider') or {}
+    who = {'grok': 'Grok', 'claude': 'Claude'}[t['role']]
+    title = f'[AI · {who}] {t["title"]} (#{t["number"]})'[:200]
+    body = [f'Automated change for #{t["number"]} by **{who} — {dev["role_title"]}**, generated through the '
+            f'{dev["provider_name"]} API (`{p.get("endpoint_host")}`, model reported by the API: `{p.get("model_reported")}`, '
+            f'response id `{p.get("response_id")}`).', '',
+            '> ⚠️ Not merged automatically. Automation never merges into `main` and never publishes releases. '
+            'The owner reviews, tests on the phone and merges by hand.', '',
+            '### Summary', dev.get('summary') or '–', '',
+            '### Files', *[f'- `{f}`' for f in dev.get('changed_files', [])], '',
+            '### Owner test steps (not done by CI)', *([f'- [ ] {s}' for s in dev.get('owner_test_steps', [])] or ['- [ ] Play-test the change on the phone']), '',
+            '### Risks noted by the developer model', dev.get('risks') or '–', '',
+            '### Guardrails at generation time',
+            f'- Protected-area check: passed (role `{t["role"]}`, audio-approved: {bool(t.get("audio_approved"))})',
+            '- JS syntax check of www/index.html: ' + ('passed' if (dev.get('js_check') or {}).get('ok') else 'not applicable'),
+            '- CI checks, the Android build and the ChatGPT review are run by the daily workflow; see its run and report.', '',
+            f'Closes nothing automatically. Related: #{t["number"]}', '',
+            f'<!-- aidev-pr issue={t["number"]} role={t["role"]} -->']
+    with open(a.out, 'w') as fh:
+        fh.write('\n'.join(body) + '\n')
+    _out(title=title)
+
+
 def cmd_guard(a, cfg):
     labels = [l for l in (a.labels or '').split(',') if l.strip()]
     ctx = G.Context.from_branch(a.branch or '', labels)
@@ -161,11 +187,13 @@ def main(argv=None):
     p.add_argument('--event', default=''); p.add_argument('--pr-url', default=''); p.add_argument('--out', default='report.md')
     p = sub.add_parser('guard'); p.add_argument('--base', required=True); p.add_argument('--head', default='HEAD')
     p.add_argument('--branch', default=''); p.add_argument('--labels', default=''); p.add_argument('--summary')
+    p = sub.add_parser('prbody'); p.add_argument('--plan', default='plan.json'); p.add_argument('--dev-result', default='dev-result.json')
+    p.add_argument('--out', default='pr-body.md')
     p = sub.add_parser('jscheck'); p.add_argument('--file', default='www/index.html')
     a = ap.parse_args(argv)
     cfg = config.load_config(a.config)
     return {'plan': cmd_plan, 'develop': cmd_develop, 'review': cmd_review, 'report': cmd_report,
-            'guard': cmd_guard, 'jscheck': cmd_jscheck}[a.cmd](a, cfg) or 0
+            'guard': cmd_guard, 'prbody': cmd_prbody, 'jscheck': cmd_jscheck}[a.cmd](a, cfg) or 0
 
 
 if __name__ == '__main__':
