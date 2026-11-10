@@ -705,6 +705,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const $ = id => document.getElementById(id);
 const store = {
@@ -1335,16 +1336,26 @@ function addTurboPoke(g){
   /* flanged vent inboard of the turbo, and a bonnet pin in front */
   const px=box.min.x+sz.x*.5, pz=box.max.z-sz.z*.18; const pin=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.008,20),blk); pin.scale.z=.6; pin.position.set(px,surf(px,pz)+.004,pz); g.add(pin);
   g.traverse(o=>{ if(o.isMesh&&o.parent!==g) o.castShadow=true; }); }
+// bake many static meshes that share a material into one geometry, so the carby bay is a handful of draws instead of dozens
+function bakeStatic(root, shadowMats){
+  root.updateMatrixWorld(true);
+  const inv=new THREE.Matrix4().copy(root.matrixWorld).invert(), by=new Map(), doomed=[];
+  root.traverse(o=>{ if(o.isMesh) doomed.push(o); });
+  for(const o of doomed){ const g=o.geometry.clone(); g.applyMatrix4(inv.clone().multiply(o.matrixWorld)); if(!by.has(o.material)) by.set(o.material,[]); by.get(o.material).push(g); }
+  while(root.children.length) root.remove(root.children[0]);
+  for(const [mat,geos] of by){ const mg=mergeGeometries(geos,false); geos.forEach(g=>g.dispose()); if(!mg) continue; const m=new THREE.Mesh(mg,mat); m.castShadow=shadowMats?shadowMats.has(mat):false; root.add(m); }
+  return root;
+}
 // bonnet off: a red rocker cover on the Barra in the bay and a carby on a riser on the driver's side, air cleaner on top (BA/BF bay, body space)
 function addCarbyOpen(g){
-  const red=new THREE.MeshPhysicalMaterial({color:'#b3120d',metalness:.35,roughness:.32,clearcoat:.8}), alu=new THREE.MeshStandardMaterial({color:'#b9bcc0',metalness:.9,roughness:.32}),
+  const red=new THREE.MeshStandardMaterial({color:'#b3120d',metalness:.45,roughness:.28}), alu=new THREE.MeshStandardMaterial({color:'#b9bcc0',metalness:.9,roughness:.32}),
         blk=new THREE.MeshStandardMaterial({color:'#0b0b0c',roughness:.7}), fil=new THREE.MeshStandardMaterial({color:'#141416',roughness:.8}), lid=new THREE.MeshStandardMaterial({color:'#1a1a1d',metalness:.5,roughness:.4});
   const E=new THREE.Group(); E.name='carbyOpen'; g.add(E);
   // rocker cover: long rounded lid along the head with fins and the oil cap
   const rk=new THREE.Mesh(new THREE.BoxGeometry(.2,.055,.7),red); rk.position.set(.06,.9,1.36); E.add(rk);
-  const rt=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.7,20,1,false,-Math.PI/2,Math.PI).rotateX(Math.PI/2),red); rt.scale.y=.35; rt.position.set(.06,.925,1.36); E.add(rt);
+  const rt=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.7,12,1,false,-Math.PI/2,Math.PI).rotateX(Math.PI/2),red); rt.scale.y=.35; rt.position.set(.06,.925,1.36); E.add(rt);
   for(let i=0;i<6;i++){ const f=new THREE.Mesh(new THREE.BoxGeometry(.2,.012,.012),red); f.position.set(.06,.958,1.08+i*.11); E.add(f); }
-  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.025,16),blk); cap.position.set(.1,.965,1.62); E.add(cap);
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.025,10),blk); cap.position.set(.1,.965,1.62); E.add(cap);
   const lip=new THREE.Mesh(new THREE.BoxGeometry(.23,.012,.73),alu); lip.position.set(.06,.873,1.36); E.add(lip);
   // carby: riser plate, square carby body with linkage, then the big round air cleaner
   const C=new THREE.Group(); C.position.set(-.2,.875,1.36); E.add(C);
@@ -1352,14 +1363,14 @@ function addCarbyOpen(g){
   const body=new THREE.Mesh(new THREE.BoxGeometry(.14,.1,.15),alu); body.position.y=.12; C.add(body);
   const bowl=new THREE.Mesh(new THREE.BoxGeometry(.13,.06,.035),alu); bowl.position.set(0,.11,.09); C.add(bowl);
   const lk=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,.12,8),blk); lk.rotation.z=Math.PI/2; lk.position.set(.02,.13,-.08); C.add(lk);
-  const base=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.02,36),lid); base.position.y=.18; C.add(base);
-  const core=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.13,36),fil); core.position.y=.255; C.add(core);
-  const pg=new THREE.BoxGeometry(.012,.13,.02); for(let i=0;i<52;i++){ const a=i/52*Math.PI*2, p=new THREE.Mesh(pg,fil); p.position.set(Math.cos(a)*.15,.255,Math.sin(a)*.15); p.rotation.y=-a; C.add(p); }   /* pleats */
-  const top=new THREE.Mesh(new THREE.CylinderGeometry(.165,.165,.022,36),lid); top.position.y=.33; C.add(top);
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.02,16),lid); base.position.y=.18; C.add(base);
+  const core=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.13,16),fil); core.position.y=.255; C.add(core);
+  const pg=new THREE.BoxGeometry(.012,.13,.02); for(let i=0;i<52;i++){ const a=i/52*Math.PI*2, p=new THREE.Mesh(pg,fil); p.position.set(Math.cos(a)*.15,.255,Math.sin(a)*.15); p.rotation.y=-a; C.add(p); }   /* pleats (merged below) */
+  const top=new THREE.Mesh(new THREE.CylinderGeometry(.165,.165,.022,16),lid); top.position.y=.33; C.add(top);
   const nut=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.03,6),alu); nut.position.y=.35; C.add(nut);
   // fuel line from the carby back along the bay
   const fl=new THREE.Mesh(new THREE.CylinderGeometry(.007,.007,.5,8),blk); fl.rotation.x=Math.PI/2; fl.position.set(-.29,.95,1.15); E.add(fl);
-  E.traverse(o=>{ if(o.isMesh) o.castShadow=true; }); }
+  bakeStatic(E, new Set([red,alu,lid,fil])); }   // one draw per material; small black bits do not cast shadows
 // NA with a carby: the air cleaner stack poking up through a round hole in the bonnet
 function addCarbyPoke(g){
   g.updateMatrixWorld(true); const box=new THREE.Box3().setFromObject(g); if(box.isEmpty()) return;
@@ -1367,14 +1378,14 @@ function addCarbyPoke(g){
   const h=new THREE.Raycaster(new THREE.Vector3(cx,box.max.y+1,cz),new THREE.Vector3(0,-1,0)).intersectObject(g,true)[0], y0=h?h.point.y:box.max.y;
   const blk=new THREE.MeshStandardMaterial({color:'#050506',roughness:.95}), fil=new THREE.MeshStandardMaterial({color:'#141416',roughness:.8}), lid=new THREE.MeshStandardMaterial({color:'#1a1a1d',metalness:.5,roughness:.4});
   const C=new THREE.Group(); C.name='carbyPoke'; C.position.set(cx,y0,cz); C.scale.setScalar(1.2);
-  const hole=new THREE.Mesh(new THREE.CircleGeometry(.15,36),blk); hole.rotation.x=-Math.PI/2; hole.position.y=.008; C.add(hole);
-  const lip=new THREE.Mesh(new THREE.TorusGeometry(.15,.008,6,36),lid); lip.rotation.x=Math.PI/2; lip.position.y=.008; C.add(lip);
-  const base=new THREE.Mesh(new THREE.CylinderGeometry(.125,.125,.03,36),lid); base.position.y=.02; C.add(base);
-  const core=new THREE.Mesh(new THREE.CylinderGeometry(.112,.112,.15,36),fil); core.position.y=.11; C.add(core);
-  const pg=new THREE.BoxGeometry(.012,.15,.02); for(let i=0;i<44;i++){ const a=i/44*Math.PI*2, p=new THREE.Mesh(pg,fil); p.position.set(Math.cos(a)*.116,.11,Math.sin(a)*.116); p.rotation.y=-a; C.add(p); }   /* pleats */
-  const top=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.022,36),lid); top.position.y=.195; C.add(top);
+  const hole=new THREE.Mesh(new THREE.CircleGeometry(.15,16),blk); hole.rotation.x=-Math.PI/2; hole.position.y=.008; C.add(hole);
+  const lip=new THREE.Mesh(new THREE.TorusGeometry(.15,.008,6,16),lid); lip.rotation.x=Math.PI/2; lip.position.y=.008; C.add(lip);
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(.125,.125,.03,16),lid); base.position.y=.02; C.add(base);
+  const core=new THREE.Mesh(new THREE.CylinderGeometry(.112,.112,.15,16),fil); core.position.y=.11; C.add(core);
+  const pg=new THREE.BoxGeometry(.012,.15,.02); for(let i=0;i<44;i++){ const a=i/44*Math.PI*2, p=new THREE.Mesh(pg,fil); p.position.set(Math.cos(a)*.116,.11,Math.sin(a)*.116); p.rotation.y=-a; C.add(p); }   /* pleats (merged below) */
+  const top=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.022,16),lid); top.position.y=.195; C.add(top);
   const nut=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.03,6),lid); nut.position.y=.215; C.add(nut);
-  C.traverse(o=>{ if(o.isMesh) o.castShadow=true; }); g.add(C); }
+  bakeStatic(C, new Set([lid,fil])); g.add(C); }
 function optNodes(slot,key){ const o=(SWAP[slot]||[]).find(o=>o[0]===key); return o?o[2]:(key?[key]:[]); }
 async function installSlot(slot,key){
   build.parts[slot]=key;
