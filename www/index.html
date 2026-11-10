@@ -726,10 +726,11 @@ const saveSettings = ()=>store.set('barra.settings', settings);
 // Clutch kick tip-in help (clutch-kick 360, rear grip drop, the 50 km/h+ throw). Off as a test: a kick only keeps the revs and wheelspin up. Set true to bring it back.
 const CK_TIPIN=false;
 const SK_REV=.4;   // Skidder: how strongly a snakey reversal off the brake is eased (0 = off, 1 = as much as with the brake held)
-const STEER_DEF={ classic:{lock:36,rate:1,front:1,rear:1.08,counter:0,spin:1,angle:0,thr:.68,kick:0,pivot:0},
-                  skidder:{lock:36,rate:1,front:1,rear:1,counter:0,spin:1,angle:0,thr:.5,kick:0,cs:0,pivot:0},
-                  drift:{lock:58,rate:1.5,front:1.12,rear:.82,counter:.75,spin:.4,angle:55,thr:.5,kick:.35,cs:1,pivot:0},
-                  grip:{lock:34,rate:1.7,front:1.22,rear:1.32,counter:.45,spin:0,angle:0,thr:.95,kick:0,cs:1,pivot:0,hs:1.6} };
+const TR_K=3;   // Classic/Skidder: how much a counter-steer helps pull a slide back the other way (0 = off)
+const STEER_DEF={ classic:{lock:36,rate:1,front:1,rear:1.08,counter:0,spin:1,angle:0,thr:.68,kick:0,pivot:0,bias:.7},
+                  skidder:{lock:36,rate:1,front:1,rear:1,counter:0,spin:1,angle:0,thr:.5,kick:0,cs:0,pivot:0,bias:.7},
+                  drift:{lock:58,rate:1.5,front:1.12,rear:.82,counter:.75,spin:.4,angle:55,thr:.5,kick:.35,cs:1,pivot:0,bias:.7},
+                  grip:{lock:34,rate:1.7,front:1.22,rear:1.32,counter:.45,spin:0,angle:0,thr:.95,kick:0,cs:1,pivot:0,hs:1.6,bias:.7} };
 if(!settings.tuneV10){ if(settings.tune){ delete settings.tune.skidder; delete settings.tune.classic; } settings.tuneV2=settings.tuneV3=settings.tuneV4=settings.tuneV5=settings.tuneV6=settings.tuneV7=settings.tuneV8=settings.tuneV9=settings.tuneV10=1; store.set('barra.settings',settings); }   // Skidder takes the old Classic feel; Classic is a touch harder to tip in
 const STEER_NOTE={ classic:'The original feel, tamed a touch. The rear holds on a little more, so a tip-in needs a bigger flick or more throttle to break it loose. 360s with the assist on.',
   grip:'Built for weaving through traffic. Sticky front and rear, quick sharp steering that stays strong at 250 km/h, and it holds a line instead of stepping out. Ideal for No Hesi.',
@@ -742,7 +743,8 @@ const TUNE_ROWS=[['lock','Steering lock',25,70,1,v=>v+'°','How far the front wh
   ['hs','High-speed steering',.5,2.5,.05,v=>v.toFixed(2)+'×','How much the wheel still turns the car at big speed: higher for lane-splitting'],
   ['pivot','Power rotation',0,3,.05,v=>v.toFixed(2)+'×','Gas + full lock keeps it rotating on its own, no 360 assist needed'],
   ['kick','Tip-in kick',0,1.5,.05,v=>Math.round(v*100)+'%','Each flick of the wheel throws the tail and breaks the rear loose for a moment'],
-  ['angle','Max drift angle',0,80,1,v=>v?v+'°':'Off','Holds the car inside this angle. Off lets it spin']];
+  ['angle','Max drift angle',0,80,1,v=>v?v+'°':'Off','Holds the car inside this angle. Off lets it spin'],
+  ['bias','Brake bias',.4,.9,.01,v=>Math.round(v*100)+'% front','More front: the rears keep spinning and the revs stay up under brakes, like a skid car. More rear: the rear brakes slow the rears and pull the tail']];
 let TUNE=null; function refreshTune(){ const m=settings.steerMode||'classic'; TUNE=Object.assign({},STEER_DEF[m]||STEER_DEF.classic,((settings.tune||{})[m])||{}); }
 refreshTune();
 
@@ -3061,9 +3063,9 @@ function step(dt){
   if(skidder && !lineLock){ const tgt=brk, up=tgt>(car.skBrk||0); car.skBrk=(car.skBrk||0)+(tgt-(car.skBrk||0))*Math.min(1,dt*(up?3.2:10)); }
   else car.skBrk=brk;
   const brkF=skidder&&!lineLock?car.skBrk:brk;
-  const FbMax=16500*(modFx('brakes').br||1);
-  const FbF = Math.min(lineLock ? brk*FbMax*.8 : brkF*FbMax*.62, mu*FzF*.97);
-  let TbR = lineLock ? 0 : brkF*FbMax*.38*WR;
+  const FbMax=14000*(modFx('brakes').br||1), bias=clamp(TUNE.bias??.7,.4,.9);   // a touch softer overall (was 16500); bias splits it front to rear
+  const FbF = Math.min(lineLock ? brk*16500*(modFx('brakes').br||1)*.8 : brkF*FbMax*bias, mu*FzF*.97);   // line lock holds the fronts as before
+  let TbR = lineLock ? 0 : brkF*FbMax*(1-bias)*WR;
   const slideLit=(car.spin||0)>.18 || Math.abs((car.wR||0)*WR)-Math.abs(vLong)>2;
   if(slideLit) car.slideHold=true; else if(!((car.spin||0)>.10 || Math.abs((car.wR||0)*WR)-Math.abs(vLong)>1.2)) car.slideHold=false;   // hysteresis so rear-brake fade doesn't chatter at the threshold
   const slideOn=slideLit||!!car.slideHold;
@@ -3151,6 +3153,14 @@ function step(dt){
   if(TUNE.pivot>0 && !car.tc && !lineLock && thr>.7 && Math.abs(sIn)>.85 && speed>.6){
     const dir=Math.sign(sIn), lit=clamp((car.spin-.3)/.4,0,1), rMax=3.6+Math.min(1.4,speed*.08), push=(dir*rMax-car.r)*dir;
     if(push>0) Tz+=dir*push*IZ*1.4*TUNE.pivot*lit*thr*clamp(car.lockT/.35,0,1)*bkG; }   // ramps in once you've held it for a moment
+  // transition (Classic and Skidder): counter-steer against the way the car is rotating and the fronts get the authority to pull it
+  // back through centre into the other side, instead of the lit rears carrying it on round into a donut. Only while the wheel is
+  // turned against the rotation, so tip-ins from straight are untouched; it eases in with how far you steer, so there's no snap.
+  { const m=settings.steerMode||'classic';
+    const on=TR_K>0 && (m==='classic'||m==='skidder') && !car.tc && !lineLock && !car.c360 && speed>2.5 && Math.abs(sIn)>.25 && Math.abs(car.r)>.3 && Math.sign(sIn)!==Math.sign(car.r);
+    car.trA=(car.trA||0)+((on?1:0)-(car.trA||0))*Math.min(1,dt*(on?2.5:12));   // eases in over ~0.4 s so it never snaps
+    if(car.trA>.01 && Math.abs(sIn)>.25){ const dir=Math.sign(sIn), kS=clamp((Math.abs(sIn)-.25)/.5,0,1), rT=dir*(.6+.9*kS), push=(rT-car.r)*dir;
+      if(push>0 && Math.sign(car.r)!==dir) Tz+=dir*Math.min(push,3)*IZ*TR_K*kS*car.trA; } }
   // tip-in hold: once the car has swung the max angle from where the tip-in started, stop it there so it hangs sideways
   if(tipA!=null && TUNE.angle>0 && !car.tc && !car.c360){ const bm=TUNE.angle*Math.PI/180, ex=tipA-clamp(tipA,-bm,bm);
     if(ex){ Tz-=ex*IZ*22; if(Math.sign(car.r)===Math.sign(ex)) Tz-=car.r*IZ*5; } }
