@@ -757,6 +757,7 @@ const VFP = { bumperF:'ss', bumperR:'ss', hood:'stock', fenders:'stock', spoiler
 const R8P = { bumperF:'club', bumperR:'f2', hood:'vent', fenders:'stock', spoiler:'club', skirts:'gts', tails:'gts', badge:'r8' };
 const PRESETS = [
   { id:'xr6na', name:'XR6 NA', engine:'na', paint:'Crimson Red', rim:'Silver', stance:'stock', parts:{...BASE_PARTS, badge:'xr6turbo_badge_5_ng'} },
+  { id:'xr6carby', name:'XR6 Carby', engine:'na', cam:'ghost', paint:'Jet Black', rim:'Chrome', stance:'low', stickers:'burnout', mods:{finish:'matte',head:'port',pipe:'35',tint:'dark'}, parts:{...BASE_PARTS, hood:'carby_poke', badge:'xr6turbo_badge_5_ng'} },   // NA Barra on a carby: air cleaner through the bonnet, matte black, chrome rims
   { id:'xr6na_bag', name:'Bagged XR6 NA', engine:'na', paint:'Winter White', rim:'Gunmetal', stance:'slammed', parts:{...BASE_PARTS, badge:'xr6turbo_badge_5_ng'} },
   { id:'xr6t', name:'XR6T', engine:'xr6t', cam:'ghost', gate:'screamer', launch:'on', paint:'Electric Blue', rim:'Silver', stance:'stock', parts:{...BASE_PARTS} },
   { id:'xr6t_bag', name:'XR6T Bagged', engine:'xr6t', cam:'ghost', gate:'screamer', launch:'on', paint:'Winter White', rim:'Gunmetal', stance:'slammed', parts:{...BASE_PARTS} },
@@ -954,7 +955,7 @@ const buildName = b => (b.id && nameOverrides[b.id]) || b.name;
 const myBuilds = store.get('barra.mybuilds') || {};
 { const old=store.get('barra.mybuild'); if(old && !myBuilds.falcon){ old.vehicle='falcon'; old.custom=true; old.id='mine_falcon'; if(!old.engine) old.engine='xr6t'; myBuilds.falcon=old; } }
 // your garage: the cars you own (each one keeps its own paint, parts, engine swap and stance); the car shop sells the four base cars
-const SHOP_CARS=[ {sid:'xr6',from:'xr6t',name:'XR6 Turbo',blurb:'BA/BF Falcon · 4.0 Barra turbo'}, {sid:'xr8',from:'xr8',name:'XR8',blurb:'BA/BF Falcon · 5.4 Boss V8'},
+const SHOP_CARS=[ {sid:'xr6',from:'xr6t',name:'XR6 Turbo',blurb:'BA/BF Falcon · 4.0 Barra turbo'}, {sid:'xr8',from:'xr8',name:'XR8',blurb:'BA/BF Falcon · 5.4 Boss V8'}, {sid:'xr6carby',from:'xr6carby',name:'XR6 Carby',blurb:'BA/BF Falcon · 4.0 Barra on a carby'},
   {sid:'vf',from:'vfss',name:'VF SS',blurb:'VF Commodore · 6.2 LS3'}, {sid:'vs',from:'vsv8',name:'VS SS',blurb:'VS Commodore · 5.7 LS1'},
   {sid:'au',from:'auforte',name:'AU Forte',blurb:'AU Falcon sedan · 4.0 I6'}, {sid:'auute',from:'auute8',name:'AU XR8 Ute',blurb:'AU Falcon ute · 5.0 V8'} ];
 const shopCar=sid=>{ const S=SHOP_CARS.find(c=>c.sid===sid), P=JSON.parse(JSON.stringify(PRESETS.find(p=>p.id===S.from))); return Object.assign(P,{id:'g_'+sid+'_'+Date.now().toString(36),name:S.name,custom:true,vehicle:P.vehicle||'falcon'}); };
@@ -2618,6 +2619,13 @@ const decalMats={};
 function decalMat(key,mk,opt={}){ if(!decalMats[key]){ decalMats[key]=new THREE.MeshStandardMaterial({map:mk(),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4,roughness:opt.r??.35,metalness:opt.m??0,side:THREE.FrontSide}); if(envTex) decalMats[key].envMap=envTex; } return decalMats[key]; }
 const isPaintMat=m=>m&&(m===MATS.xr6t||m===MATS.etk800||m===AMAT.paint||paintClones.includes(m));
 let livSig='', livGrp=null, DecalGeometry=null;
+const PLATE_Y={ falcon:[.535,null] };   // [front, rear] plate centre height in body space (null = work it out from the body): the BA/BF front plate sits on the bumper bar under the grille
+function bakedPlates(){ // plate meshes built into the body model (AU, VS): [front box, rear box] in body space, split by which end they're on
+  stance.updateMatrixWorld(true); const inv=stance.matrixWorld.clone().invert(), m=new THREE.Matrix4(), v=new THREE.Vector3(), out=[null,null];
+  stance.traverse(o=>{ if(!o.isMesh||!o.visible||o.userData.decal||!o.geometry.attributes.position||!/plate/i.test(o.name+' '+(o.material&&o.material.name||''))) return;
+    m.multiplyMatrices(inv,o.matrixWorld); const a=o.geometry.attributes.position;
+    for(let i=0;i<a.count;i++){ v.fromBufferAttribute(a,i).applyMatrix4(m); const k=v.z>0?0:1; (out[k]||(out[k]=new THREE.Box3())).expandByPoint(v); } });
+  return out; }
 function livBox(){ stance.updateMatrixWorld(true); const inv=stance.matrixWorld.clone().invert(), b=new THREE.Box3(); stance.traverse(o=>{ if(o.isMesh&&o.visible&&!o.userData.decal){ o.geometry.computeBoundingBox(); b.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv)); } }); return b; }
 function livCast(origin,dir,glass){ const W=stance.matrixWorld, o=origin.clone().applyMatrix4(W), d=dir.clone().transformDirection(W);
   const rc=new THREE.Raycaster(o,d,0,12), hits=rc.intersectObject(stance,true).filter(h=>h.object.visible&&!h.object.userData.decal&&(glass?(h.object.material.transparent||isPaintMat(h.object.material)):isPaintMat(h.object.material)));
@@ -2657,9 +2665,17 @@ async function applyLivery(force){
   /* rego plates */
   const txt=(build.plate||'1BRR 123').toUpperCase().slice(0,8), pm=new THREE.MeshStandardMaterial({map:plateTex(txt,build.plateS||'wa'),roughness:.4,metalness:.15,polygonOffset:true,polygonOffsetFactor:-2});
   const pw=build.plateS==='euro'?.46:.372, ph=build.plateS==='euro'?.11:.134;
-  for(const [front,y] of [[1,B.min.y+hgt*.27],[0,B.min.y+hgt*.44]]){ const o=V(0,y,front?B.max.z+out:B.min.z-out), d=V(0,0,front?-1:1); const W=stance.matrixWorld;
-    const rc=new THREE.Raycaster(o.clone().applyMatrix4(W),d.clone().transformDirection(W),0,8), h=rc.intersectObject(stance,true).filter(h=>h.object.visible&&!h.object.userData.decal&&!h.object.material.transparent)[0];
-    const p=new THREE.Mesh(new THREE.PlaneGeometry(pw,ph),pm); p.userData.decal=1; const loc=h?stance.worldToLocal(h.point.clone()):V(0,y,front?B.max.z:B.min.z); loc.z+=front?.012:-.012; p.position.copy(loc); if(!front) p.rotation.y=Math.PI; livGrp.add(p); }
+  const PY=PLATE_Y[vehId]||[], BP=bakedPlates();   // a fixed mount height where the body-box guess misses (it also moved whenever a tall part changed the box)
+  for(const [front,y0] of [[1,B.min.y+hgt*.27],[0,B.min.y+hgt*.44]]){
+    const bp=BP[front?0:1]; if(bp){ // the model has its own plate: cover it exactly, same centre, at least as big
+      const c=bp.getCenter(V(0,0,0)), sz=bp.getSize(V(0,0,0)), p=new THREE.Mesh(new THREE.PlaneGeometry(Math.max(pw,sz.x+.012),Math.max(ph,sz.y+.012)),pm); p.userData.decal=1;
+      p.position.set(c.x,c.y,front?bp.max.z+.006:bp.min.z-.006); if(!front) p.rotation.y=Math.PI; livGrp.add(p); continue; }
+    const y=PY[front?0:1]??y0, d=V(0,0,front?-1:1); const W=stance.matrixWorld, dW=d.clone().transformDirection(W);
+    // cast at the centre and the four corners and sit the plate on the outermost hit, so it never sinks into a curved bumper or boot lid
+    let z=null; for(const [dx,dy] of [[0,0],[-pw*.42,-ph*.42],[pw*.42,-ph*.42],[-pw*.42,ph*.42],[pw*.42,ph*.42]]){ const o=V(dx,y+dy,front?B.max.z+out:B.min.z-out);
+      const h=new THREE.Raycaster(o.applyMatrix4(W),dW,0,8).intersectObject(stance,true).filter(h=>h.object.visible&&!h.object.userData.decal&&!h.object.material.transparent)[0];
+      if(h){ const hz=stance.worldToLocal(h.point.clone()).z; if(z==null||(front?hz>z:hz<z)) z=hz; } }
+    const p=new THREE.Mesh(new THREE.PlaneGeometry(pw,ph),pm); p.userData.decal=1; p.position.set(0,y,(z??(front?B.max.z:B.min.z))+(front?.008:-.008)); if(!front) p.rotation.y=Math.PI; livGrp.add(p); }
 }
 function renderLiveryOpts(row){ const mk=(t,l,f)=>{ const b=document.createElement('button'); b.className='arrow'; b.textContent=t; b.setAttribute('aria-label',l); b.onclick=f; return b; };
   const L=shopCat==='livery'?LIVERY:shopCat==='stickers'?STICKERS:PLATES, key=shopCat==='livery'?'livery':shopCat==='stickers'?'stickers':'plateS', keys=L.map(o=>o[0]), cur=Math.max(0,keys.indexOf(build[key]||keys[0])), o=L[cur];
@@ -3024,7 +3040,9 @@ function step(dt){
   if(!manual && car.gear>=2 && car.shiftT<=0 && (car.autoT<=0 || (thr>.6 && car.rpm>ENG.limit-250)) && !lineLock){   // the low gears rev out faster than the shift timer: never sit it on the limiter waiting to change up
     const upAt=thr>.6?ENG.limit-200:thr<.1?ENG.limit-900:2900+thr*3000;
     const lower=car.gear>2?Math.abs(car.wR*RATIOS[car.gear-1]*FINAL)*60/(2*Math.PI):1e9;
-    const holdForSkid = settings.venue!=='drag' && ((car.spin>.4 && thr>.3) || (burnVenue() && car.spin>.2));   // never short-shift out of a skid · on the strip it shifts up through the skate
+    const wheelAhead = Math.abs(wN*WR) - Math.abs(vxR);   // rear tyre surface speed vs the road under it
+    const wheelsSpinning = wheelAhead > Math.max(3, .3*Math.abs(vxR));   // normal traction slip under power is allowed; a lit-up tyre is not
+    const holdForSkid = wheelsSpinning && (settings.venue!=='drag' || Math.abs(vxR)<10);   // never change up while the rears are spinning faster than the car is moving: it only shifts once road speed catches up to wheel speed · on the strip it still shifts up through the skate once rolling
     if(rpmW>upAt&&car.gear<RATIOS.length-1&&!holdForSkid){ autoShift(true); car.autoT=.9; }
     else if(car.gear>2&&car.spin<.3&&((thr>.85&&rpmW<2600&&lower<ENG.limit-900)||rpmW<1300||(brk>.3&&lower<4400))){ autoShift(false); car.autoT=.8; }
   }
@@ -5359,7 +5377,7 @@ function frame(now){
     body.rotation.x+=((-car.ax*.0045 - .014*sp1*car.load + popPitch)-body.rotation.x)*Math.min(1,dt*8);
     body.rotation.z+=((car.ay*.006 + .009*sp1*car.load + popRoll)-body.rotation.z)*Math.min(1,dt*8);
     if(sp1>.2){ const j=sp1*(car.cutT>0?.006:.0028); body.rotation.x+=(Math.random()-.5)*j; body.rotation.z+=(Math.random()-.5)*j; body.position.y=(Math.random()-.5)*j*.8; } else body.position.y=0;
-    wheels.forEach((w,i)=>{ w.spin.rotation.x=car.wheelRot[i]; if(w.front) w.steer.rotation.y=car.steer; });
+    wheels.forEach((w,i)=>{ w.spin.rotation.x=car.wheelRot[i]; w.steer.rotation.y=w.front?car.steer:0; });   // rears never steer (also clears the garage wheel-shop pose)
     brakeMats.forEach(m=>m.emissiveIntensity=(car.braking&&car.gear!==0)||(car.gear===0&&input.thr>.1)?3.2:.35);
     reverseMats.forEach(m=>m.emissiveIntensity=car.gear===0?2.2:0);
     let gx=null,gz=null;
@@ -5372,7 +5390,7 @@ function frame(now){
     hudAcc+=dt; if(hudAcc>1/30){ updateHud(hudAcc); freeTripTick(hudAcc); if(MAP||['circuit','sprint','free'].includes(settings.venue)) drawMap(gx,gz); hudAcc=0; }
   } else if(state==='garage'){
     garageEngine(dt); body.rotation.set(0,0,0); carRoot.rotation.x=0; car.pw=car.pwv=0; brakeMats.forEach(m=>m.emissiveIntensity=.35); reverseMats.forEach(m=>m.emissiveIntensity=0);
-    wheels.forEach(w=>{ w.steer.rotation.y=shopCat==='wheels'?.35:0; });
+    wheels.forEach(w=>{ w.steer.rotation.y=(w.front&&shopCat==='wheels')?.35:0; });   // only the fronts turn to show off the rims
     updateGarageCamera(dt);
   }
   updateStance(updateStanceNow?1:dt); updateStanceNow=false;
