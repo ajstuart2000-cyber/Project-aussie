@@ -120,7 +120,9 @@ class RepairTests(unittest.TestCase):
         first = answer([{'path': 'www/index.html', 'search': 'nope-not-here', 'replace': 'x'}])
         first['usage'] = {'input_tokens': 80000, 'output_tokens': 1000}   # $0.166 at grok-4.7 prices
         # enough room for the first call's worst case (~$0.2) but not for a repair after paying $0.166
-        res = self.run_seq([first], spent=CFG['limits']['daily_budget_usd'] - 0.25)
+        # (reasoning allowance off here so the numbers stay those of the visible-answer cap)
+        cfg = copy.deepcopy(CFG); cfg['limits']['xai_reasoning_allowance_tokens'] = 0
+        res = self.run_seq([first], cfg, spent=CFG['limits']['daily_budget_usd'] - 0.25)
         self.assertEqual(res['status'], 'rejected')
         self.assertFalse(res['repair']['attempted'])
         self.assertIn('budget', res['error'])

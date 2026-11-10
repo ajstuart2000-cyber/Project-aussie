@@ -1,7 +1,7 @@
-"""CLI: python -m aidev <plan|develop|review|report|guard|jscheck|prmeta|gate|gatereport> ..."""
+"""CLI: python -m aidev <plan|feedback|develop|review|report|guard|jscheck|prmeta|gate|gatereport> ..."""
 import argparse, json, os, sys, time
 
-from . import budget as B, config, develop, guardrails as G, jscheck, mergegate as MG, report, repo, review, tasks
+from . import budget as B, config, develop, feedback as FB, guardrails as G, jscheck, mergegate as MG, report, repo, review, tasks
 
 
 def _out(**kv):
@@ -78,6 +78,24 @@ def cmd_plan(a, cfg):
          issue=t.get('number', ''), branch=t.get('branch', ''), mode=t.get('mode', ''),
          pr_number=t.get('pr_number') or '', audio_approved=bool(t.get('audio_approved')),
          report_issue=rep_issue, date=date, spent_usd=spent)
+
+
+def cmd_feedback(a, cfg):
+    """Write the review/owner feedback an update-mode run must address (see feedback.py)."""
+    if a.fixtures:
+        fx = _load(a.fixtures)
+        comments, reviews, inline = fx.get('comments', []), fx.get('reviews', []), fx.get('review_comments', [])
+    else:
+        from . import gh_api
+        token = os.environ.get('GH_TOKEN') or os.environ['GITHUB_TOKEN']
+        comments = gh_api.get(f'/repos/{a.repo}/issues/{a.pr}/comments', token, 'per_page=100')
+        reviews = gh_api.get(f'/repos/{a.repo}/pulls/{a.pr}/reviews', token, 'per_page=100')
+        inline = gh_api.get(f'/repos/{a.repo}/pulls/{a.pr}/comments', token, 'per_page=100')
+    text = FB.build(comments, reviews, inline, cfg, head_sha=a.head_sha or '')
+    with open(a.out, 'w') as fh:
+        fh.write(text)
+    print(f'feedback: {len(text)} chars' + (' (ChatGPT review included)' if 'Latest ChatGPT code review' in text else ' (no ChatGPT review found)'))
+    return 0
 
 
 def cmd_develop(a, cfg):
@@ -322,6 +340,9 @@ def main(argv=None):
     p.add_argument('--out', default='plan.json'); p.add_argument('--dry-run', action='store_true')
     p.add_argument('--issue', type=int); p.add_argument('--event'); p.add_argument('--fixtures')
     p.add_argument('--backup', action='store_true', help='this is the later backup schedule trigger')
+    p = sub.add_parser('feedback'); p.add_argument('--repo', default=os.environ.get('GITHUB_REPOSITORY', ''))
+    p.add_argument('--pr', type=int); p.add_argument('--head-sha', default=''); p.add_argument('--out', default='feedback.md')
+    p.add_argument('--fixtures')
     p = sub.add_parser('develop'); p.add_argument('--plan', default='plan.json'); p.add_argument('--out', default='dev-result.json')
     p.add_argument('--root', default='.'); p.add_argument('--feedback'); p.add_argument('--dry-run', action='store_true')
     p = sub.add_parser('review'); p.add_argument('--plan', default='plan.json'); p.add_argument('--dev-result', default='dev-result.json')
@@ -347,7 +368,7 @@ def main(argv=None):
     p.add_argument('--out', default='gate-report.md')
     a = ap.parse_args(argv)
     cfg = config.load_config(a.config)
-    return {'plan': cmd_plan, 'develop': cmd_develop, 'review': cmd_review, 'report': cmd_report,
+    return {'plan': cmd_plan, 'feedback': cmd_feedback, 'develop': cmd_develop, 'review': cmd_review, 'report': cmd_report,
             'guard': cmd_guard, 'prbody': cmd_prbody, 'jscheck': cmd_jscheck, 'prmeta': cmd_prmeta, 'gate': cmd_gate,
             'gatereport': cmd_gatereport}[a.cmd](a, cfg) or 0
 

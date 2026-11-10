@@ -43,6 +43,16 @@ def cost(cfg, provider, model, in_tok, out_tok):
     return round(in_tok * p['in'] / 1e6 + out_tok * p['out'] / 1e6, 6)
 
 
+def reasoning_allowance(cfg, provider):
+    """Output tokens a provider can bill beyond the max-output cap we send.
+
+    Anthropic max_tokens and OpenAI max_completion_tokens include reasoning, so nothing extra.
+    xAI max_output_tokens does not cap Grok's reasoning tokens, so the worst case adds an allowance."""
+    if provider == 'xai':
+        return int(cfg['limits'].get('xai_reasoning_allowance_tokens', 0) or 0)
+    return 0
+
+
 class BudgetExceeded(Exception):
     pass
 
@@ -61,7 +71,7 @@ class Budget:
 
     def worst_case(self, provider, model, prompt_chars, max_out):
         # ~3 chars/token is a pessimistic estimate for code
-        return cost(self.cfg, provider, model, prompt_chars // 3 + 1, max_out)
+        return cost(self.cfg, provider, model, prompt_chars // 3 + 1, max_out + reasoning_allowance(self.cfg, provider))
 
     def authorize(self, provider, model, prompt_chars, max_out):
         if self.calls >= self.max_calls:
