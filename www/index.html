@@ -3493,12 +3493,26 @@ addEventListener('keydown',e=>{ if(e.repeat||e.target.tagName==='INPUT') return;
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault(); });
 addEventListener('keyup',e=>{ keys[e.code]=false; });
 addEventListener('blur',()=>{ for(const k in keys) keys[k]=false; for(const k in touch) touch[k]=0; revHeld=false; });
+// Gamepad analogue: buttons/triggers may rest at 0 or at -1 (Android/XInput axes), and a few sit inverted or slightly off zero.
+// Map to 0..1 with a deadzone so a released control is fully off and a fully pressed one is fully on, with smooth travel in between.
+function pad01(v,dz=.12){ if(v==null||Number.isNaN(+v)) return 0; v=+v; if(v<0) v=v<-1?0:(v+1)/2; if(v<=dz) return 0; if(v>=1-dz) return 1; return (v-dz)/(1-2*dz); }
+function padBtn01(b,dz=.12){ if(!b) return 0; if(!b.pressed) return 0;   // trust pressed for "at rest" so a sticky/inverted 1.0 never holds the clutch in
+  const raw=typeof b.value==='number'?b.value:1; return pad01(raw<.05?1:raw, dz); }
+function padAxis01(gp,i,dz=.12){ if(!gp||i==null||gp.axes[i]==null) return 0; return pad01(gp.axes[i],dz); }
 function readInput(dt){
   const up=keys.KeyW||keys.ArrowUp||touch.G, dn=keys.KeyS||keys.ArrowDown||touch.B, lf=keys.KeyA||keys.ArrowLeft||touch.L, rt=keys.KeyD||keys.ArrowRight||touch.R;
   let gp=null; const pads=navigator.getGamepads?navigator.getGamepads():[]; for(const p of pads) if(p){gp=p;break;}
   input.thr+=((up?1:0)-input.thr)*Math.min(1,dt*(up?8:20));   /* snappy lift so quick stabs work */ input.brk+=((dn?1:0)-input.brk)*Math.min(1,dt*10);
   input.steer=(lf?1:0)-(rt?1:0); input.hb=(keys.Space||touch.H)?1:0; input.clutch=(keys.KeyZ||touch.K)?1:0; input.als=(keys.KeyF||touch.N)?1:0; input.nos=(keys.KeyN||keys.ShiftLeft||touch.O)?1:0;
-  if(gp){ const ax=gp.axes[0]||0; if(Math.abs(ax)>.08) input.steer=-ax; const r=gp.buttons[7]?.value||0, l=gp.buttons[6]?.value||0; if(r>.05) input.thr=r; if(l>.05) input.brk=l; if(gp.buttons[0]?.pressed) input.hb=1; if(gp.buttons[4]?.pressed) input.clutch=1; if(gp.buttons[10]?.pressed||gp.buttons[11]?.pressed) input.als=1; if(gp.buttons[5]?.pressed) input.nos=1; }   // RB = nitrous, click either stick = 2-step / anti-lag
+  if(gp){ const ax=gp.axes[0]||0; if(Math.abs(ax)>.08) input.steer=-ax;
+    // RT/LT: button 7/6 (0..1), or axes 5/4 on pads that expose triggers as rest-at--1 axes. Never use axes 0-3 (sticks).
+    const r=Math.max(padBtn01(gp.buttons[7],.08), padAxis01(gp,5,.08), padAxis01(gp,7,.08));
+    const l=Math.max(padBtn01(gp.buttons[6],.08), padAxis01(gp,4,.08), padAxis01(gp,6,.08));
+    if(r>0) input.thr=r; if(l>0) input.brk=l;
+    if(gp.buttons[0]?.pressed) input.hb=1;
+    // LB clutch (button 4): analogue if the bumper reports a value, otherwise 0 or 1. Deadzoned so rest is fully engaged (clutch out).
+    const cl=padBtn01(gp.buttons[4],.12); if(cl>0||gp.buttons[4]?.pressed) input.clutch=cl;
+    if(gp.buttons[10]?.pressed||gp.buttons[11]?.pressed) input.als=1; if(gp.buttons[5]?.pressed) input.nos=1; }   // RB = nitrous, click either stick = 2-step / anti-lag
 }
 function resetCar(){ const v=settings.venue; if(MAP){ if(MAP.H&&MAP.H.chain>0){ MAP.H.chain=0; MAP.H.mult=1; toast('Reset · chain lost','var(--bad)'); } resetMap(); for(let k=0;k<4;k++) skids.lift(k); return; } if(burnVenue()){ placeFor(v); freshTyres(); run.on=false; return; } if(v==='drag'){ placeFor('drag'); dragReset(); return; } if(v==='sprint'){ placeFor('sprint'); sprint.reset(); return; } nearest(); placeCar(car.idx,0); if(lap.running) lap.invalid=true; skids.lift(0); skids.lift(1); skids.lift(2); skids.lift(3); }
 function toggleAir(){ settings.airUp=!settings.airUp; saveSettings(); airHiss(); toast(settings.airUp?'Air ride up':'Air ride down · slammed'); refreshSegs(); }
