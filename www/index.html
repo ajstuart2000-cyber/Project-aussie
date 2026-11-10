@@ -23,12 +23,17 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--night);color:var
 #app{position:fixed;left:0;top:0;width:100%;height:100%;overflow:hidden}
 #gdeck,#shop,#shop>*,#cats,#optRow{min-width:0;max-width:100%}
 #shopTitle{font:800 13px var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--amber,#ffb000)}
-#carShop{display:grid;gap:8px;padding:10px 12px;min-width:0;max-width:100%;overflow:hidden}
+#carShop{display:grid;gap:8px;padding:10px 12px;min-width:0;max-width:100%;overflow:auto;position:relative;z-index:5}
 .csHead{display:flex;align-items:center;gap:10px;flex-wrap:wrap} .csHead b{font:800 16px var(--f-display);letter-spacing:.08em;text-transform:uppercase} .csHead .btn{margin-left:auto}
 #csList,#csOwned{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;min-width:0}
-.cs{flex:0 0 auto;display:grid;gap:4px;padding:10px;border:1px solid var(--line);border-radius:6px;background:rgba(239,230,216,.04);min-width:170px}
+.cs{flex:0 0 auto;display:grid;gap:4px;padding:10px;border:1px solid var(--line);border-radius:6px;background:rgba(239,230,216,.04);min-width:170px;cursor:pointer}
 .cs b{font:800 17px var(--f-display);letter-spacing:.06em} .cs span{font-size:12px} .dim{color:var(--muted);font-size:12px}
+.cs.cur{border-color:var(--gold,#ffc53d);box-shadow:0 0 0 1px var(--gold,#ffc53d)}
 .csO{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line);border-radius:6px} .csO.cur{border-color:var(--amber,#ffb000)} .csO .btn{padding:6px 10px;font-size:12px}
+/* Car shop (and any body.carshop screen): hide the left garage menu so it cannot cover the panel; frame the 3D car in the space above */
+body.carshop #actions{display:none!important}
+body.compact #carShop,body.tiny #carShop{flex:1;min-width:0}
+body.tiny.carshop #carShop,body.compact.tiny.carshop #carShop{max-height:48vh}
 #shop{overflow:hidden}
 #optRow{overflow-x:auto;scrollbar-width:none}
 body.touch #draghud,body.touch #freehud,body.touch #hesihud{max-width:calc(50% - 100px);grid-template-columns:auto minmax(0,1fr);overflow-wrap:anywhere}   /* stops short of the centred speedo */
@@ -4997,7 +5002,7 @@ function freeTripTick(dt){
 }
 
 /* ================= garage UI ================= */
-let state='loading', menuOpen=false, revHeld=false, shopCat=null;
+let state='loading', menuOpen=false, revHeld=false, shopCat=null, shopSel=null, shopPrevIdx=null, shopPrevTok=0;
 function stats(){
   const st=STANCES[build.stance]; const sp={'xr6turbo_wing_3_ng':.12,'xr6turbo_wing_5_ng':.06,'misc_d':.03}[build.parts.spoiler]||0;
   return { acc:.7, top:.74, han:Math.min(1,.56+(st.drop/.08)*.14+sp), sta:st.rate };
@@ -5033,30 +5038,36 @@ function changeCost(a,b){ if(!a||!b||a.id!==b.id) return 0; let c=0;
   const pa=a.parts||{}, pb=b.parts||{}; for(const k of new Set([...Object.keys(pa),...Object.keys(pb)])) if(pa[k]!==pb[k]) c+=450;
   for(const [k,p] of [['tyre',600],['wheel',900],['paint',500],['livery',600],['livCol',200],['stickers',150],['plateS',250],['plate',250],['stance',400],['cam',1500],['launch',1800],['gate',900],['box',1200],['diff',500]]) if(a[k]!==b[k]) c+=p;
   return c; }
-function careerToggle(){ CAREER.on=!CAREER.on; if(CAREER.on&&!CAREER.started){ CAREER.started=true; CAREER.cash=2500; garageCars.push(Object.assign(shopCar('au'),{name:'Tired AU Forte'})); store.set('barra.garage',garageCars); toast('Career on · $2,500 and a tired AU Forte in your garage','var(--amber)'); selectBuild(garageCars.length-1); }
+function careerToggle(){ CAREER.on=!CAREER.on; if(CAREER.on&&!CAREER.started){ CAREER.started=true; CAREER.cash=2500; garageCars.push(Object.assign(shopCar('au'),{name:'Tired AU Forte'})); store.set('barra.garage',garageCars); toast('Career on · $2,500 and a tired AU Forte in your garage','var(--amber)'); shopSel=null; shopPrevIdx=garageCars.length-1; shopPrevTok++; selectBuild(garageCars.length-1); }
   else toast(CAREER.on?`Career on · ${money(CAREER.cash)}`:'Career off · everything is free again','var(--amber)'); careerSave(); cashHud(); renderShop(); }
 setTimeout(cashHud,0);
-function toMyBuild(){ if(CAREER.on){ const prev=garageCars.find(b=>b.id===build.id), cost=changeCost(prev,build);
+function toMyBuild(){ if(shopSel) return; if(CAREER.on){ const prev=garageCars.find(b=>b.id===build.id), cost=changeCost(prev,build);
     if(cost>CAREER.cash){ const keep=JSON.parse(JSON.stringify(prev)); for(const k of Object.keys(build)) delete build[k]; Object.assign(build,keep); toast(`That's ${money(cost)} · you've got ${money(CAREER.cash)}`,'var(--bad)'); applyBuild().then(()=>{ renderBuild(); renderOpts&&renderOpts(); }); return; }
     if(cost>0){ CAREER.cash-=cost; careerSave(); cashHud(); toast(`−${money(cost)} · ${money(CAREER.cash)} left`,'var(--bone)'); } }
   build.custom=true; let i=garageCars.findIndex(b=>b.id===build.id);   // every change saves straight into the car in your garage
   if(i<0){ build.id='g_'+(build.vehicle||'falcon')+'_'+Date.now().toString(36); garageCars.push(null); i=garageCars.length-1; }
   garageCars[i]=JSON.parse(JSON.stringify(build)); store.set('barra.garage',garageCars); buildIdx=i; store.set('barra.buildIdx',buildIdx); renderBuild(); }
+// shopSel = sid being previewed on the turntable; shopPrevIdx = garage car to put back when the shop closes
+function previewShopCar(sid){ const tok=++shopPrevTok; shopSel=sid; const b=shopCar(sid); if(!ENGINES[b.engine]) b.engine='xr6t'; if(!b.vehicle) b.vehicle='falcon'; build=b; $('gmsg').textContent='Loading…'; applyBuild().then(()=>{ if(tok!==shopPrevTok) return; renderBuild(); renderShopHighlight(); $('gmsg').textContent=isTouch?'Drag the car to spin the turntable':'Drag the car to spin it · hold Rev to hear the Barra'; }); }
+function endShopPreview(){ shopPrevTok++; const restore=shopPrevIdx; shopSel=null; shopPrevIdx=null; document.body.classList.remove('carshop'); if(restore!=null&&garageCars[restore]) return selectBuild(restore); return Promise.resolve(); }
+function openCarShop(on){ const sh=$('carShop'); if(on){ if(!$('shop').hidden) openShop(false); sh.hidden=false; document.body.classList.add('shopping','carshop'); gFrameN=0; shopPrevIdx=buildIdx; renderShop(); previewShopCar(shopSel||SHOP_CARS[0].sid); } else { sh.hidden=true; if($('shop').hidden) document.body.classList.remove('shopping'); endShopPreview(); gFrameN=0; ttTarget=null; Object.assign(gcamT,{yaw:.75,pitch:.16,dist:6.4}); } }
+function renderShopHighlight(){ const L=$('csList'); if(L) for(const d of L.querySelectorAll('.cs[data-sid]')) d.classList.toggle('cur',d.dataset.sid===shopSel); const G=$('csOwned'); if(G) [...G.children].forEach((r,i)=>r.classList.toggle('cur',shopSel==null&&i===buildIdx)); }
 function renderShop(){ const L=$('csList'); if(!L) return; L.innerHTML='';
-  { const d=document.createElement('div'); d.className='cs'; d.innerHTML=`<b>Career mode</b><span>${CAREER.on?`On · ${money(CAREER.cash)} in the bank · ${money(CAREER.earned)} won so far`:'Off · everything is free. Turn it on to start with $2,500 and a tired AU Forte, and earn your way up.'}</span>`; const bt=document.createElement('button'); bt.className='btn'+(CAREER.on?'':' primary'); bt.textContent=CAREER.on?'Turn career off':'Start career'; bt.onclick=careerToggle; d.appendChild(bt); L.appendChild(d); }
+  { const d=document.createElement('div'); d.className='cs'; d.style.cursor='default'; d.innerHTML=`<b>Career mode</b><span>${CAREER.on?`On · ${money(CAREER.cash)} in the bank · ${money(CAREER.earned)} won so far`:'Off · everything is free. Turn it on to start with $2,500 and a tired AU Forte, and earn your way up.'}</span>`; const bt=document.createElement('button'); bt.className='btn'+(CAREER.on?'':' primary'); bt.textContent=CAREER.on?'Turn career off':'Start career'; bt.onclick=careerToggle; d.appendChild(bt); L.appendChild(d); }
   for(const S of SHOP_CARS){ const P=PRESETS.find(p=>p.id===S.from), E=ENGINES[P.engine]||{}, own=garageCars.filter(b=>(b.vehicle||'falcon')===(P.vehicle||'falcon')&&(b.engine===P.engine||b.id.startsWith('g_'+S.sid))).length;
-    const d=document.createElement('div'); d.className='cs'; d.innerHTML=`<b>${S.name}</b><span>${S.blurb}</span><span class="dim">${E.spec||''}${own?` · ${own} in your garage`:''}</span>`;
-    const bt=document.createElement('button'); bt.className='btn primary'; bt.textContent=CAREER.on?`Buy · ${money(carPrice(S.sid))}`:'Add to garage'; bt.onclick=()=>{ if(CAREER.on){ const p=carPrice(S.sid); if(p>CAREER.cash){ toast(`Need ${money(p)} · you've got ${money(CAREER.cash)}`,'var(--bad)'); return; } CAREER.cash-=p; careerSave(); cashHud(); } garageCars.push(shopCar(S.sid)); store.set('barra.garage',garageCars); toast(`${S.name} added to your garage`); renderShop(); selectBuild(garageCars.length-1); };
+    const d=document.createElement('div'); d.className='cs'+(shopSel===S.sid?' cur':''); d.dataset.sid=S.sid; d.innerHTML=`<b>${S.name}</b><span>${S.blurb}</span><span class="dim">${E.spec||''}${own?` · ${own} in your garage`:''}</span>`;
+    d.onclick=e=>{ if(e.target.closest('button')) return; previewShopCar(S.sid); };
+    const bt=document.createElement('button'); bt.className='btn primary'; bt.textContent=CAREER.on?`Buy · ${money(carPrice(S.sid))}`:'Add to garage'; bt.onclick=()=>{ if(CAREER.on){ const p=carPrice(S.sid); if(p>CAREER.cash){ toast(`Need ${money(p)} · you've got ${money(CAREER.cash)}`,'var(--bad)'); return; } CAREER.cash-=p; careerSave(); cashHud(); } garageCars.push(shopCar(S.sid)); store.set('barra.garage',garageCars); toast(`${S.name} added to your garage`); shopSel=null; shopPrevIdx=garageCars.length-1; shopPrevTok++; selectBuild(garageCars.length-1).then(renderShop); };
     d.appendChild(bt); L.appendChild(d); }
-  const G=$('csOwned'); G.innerHTML=''; garageCars.forEach((b,i)=>{ const r=document.createElement('div'); r.className='csO'+(i===buildIdx?' cur':''); r.innerHTML=`<span>${esc(buildName(b))}</span>`;
-    const go=document.createElement('button'); go.className='btn ghost'; go.textContent=i===buildIdx?'Driving':'Pick'; go.onclick=()=>{ selectBuild(i).then(renderShop); }; r.appendChild(go);
-    if(garageCars.length>1){ const rm=document.createElement('button'); rm.className='btn ghost'; rm.textContent='Sell'; rm.onclick=()=>{ if(rm.dataset.sure){ garageCars.splice(i,1); store.set('barra.garage',garageCars); selectBuild(Math.min(buildIdx>i?buildIdx-1:buildIdx,garageCars.length-1)).then(renderShop); } else { rm.dataset.sure=1; rm.textContent='Sure?'; } }; r.appendChild(rm); }
+  const G=$('csOwned'); G.innerHTML=''; garageCars.forEach((b,i)=>{ const r=document.createElement('div'); r.className='csO'+(shopSel==null&&i===buildIdx?' cur':''); r.innerHTML=`<span>${esc(buildName(b))}</span>`;
+    const go=document.createElement('button'); go.className='btn ghost'; go.textContent=shopSel==null&&i===buildIdx?'Driving':'Pick'; go.onclick=()=>{ shopSel=null; shopPrevIdx=i; shopPrevTok++; selectBuild(i).then(renderShop); }; r.appendChild(go);
+    if(garageCars.length>1){ const rm=document.createElement('button'); rm.className='btn ghost'; rm.textContent='Sell'; rm.onclick=()=>{ if(rm.dataset.sure){ garageCars.splice(i,1); store.set('barra.garage',garageCars); const ni=Math.min(buildIdx>i?buildIdx-1:buildIdx,garageCars.length-1); shopSel=null; shopPrevIdx=ni; shopPrevTok++; selectBuild(ni).then(renderShop); } else { rm.dataset.sure=1; rm.textContent='Sure?'; } }; r.appendChild(rm); }
     G.appendChild(r); }); }
-$('shopBtn').onclick=()=>{ const sh=$('carShop'); if(sh.hidden&&!$('shop').hidden) openShop(false); sh.hidden=!sh.hidden; if(!sh.hidden) renderShop(); };
-$('csClose').onclick=()=>{ $('carShop').hidden=true; };
+$('shopBtn').onclick=()=>{ startAudio(); openCarShop($('carShop').hidden); };
+$('csClose').onclick=()=>{ openCarShop(false); };
 
 const catsNow=()=>VEH.cats.filter(c=>(CAT_GROUP[c[0]]||'engine')===shopMode);
-function openShop(on,mode){ if(mode) shopMode=mode; $('shop').hidden=!on; gFrameN=0; document.body.classList.toggle('shopping',on); $('custBtn').hidden=!on; $('custBtn').textContent='Done';
+function openShop(on,mode){ if(mode) shopMode=mode; if($('carShop')&&!$('carShop').hidden){ $('carShop').hidden=true; endShopPreview(); } $('shop').hidden=!on; gFrameN=0; document.body.classList.toggle('shopping',on); $('custBtn').hidden=!on; $('custBtn').textContent='Done';
   for(const id of ['wsBtn','paintBtn','bodyBtn']) $(id).hidden=on; $('revBtn').hidden=on; $('dynoBtn').hidden=!(on&&shopMode==='engine'); $('carShop').hidden=true;
   $('shopTitle').textContent=on?SHOP_NAMES[shopMode]:''; $('shopTitle').hidden=!on;
   if(on){ renderCats(); const C=catsNow(); setCat(shopCat&&C.some(c=>c[0]===shopCat)?shopCat:C[0][0]); } else { shopCat=null; ttTarget=null; Object.assign(gcamT,{yaw:.75,pitch:.16,dist:6.4}); } }
@@ -5385,7 +5396,7 @@ function pollPad(){
     if(E[4]) selectBuild(buildIdx-1); if(E[5]) selectBuild(buildIdx+1);   // LB / RB change car; D-pad and stick move the highlight
     if(E[1]&&padFocus){ setPadFocus(null); const back=[...document.querySelectorAll('.back,.close,[data-close],#custClose,#dynoClose')].find(el=>!el.closest('[hidden]')&&el.getBoundingClientRect().width>0); if(back) back.click(); }
     const navd=padNav(gp,E,document.body);
-    if(E[0]&&!navd){ startAudio(); showVenue(); } if(E[3]) (document.body.classList.contains('shopping')?$('custBtn'):$('wsBtn')).click(); if(E[9]) openMenu();
+    if(E[0]&&!navd){ startAudio(); showVenue(); } if(E[3]){ if($('carShop')&&!$('carShop').hidden) openCarShop(false); else (document.body.classList.contains('shopping')?$('custBtn'):$('wsBtn')).click(); } if(E[9]) openMenu();
     const rt=gp.buttons[7]?.value||0; if(rt>.3){ startAudio(); revHeld=true; } else if(padPrev.rev) revHeld=false; padPrev.rev=rt>.3; return; }
   if(state==='drive'){
     const toManual=()=>{ if(!manual){ setManual(true); toast('Manual · B up · X down · LB clutch'); } };
