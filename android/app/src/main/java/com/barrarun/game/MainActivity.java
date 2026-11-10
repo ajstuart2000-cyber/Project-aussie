@@ -73,7 +73,12 @@ public class MainActivity extends AppCompatActivity {
                         "(function(){try{return typeof window.__paBack==='function'&&window.__paBack()===true;}catch(e){return false;}})()",
                         value -> {
                             if (!"true".equals(value)) {
-                                finish();
+                                // game declined Back: keep the previous behaviour (WebView history first, otherwise exit)
+                                if (webView != null && webView.canGoBack()) {
+                                    webView.goBack();
+                                } else {
+                                    finish();
+                                }
                             }
                         });
             }
@@ -144,20 +149,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
         if (webView != null) {
             webView.onResume();
-            webView.resumeTimers();
         }
     }
 
@@ -165,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         if (webView != null) {
             webView.onPause();
-            webView.pauseTimers();
         }
         super.onPause();
     }
