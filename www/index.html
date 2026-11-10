@@ -3051,6 +3051,9 @@ function step(dt){
   const Taxle = (ratio===0||clutchIn||twoStep) ? 0 : Te*mult*gr*.88*(1-Math.min(.95,clPed));
   const Ieff = 2.4 + (coupled&&!clutchIn ? .2*gr*gr : 0);
   const skidder=(settings.steerMode||'classic')==='skidder';
+  // skidder: tip-ins need a bit of speed. No tip-in throw below ~25 km/h, fading in to the full tip-in by ~40 km/h, so a slow
+  // brake-held snakey isn't kicked on every steering reversal. Clutch kicks are separate and still work slow.
+  const tipOn=skidder?(u=>u*u*(3-2*u))(clamp((speed-7)/4.2,0,1)):1;
   // skidder only: ramp the foot brake so the front bite and the tail coming out build over a beat, not instantly
   if(skidder && !lineLock){ const tgt=brk, up=tgt>(car.skBrk||0); car.skBrk=(car.skBrk||0)+(tgt-(car.skBrk||0))*Math.min(1,dt*(up?3.2:10)); }
   else car.skBrk=brk;
@@ -3080,7 +3083,7 @@ function step(dt){
     car.ckGrip+=(Math.min(1,u*1.6)-(car.ckGrip||0))*Math.min(1,dt*14);
   } else car.ckGrip+=(0-(car.ckGrip||0))*Math.min(1,dt*5);
   car.wR=wN;
-  let [Fxr,Fyr,sR] = tyre2((wN*WR-vxR)/den, tanAR, FzR, muR, AP_R); Fyr*=TUNE.rear*(1-.65*TUNE.kick*Math.min(1,(car.kickT||0)/.45))*(1-.3*Math.min(1,TUNE.pivot)*clamp(((car.spin||0)-.3)/.4,0,1))*(car.c360?.42:1);   // the rear lets go for a clutch-kick 360   // a tip-in flick unloads the rear for a moment
+  let [Fxr,Fyr,sR] = tyre2((wN*WR-vxR)/den, tanAR, FzR, muR, AP_R); Fyr*=TUNE.rear*(1-.65*TUNE.kick*tipOn*Math.min(1,(car.kickT||0)/.45))*(1-.3*Math.min(1,TUNE.pivot)*clamp(((car.spin||0)-.3)/.4,0,1))*(car.c360?.42:1);   // the rear lets go for a clutch-kick 360   // a tip-in flick unloads the rear for a moment
   if(car.ckGrip>0) Fyr*=1-.55*car.ckGrip;   // clutch-kick grip loss builds and eases; tip-in unload above is unchanged
   Fyr*=SF.latR/SF.longR;   // rear camber: corners harder, launches worse
   // ---- front wheel lift: the car pivots on the rear tyres. Drive force times the effective CG height lifts the nose,
@@ -3123,12 +3126,12 @@ function step(dt){
   // Slow down near a standstill the same input does pivot donuts on the nose.
   // a flick of the wheel starts a tip-in; flicking straight from one lock to the other counts too, so tip-ins link
   if(Math.abs(sIn)>.5 && (Math.abs(car.sPrev||0)<.3 || Math.sign(sIn)!==Math.sign(car.sPrev||0))){ car.flickT=.7; if(TUNE.tip && car.tipRef==null) car.tipRef=speed>3?Math.atan2(car.vx,car.vz):car.h;
-    if(TUNE.kick>0 && !car.tc && Math.abs(sIn)>.9 && thr>.75 && speed>1.2 && (car.spin>.3||speed>6)){ car.kickT=.45; car.kickDir=Math.sign(sIn); shake=Math.max(shake,.1*TUNE.kick); } }
+    if(TUNE.kick>0 && tipOn>0 && !car.tc && Math.abs(sIn)>.9 && thr>.75 && speed>1.2 && (car.spin>.3||speed>6)){ car.kickT=.45; car.kickDir=Math.sign(sIn); shake=Math.max(shake,.1*TUNE.kick*tipOn); } }
   car.flickT=Math.max(0,(car.flickT||0)-dt); car.kickT=Math.max(0,(car.kickT||0)-dt); car.sPrev=sIn; car.offT=Math.abs(sIn)<.15?(car.offT||0)+dt:0; car.lockT=(Math.abs(sIn)>.85&&thr>.7)?(car.lockT||0)+dt:0; if(car.offT>1||(speed<.5&&!lineLock)) car.tipRef=null;
   const tipA = TUNE.tip&&car.tipRef!=null ? Math.atan2(Math.sin(car.h-car.tipRef),Math.cos(car.h-car.tipRef)) : null;   // how far the car has swung since the tip-in started
   if(settings.donut!=='off' && !car.tc && TUNE.spin>0 && thr>.5 && Math.abs(sIn)>TUNE.thr && speed>1.2){
     const dir=Math.sign(sIn), kS=clamp((Math.abs(sIn)-TUNE.thr)/.35,0,1), lit=clamp((car.spin-.25)/.35,0,1);
-    const k=kS*Math.max(lit, speed>(TUNE.kick>0?3.5:7)&&car.flickT>0?Math.min(1,.55+.35*TUNE.kick):0);
+    const k=kS*Math.max(lit, speed>(TUNE.kick>0?3.5:7)&&car.flickT>0?Math.min(1,.55+.35*TUNE.kick)*tipOn:0);
     const rT=dir*Math.min(4.8,2.8+speed*.09)*Math.max(1,.6+.4*TUNE.spin), push=(rT-car.r)*dir;
     // tip-in, not a spin: once the tail is swung out to the max angle the assist stops pushing, so the car hangs sideways
     const useV=!TUNE.tip&&speed>4, bIn=TUNE.tip?(tipA??0)*dir:useV?-Math.atan2(vLat,Math.max(Math.abs(vLong),1))*dir:0, gate=TUNE.angle>0&&(TUNE.tip||useV)?clamp((TUNE.angle*Math.PI/180-bIn)/.3,0,1):1;
@@ -3137,7 +3140,7 @@ function step(dt){
     if(slow>0 && !(TUNE.tip&&TUNE.angle>0)){ Fx-=M*1.9*over*slow*vLong/speed; Fy-=M*1.9*over*slow*vLat/speed; } }
   // power rotation (skid car): rears lit up, gas down, wheel on full lock and the spinning tyres drive the tail around the
   // front wheels. Works with the 360 assist off; hold it and it keeps going round, ease off the gas or the lock and it slows.
-  if(car.kickT>0 && Math.sign(sIn)===car.kickDir) Tz+=car.kickDir*IZ*TUNE.kick*5.5*(car.kickT/.45);   // the throw: yaw builds smoothly, no snap
+  if(car.kickT>0 && Math.sign(sIn)===car.kickDir) Tz+=car.kickDir*IZ*TUNE.kick*5.5*(car.kickT/.45)*tipOn;   // the throw: yaw builds smoothly, no snap
   if(car.c360){ const C=car.c360; C.t+=dt; C.yaw+=car.r*dt*C.dir; const push=5.6-car.r*C.dir;   // drive the full turn, then hand back; let go of the lock or the gas and it ends
     if(push>0) Tz+=C.dir*push*IZ*3.2*(C.yaw<5.2?1:clamp((6.1-C.yaw)/.9,0,1));
     if(C.yaw>=2*Math.PI*.97||C.t>2.4||Math.abs(sIn)<.2||thr<.3||Math.sign(sIn)!==C.dir){ if(C.yaw>=2*Math.PI*.9) toast('Clutch-kick 360!','var(--good)'); car.c360=null; } }
@@ -3155,7 +3158,7 @@ function step(dt){
       if(ex){ Tz+=ex*IZ*22; if(Math.sign(car.r)===-Math.sign(ex)) Tz-=car.r*IZ*5; } } }
   if(car.tc && speed>3 && !car.c360){ const rLim=mu*G*.95/Math.max(speed,1), rDes=clamp(vLong*Math.tan(delta)/L,-rLim,rLim), err=car.r-rDes; if(Math.abs(err)>.08) Tz-=Math.sign(err)*(Math.abs(err)-.08)*IZ*5; }
   // skidder: while the brake is held or a clutch kick is dumping (and this is not a tip-in throw), cap how fast yaw can build so the tail comes out smoothly
-  if(skidder && !lineLock && !car.tc && !car.c360 && (car.kickT||0)<=0 && (car.flickT||0)<=0 && (brk>.12||(car.ckDump||0)>0||(car.ckGrip||0)>.12) && speed>1){
+  if(skidder && !lineLock && !car.tc && !car.c360 && (((car.kickT||0)<=0 && (car.flickT||0)<=0) || tipOn<.5) && (brk>.12||(car.ckDump||0)>0||(car.ckGrip||0)>.12) && speed>1){
     const rDot=Tz/IZ, rDotMax=5.5, rCap=2.2+Math.min(1.2,speed*.08);
     if(Math.abs(rDot)>rDotMax && Math.sign(rDot)===Math.sign(car.r||rDot)) Tz=Math.sign(rDot)*rDotMax*IZ;
     const rNext=car.r+Tz/IZ*dt;
