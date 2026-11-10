@@ -3012,13 +3012,16 @@ function step(dt){
   const clutchWas=!!car.clutchHeld;
   if(clPed>.55) car.clutchHeld=true; else if(clPed<.40) car.clutchHeld=false;   // hysteresis so a noisy pad doesn't chatter the kick
   const clutchIn = clPed>.92 && ratio!==0;   // works on auto too: hold it and the engine free-revs
+  // skidder: below ~50 km/h a clutch kick only keeps the revs up and the rears lit; it doesn't throw the tail out. From ~45 to ~55 km/h
+  // its tip-in help (the rear letting go and the clutch-kick 360) fades in, full from ~55 km/h as before.
+  const ckOn=(settings.steerMode||'classic')==='skidder'?(u=>u*u*(3-2*u))(clamp((speed-12.5)/2.78,0,1)):1;
   if(clutchWas && clPed<=.40 && ratio!==0 && (car.ckDump||0)<=0){ // clutch kick: dump the spinning engine into the axle over a beat, not in one spike
     const Ie=.2, we=car.rpm*2*Math.PI/60*Math.sign(gr), Iw=2.4;
-    car.ckW0=car.wR; car.ckW1=(Iw*car.wR+Ie*Math.abs(gr)*we)/(Iw+Ie*gr*gr); car.ckRpm0=car.rpm; car.ckDump=car.ckDump0=.20; car.clutchHeld=false;
+    car.ckW0=car.wR; car.ckW1=(Iw*car.wR+Ie*Math.abs(gr)*we)/(Iw+Ie*gr*gr); car.ckRpm0=car.rpm; car.ckDump=car.ckDump0=.20; car.ckK=ckOn; car.clutchHeld=false;
     if(car.rpm>3000) thud(.25);
     // clutch-kick 360: only on full lock (or a flick onto lock within a third of a second). A half-turn of the wheel while snaking must not snap into a 360.
-    if(car.rpm>3000 && speed>1 && !burnVenue()){ if(Math.abs(sIn)>.85) car.c360={dir:Math.sign(sIn),yaw:0,t:0}; else car.ckWin=.35; shake=Math.max(shake,.3); } }
-  car.ckWin=Math.max(0,(car.ckWin||0)-dt); if(car.ckWin>0 && Math.abs(sIn)>.85 && !car.c360 && !burnVenue()){ car.c360={dir:Math.sign(sIn),yaw:0,t:0}; car.ckWin=0; }
+    if(car.rpm>3000 && speed>1 && !burnVenue() && ckOn>0){ if(Math.abs(sIn)>.85) car.c360={dir:Math.sign(sIn),yaw:0,t:0,k:ckOn}; else car.ckWin=.35; shake=Math.max(shake,.3); } }
+  car.ckWin=Math.max(0,(car.ckWin||0)-dt); if(car.ckWin>0 && Math.abs(sIn)>.85 && !car.c360 && !burnVenue() && ckOn>0){ car.c360={dir:Math.sign(sIn),yaw:0,t:0,k:car.ckK??ckOn}; car.ckWin=0; }
   clutchPrev=clPed;
   if(twoStep && lsP>=1 && car.rpm>=LC-20 && car.cutT<=0){ car.cutT=.075+Math.random()*.03; if(!ENG.lsTwo) launchBang(); else flameKick(.35); }
   if(rollALS && car.rpm>=car.alsRpm && car.cutT<=0){ car.cutT=.06+Math.random()*.03; launchBang(); } car.alsOn=!!rollALS;
@@ -3083,8 +3086,8 @@ function step(dt){
     car.ckGrip+=(Math.min(1,u*1.6)-(car.ckGrip||0))*Math.min(1,dt*14);
   } else car.ckGrip+=(0-(car.ckGrip||0))*Math.min(1,dt*5);
   car.wR=wN;
-  let [Fxr,Fyr,sR] = tyre2((wN*WR-vxR)/den, tanAR, FzR, muR, AP_R); Fyr*=TUNE.rear*(1-.65*TUNE.kick*tipOn*Math.min(1,(car.kickT||0)/.45))*(1-.3*Math.min(1,TUNE.pivot)*clamp(((car.spin||0)-.3)/.4,0,1))*(car.c360?.42:1);   // the rear lets go for a clutch-kick 360   // a tip-in flick unloads the rear for a moment
-  if(car.ckGrip>0) Fyr*=1-.55*car.ckGrip;   // clutch-kick grip loss builds and eases; tip-in unload above is unchanged
+  let [Fxr,Fyr,sR] = tyre2((wN*WR-vxR)/den, tanAR, FzR, muR, AP_R); Fyr*=TUNE.rear*(1-.65*TUNE.kick*tipOn*Math.min(1,(car.kickT||0)/.45))*(1-.3*Math.min(1,TUNE.pivot)*clamp(((car.spin||0)-.3)/.4,0,1))*(car.c360?1-.58*(car.c360.k??1):1);   // the rear lets go for a clutch-kick 360   // a tip-in flick unloads the rear for a moment
+  if(car.ckGrip>0) Fyr*=1-.55*car.ckGrip*(car.ckK??1);   // clutch-kick grip loss builds and eases; tip-in unload above is unchanged
   Fyr*=SF.latR/SF.longR;   // rear camber: corners harder, launches worse
   // ---- front wheel lift: the car pivots on the rear tyres. Drive force times the effective CG height lifts the nose,
   // the weight ahead of the rear axle pulls it back down. Past ~6 degrees the wheelie bars push back.
@@ -3142,7 +3145,7 @@ function step(dt){
   // front wheels. Works with the 360 assist off; hold it and it keeps going round, ease off the gas or the lock and it slows.
   if(car.kickT>0 && Math.sign(sIn)===car.kickDir) Tz+=car.kickDir*IZ*TUNE.kick*5.5*(car.kickT/.45)*tipOn;   // the throw: yaw builds smoothly, no snap
   if(car.c360){ const C=car.c360; C.t+=dt; C.yaw+=car.r*dt*C.dir; const push=5.6-car.r*C.dir;   // drive the full turn, then hand back; let go of the lock or the gas and it ends
-    if(push>0) Tz+=C.dir*push*IZ*3.2*(C.yaw<5.2?1:clamp((6.1-C.yaw)/.9,0,1));
+    if(push>0) Tz+=C.dir*push*IZ*3.2*(C.k??1)*(C.yaw<5.2?1:clamp((6.1-C.yaw)/.9,0,1));
     if(C.yaw>=2*Math.PI*.97||C.t>2.4||Math.abs(sIn)<.2||thr<.3||Math.sign(sIn)!==C.dir){ if(C.yaw>=2*Math.PI*.9) toast('Clutch-kick 360!','var(--good)'); car.c360=null; } }
   if(TUNE.pivot>0 && !car.tc && !lineLock && thr>.7 && Math.abs(sIn)>.85 && speed>.6){
     const dir=Math.sign(sIn), lit=clamp((car.spin-.3)/.4,0,1), rMax=3.6+Math.min(1.4,speed*.08), push=(dir*rMax-car.r)*dir;
