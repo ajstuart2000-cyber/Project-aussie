@@ -32,3 +32,10 @@ assets/palette.png
 assets/lights.png
 assets/logo.png
 assets/etk800_d.png
+assets/carby_limiter.wav
+assets/carby_mid_5000.wav
+assets/carby_high_5850.wav
+assets/carby_shift.wav
+assets/carby_liftoff_crackle.wav
+assets/carby_decel.wav
+assets/zf_fart_na.wav

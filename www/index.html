@@ -23,12 +23,36 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--night);color:var
 #app{position:fixed;left:0;top:0;width:100%;height:100%;overflow:hidden}
 #gdeck,#shop,#shop>*,#cats,#optRow{min-width:0;max-width:100%}
 #shopTitle{font:800 13px var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--amber,#ffb000)}
-#carShop{display:grid;gap:8px;padding:10px 12px;min-width:0;max-width:100%;overflow:hidden}
-.csHead{display:flex;align-items:center;gap:10px;flex-wrap:wrap} .csHead b{font:800 16px var(--f-display);letter-spacing:.08em;text-transform:uppercase} .csHead .btn{margin-left:auto}
-#csList,#csOwned{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;min-width:0}
-.cs{flex:0 0 auto;display:grid;gap:4px;padding:10px;border:1px solid var(--line);border-radius:6px;background:rgba(239,230,216,.04);min-width:170px}
-.cs b{font:800 17px var(--f-display);letter-spacing:.06em} .cs span{font-size:12px} .dim{color:var(--muted);font-size:12px}
-.csO{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line);border-radius:6px} .csO.cur{border-color:var(--amber,#ffb000)} .csO .btn{padding:6px 10px;font-size:12px}
+#carShop{display:grid;gap:8px;padding:10px 12px;min-width:0;max-width:100%;overflow:hidden;position:relative;z-index:5;box-sizing:border-box}
+.csHead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0} .csHead b{font:800 16px var(--f-display);letter-spacing:.08em;text-transform:uppercase} .csHead .btn{margin-left:auto;flex:none}
+.csHead .dim{min-width:0}
+/* Horizontal scroll of whole cards only — never shrink the row and scroll inside a card (overflow-x alone would compute overflow-y to auto and let the grid squash the row) */
+#csList,#csOwned{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;min-width:0;min-height:min-content;align-items:stretch;padding:2px 4px;scroll-padding-inline:4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+#csList::-webkit-scrollbar,#csOwned::-webkit-scrollbar{display:none}
+.cs{flex:0 0 auto;display:grid;gap:4px;padding:10px;border:1px solid var(--line);border-radius:6px;background:rgba(239,230,216,.04);min-width:170px;max-width:260px;cursor:pointer;align-content:start;overflow:visible;scroll-snap-align:start;box-sizing:border-box}
+.cs b{font:800 17px var(--f-display);letter-spacing:.06em} .cs span{font-size:12px;overflow-wrap:anywhere} .dim{color:var(--muted);font-size:12px}
+.cs.cur{border-color:var(--gold,#ffc53d);box-shadow:0 0 0 1px var(--gold,#ffc53d)}
+.csO{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;scroll-snap-align:start} .csO.cur{border-color:var(--amber,#ffb000)} .csO .btn{padding:6px 10px;font-size:12px}
+/* Car shop (and any body.carshop screen): hide the left garage menu so it cannot cover the panel; frame the 3D car in the space above */
+body.carshop #actions{display:none!important}
+body.compact #carShop,body.tiny #carShop{flex:1 1 auto;min-width:0;min-height:min-content}
+/* Landscape phones: fit name, engine, kW/Nm, status and the button on each card with no internal scroll; garage row is one compact line; leave the turntable visible above */
+body.compact.carshop #carShop,body.tiny.carshop #carShop{gap:6px;padding:8px 10px;max-height:none}
+body.compact.carshop .csHead,body.tiny.carshop .csHead{gap:6px;flex-wrap:nowrap}
+body.compact.carshop .csHead b,body.tiny.carshop .csHead b{font-size:14px}
+body.compact.carshop .csHead .dim,body.tiny.carshop .csHead .dim{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.compact.carshop .cs,body.tiny.carshop .cs{padding:6px 8px;gap:2px;min-width:168px}
+body.compact.carshop .cs b,body.tiny.carshop .cs b{font-size:15px;line-height:1.15}
+body.compact.carshop .cs span,body.tiny.carshop .cs span,body.compact.carshop .dim,body.tiny.carshop .dim{font-size:11px;line-height:1.25}
+body.compact.carshop .cs .btn,body.tiny.carshop .cs .btn{padding:6px 8px;font-size:11px;margin-top:2px}
+body.compact.carshop .cs.csCareer>span:not(.dim),body.tiny.carshop .cs.csCareer>span:not(.dim){display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* Your garage sits on one line with the owned cars, so the shop cards keep their full height */
+body.compact.carshop #carShop,body.tiny.carshop #carShop{grid-template-columns:auto minmax(0,1fr)}
+body.compact.carshop #carShop>.csHead:first-child,body.tiny.carshop #carShop>.csHead:first-child,
+body.compact.carshop #csList,body.tiny.carshop #csList{grid-column:1/-1}
+body.compact.carshop #carShop>.csHead:nth-of-type(2),body.tiny.carshop #carShop>.csHead:nth-of-type(2){flex-wrap:nowrap;align-self:center;margin:0;min-width:0}
+body.compact.carshop #carShop>.csHead:nth-of-type(2) b,body.tiny.carshop #carShop>.csHead:nth-of-type(2) b{font-size:12px;letter-spacing:.06em;white-space:nowrap}
+body.compact.carshop #csOwned,body.tiny.carshop #csOwned{align-self:center;padding:2px 0}
 #shop{overflow:hidden}
 #optRow{overflow-x:auto;scrollbar-width:none}
 body.touch #draghud,body.touch #freehud,body.touch #hesihud{max-width:calc(50% - 100px);grid-template-columns:auto minmax(0,1fr);overflow-wrap:anywhere}   /* stops short of the centred speedo */
@@ -681,6 +705,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const $ = id => document.getElementById(id);
 const store = {
@@ -698,14 +723,18 @@ if(!settings.turboV3){ settings.turbo='real'; settings.turboV3=1; settings.turbo
 const saveSettings = ()=>store.set('barra.settings', settings);
 // Steering styles. Classic is the original feel; Skidder throws the car around for 360s and tip-ins and catches it when you
 // let go; Drift adds lock, counter-steers for you and holds the car inside a set angle so it doesn't spin.
-const STEER_DEF={ classic:{lock:36,rate:1,front:1,rear:1,counter:0,spin:1,angle:0,thr:.5,kick:0,pivot:0},
-                  skidder:{lock:40,rate:1.1,front:1.04,rear:.95,counter:.35,spin:1.8,angle:0,thr:.7,kick:.85,tip:1,cs:0,pivot:1.6},
-                  drift:{lock:58,rate:1.5,front:1.12,rear:.82,counter:.75,spin:.4,angle:55,thr:.5,kick:.35,cs:1,pivot:0},
-                  grip:{lock:34,rate:1.7,front:1.22,rear:1.32,counter:.45,spin:0,angle:0,thr:.95,kick:0,cs:1,pivot:0,hs:1.6} };
-if(!settings.tuneV6){ if(settings.tune) delete settings.tune.skidder; settings.tuneV2=settings.tuneV3=settings.tuneV4=settings.tuneV5=settings.tuneV6=1; store.set('barra.settings',settings); }   // new skidder defaults replace the old ones
-const STEER_NOTE={ classic:'The original feel. Full lock only once the rear is loose, 360s with the assist on.',
+// Clutch kick tip-in help (clutch-kick 360, rear grip drop, the 50 km/h+ throw). Off as a test: a kick only keeps the revs and wheelspin up. Set true to bring it back.
+const CK_TIPIN=false;
+const SK_REV=.4;   // Skidder: how strongly a snakey reversal off the brake is eased (0 = off, 1 = as much as with the brake held)
+const TR_K=3;   // Classic/Skidder: how much a counter-steer helps pull a slide back the other way (0 = off)
+const STEER_DEF={ classic:{lock:36,rate:1,front:1,rear:1.08,counter:0,spin:1,angle:0,thr:.68,kick:0,pivot:0,bias:.7},
+                  skidder:{lock:36,rate:1,front:1,rear:1,counter:0,spin:1,angle:0,thr:.5,kick:0,cs:0,pivot:0,bias:.7},
+                  drift:{lock:58,rate:1.5,front:1.12,rear:.82,counter:.75,spin:.4,angle:55,thr:.5,kick:.35,cs:1,pivot:0,bias:.7},
+                  grip:{lock:34,rate:1.7,front:1.22,rear:1.32,counter:.45,spin:0,angle:0,thr:.95,kick:0,cs:1,pivot:0,hs:1.6,bias:.7} };
+if(!settings.tuneV10){ if(settings.tune){ delete settings.tune.skidder; delete settings.tune.classic; } settings.tuneV2=settings.tuneV3=settings.tuneV4=settings.tuneV5=settings.tuneV6=settings.tuneV7=settings.tuneV8=settings.tuneV9=settings.tuneV10=1; store.set('barra.settings',settings); }   // Skidder takes the old Classic feel; Classic is a touch harder to tip in
+const STEER_NOTE={ classic:'The original feel, tamed a touch. The rear holds on a little more, so a tip-in needs a bigger flick or more throttle to break it loose. 360s with the assist on.',
   grip:'Built for weaving through traffic. Sticky front and rear, quick sharp steering that stays strong at 250 km/h, and it holds a line instead of stepping out. Ideal for No Hesi.',
-  skidder:'Drives like Classic until you throw it. Light the rears, pin the gas and throw it to full lock: the tail swings out for a tip-in, and if you hold it the spinning tyres drive it round into full 360s, 360 assist on or off. Throw it the other way to link them. Ease off the gas or the lock to slow it, let go of the wheel and it catches itself.',
+  skidder:'Drives like the original Classic: tip-ins, smooth snakes and gas plus full lock for 360s. Hold the brake on full lock and the tail swings out but won\'t donut. Below about 50 km/h a clutch kick just keeps the rears lit.',
   drift:'Drift knuckles. Big lock, the fronts counter-steer for you and the car is held inside your max drift angle so it won\'t spin.' };
 const TUNE_ROWS=[['lock','Steering lock',25,70,1,v=>v+'°','How far the front wheels turn at full lock'],['rate','Steering speed',.5,2.5,.05,v=>v.toFixed(2)+'×','How fast the wheel turns'],
   ['front','Front grip',.8,1.3,.01,v=>Math.round(v*100)+'%','Sideways grip at the front'],['rear','Rear grip',.6,1.2,.01,v=>Math.round(v*100)+'%','Lower lets the tail step out easier'],
@@ -714,7 +743,8 @@ const TUNE_ROWS=[['lock','Steering lock',25,70,1,v=>v+'°','How far the front wh
   ['hs','High-speed steering',.5,2.5,.05,v=>v.toFixed(2)+'×','How much the wheel still turns the car at big speed: higher for lane-splitting'],
   ['pivot','Power rotation',0,3,.05,v=>v.toFixed(2)+'×','Gas + full lock keeps it rotating on its own, no 360 assist needed'],
   ['kick','Tip-in kick',0,1.5,.05,v=>Math.round(v*100)+'%','Each flick of the wheel throws the tail and breaks the rear loose for a moment'],
-  ['angle','Max drift angle',0,80,1,v=>v?v+'°':'Off','Holds the car inside this angle. Off lets it spin']];
+  ['angle','Max drift angle',0,80,1,v=>v?v+'°':'Off','Holds the car inside this angle. Off lets it spin'],
+  ['bias','Brake bias',.4,.9,.01,v=>Math.round(v*100)+'% front','More front: the rears keep spinning and the revs stay up under brakes, like a skid car. More rear: the rear brakes slow the rears and pull the tail']];
 let TUNE=null; function refreshTune(){ const m=settings.steerMode||'classic'; TUNE=Object.assign({},STEER_DEF[m]||STEER_DEF.classic,((settings.tune||{})[m])||{}); }
 refreshTune();
 
@@ -757,6 +787,7 @@ const VFP = { bumperF:'ss', bumperR:'ss', hood:'stock', fenders:'stock', spoiler
 const R8P = { bumperF:'club', bumperR:'f2', hood:'vent', fenders:'stock', spoiler:'club', skirts:'gts', tails:'gts', badge:'r8' };
 const PRESETS = [
   { id:'xr6na', name:'XR6 NA', engine:'na', paint:'Crimson Red', rim:'Silver', stance:'stock', parts:{...BASE_PARTS, badge:'xr6turbo_badge_5_ng'} },
+  { id:'xr6carby', name:'XR6 Carby', engine:'na', cam:'ghost', paint:'Jet Black', rim:'Chrome', stance:'low', stickers:'pops', plate:'LONGNAME', plateS:'black', mods:{finish:'matte',head:'port',pipe:'35',tint:'dark'}, parts:{...BASE_PARTS, hood:'carby_open', badge:'xr6turbo_badge_5_ng'} },   // NA Barra on a carby, bonnet off, done like the real car (decals and plate used with the owner's permission): air cleaner through the bonnet, matte black, chrome rims
   { id:'xr6na_bag', name:'Bagged XR6 NA', engine:'na', paint:'Winter White', rim:'Gunmetal', stance:'slammed', parts:{...BASE_PARTS, badge:'xr6turbo_badge_5_ng'} },
   { id:'xr6t', name:'XR6T', engine:'xr6t', cam:'ghost', gate:'screamer', launch:'on', paint:'Electric Blue', rim:'Silver', stance:'stock', parts:{...BASE_PARTS} },
   { id:'xr6t_bag', name:'XR6T Bagged', engine:'xr6t', cam:'ghost', gate:'screamer', launch:'on', paint:'Winter White', rim:'Gunmetal', stance:'slammed', parts:{...BASE_PARTS} },
@@ -896,7 +927,8 @@ const boosted=()=>ENG.turbo||ENG.sc;
 const lamOpt=()=>(boosted()?.8:.88)-(modKey('fuel')==='meth'?.02:0), lamDef=()=>boosted()?.78:.87, ecuLam=()=>ECU.lam??lamDef();
 function knockLim(){ const f={'98':3,c16:6,e85:8,meth:9}[modKey('fuel')]??3;
   return f+(modOn('wmi')&&modKey('wmi')==='on'?2:0)+(modOn('cooler')?({fmic:.8,big:1.5}[modKey('cooler')]||0):0)+(boosted()?0:2)-(ENG.turbo?10*Math.max(0,ECU.boost):0)-8*Math.max(0,ecuLam()-lamOpt()); }
-const revAllow=()=>(modFx('head').rev||0)+(modFx('forged').rev||0)+300, baseLim=()=>(ENGINES[build.engine]||ENG).limit;
+function isXr6Carby(){ if(typeof build==='undefined'||!build) return false; if((build.engine||'')!=='na') return false; const id=build.id||'', h=(build.parts||{}).hood; return id==='xr6carby'||id.indexOf('g_xr6carby')===0||h==='carby_open'||h==='carby_poke'; }
+const revAllow=()=>(modFx('head').rev||0)+(modFx('forged').rev||0)+300, baseLim=()=>isXr6Carby()?6900:(ENGINES[build.engine]||ENG).limit;
 function ecuK(r){ const t=ECU.timing, kl=knockLim(); let f=1+.012*Math.min(t,kl); if(t>kl) f-=.035*(t-kl);
   const dl=ecuLam()-lamOpt(); f*=1-3.5*dl*dl;
   f*=1+.008*ECU.cam*clamp((4200-r)/1800,0,1)-.008*ECU.cam*clamp((r-4200)/1500,0,1);
@@ -933,7 +965,7 @@ function targetKW(){ if(_tk!=null) return _tk; const E0=ENGINES[build.engine]||E
   return _tk=Math.round(P); }
 function kwWith(cat,v){ const keep=JSON.stringify([build.mods||{},build.cam]); if(cat==='cams') build.cam=v; else build.mods={...(build.mods||{}),[cat]:v};
   _tk=null; const r=targetKW(); const [m,c]=JSON.parse(keep); build.mods=m; build.cam=c; _tk=null; targetKW(); return r; }
-function engFor(E){ refreshEcu(); const o=Object.assign({},E); o.limit=E.limit+(modFx('head').rev||0)+(modFx('forged').rev||0)+(ECU.rev||0);
+function engFor(E){ refreshEcu(); const o=Object.assign({},E); o.limit=baseLim()+(isXr6Carby()?0:(modFx('head').rev||0)+(modFx('forged').rev||0))+(ECU.rev||0);
   if(modFx('conv').stall) o.stall=Math.max(E.stall,modFx('conv').stall); if(modOn('blower',E)&&modFx('blower').pw) o.sc=true; return o; }
 // slot the new engine categories into every car's shop, right after the turbo
 { const NEWC=[['manifold','Exhaust manifold'],['cooler','Intercooler'],['wmi','Water-meth'],['blower','Supercharger kit'],['head','Head work'],['tb','Throttle body'],['forged','Bottom end'],['nos','Nitrous'],['conv','Torque converter']];
@@ -954,7 +986,7 @@ const buildName = b => (b.id && nameOverrides[b.id]) || b.name;
 const myBuilds = store.get('barra.mybuilds') || {};
 { const old=store.get('barra.mybuild'); if(old && !myBuilds.falcon){ old.vehicle='falcon'; old.custom=true; old.id='mine_falcon'; if(!old.engine) old.engine='xr6t'; myBuilds.falcon=old; } }
 // your garage: the cars you own (each one keeps its own paint, parts, engine swap and stance); the car shop sells the four base cars
-const SHOP_CARS=[ {sid:'xr6',from:'xr6t',name:'XR6 Turbo',blurb:'BA/BF Falcon · 4.0 Barra turbo'}, {sid:'xr8',from:'xr8',name:'XR8',blurb:'BA/BF Falcon · 5.4 Boss V8'},
+const SHOP_CARS=[ {sid:'xr6',from:'xr6t',name:'XR6 Turbo',blurb:'BA/BF Falcon · 4.0 Barra turbo'}, {sid:'xr8',from:'xr8',name:'XR8',blurb:'BA/BF Falcon · 5.4 Boss V8'}, {sid:'xr6carby',from:'xr6carby',name:'XR6 Carby',blurb:'BA/BF Falcon · 4.0 Barra on a carby'},
   {sid:'vf',from:'vfss',name:'VF SS',blurb:'VF Commodore · 6.2 LS3'}, {sid:'vs',from:'vsv8',name:'VS SS',blurb:'VS Commodore · 5.7 LS1'},
   {sid:'au',from:'auforte',name:'AU Forte',blurb:'AU Falcon sedan · 4.0 I6'}, {sid:'auute',from:'auute8',name:'AU XR8 Ute',blurb:'AU Falcon ute · 5.0 V8'} ];
 const shopCar=sid=>{ const S=SHOP_CARS.find(c=>c.sid===sid), P=JSON.parse(JSON.stringify(PRESETS.find(p=>p.id===S.from))); return Object.assign(P,{id:'g_'+sid+'_'+Date.now().toString(36),name:S.name,custom:true,vehicle:P.vehicle||'falcon'}); };
@@ -1309,28 +1341,63 @@ function addTurboPoke(g){
   /* flanged vent inboard of the turbo, and a bonnet pin in front */
   const px=box.min.x+sz.x*.5, pz=box.max.z-sz.z*.18; const pin=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.008,20),blk); pin.scale.z=.6; pin.position.set(px,surf(px,pz)+.004,pz); g.add(pin);
   g.traverse(o=>{ if(o.isMesh&&o.parent!==g) o.castShadow=true; }); }
+// bake many static meshes that share a material into one geometry, so the carby bay is a handful of draws instead of dozens
+function bakeStatic(root, shadowMats){
+  root.updateMatrixWorld(true);
+  const inv=new THREE.Matrix4().copy(root.matrixWorld).invert(), by=new Map(), doomed=[];
+  root.traverse(o=>{ if(o.isMesh) doomed.push(o); });
+  for(const o of doomed){ const g=o.geometry.clone(); g.applyMatrix4(inv.clone().multiply(o.matrixWorld)); if(!by.has(o.material)) by.set(o.material,[]); by.get(o.material).push(g); }
+  while(root.children.length) root.remove(root.children[0]);
+  for(const [mat,geos] of by){ const mg=mergeGeometries(geos,false); geos.forEach(g=>g.dispose()); if(!mg) continue; const m=new THREE.Mesh(mg,mat); m.castShadow=shadowMats?shadowMats.has(mat):false; root.add(m); }
+  return root;
+}
+// bonnet off: a red rocker cover on the Barra in the bay and a carby on a riser on the driver's side, air cleaner on top (BA/BF bay, body space)
+function addCarbyOpen(g){
+  const red=new THREE.MeshStandardMaterial({color:'#b3120d',metalness:.45,roughness:.28}), alu=new THREE.MeshStandardMaterial({color:'#b9bcc0',metalness:.9,roughness:.32}),
+        blk=new THREE.MeshStandardMaterial({color:'#0b0b0c',roughness:.7}), fil=new THREE.MeshStandardMaterial({color:'#141416',roughness:.8}), lid=new THREE.MeshStandardMaterial({color:'#1a1a1d',metalness:.5,roughness:.4});
+  const E=new THREE.Group(); E.name='carbyOpen'; g.add(E);
+  // rocker cover: long rounded lid along the head with fins and the oil cap
+  const rk=new THREE.Mesh(new THREE.BoxGeometry(.2,.055,.7),red); rk.position.set(.06,.9,1.36); E.add(rk);
+  const rt=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.7,12,1,false,-Math.PI/2,Math.PI).rotateX(Math.PI/2),red); rt.scale.y=.35; rt.position.set(.06,.925,1.36); E.add(rt);
+  for(let i=0;i<6;i++){ const f=new THREE.Mesh(new THREE.BoxGeometry(.2,.012,.012),red); f.position.set(.06,.958,1.08+i*.11); E.add(f); }
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.025,10),blk); cap.position.set(.1,.965,1.62); E.add(cap);
+  const lip=new THREE.Mesh(new THREE.BoxGeometry(.23,.012,.73),alu); lip.position.set(.06,.873,1.36); E.add(lip);
+  // carby: riser plate, square carby body with linkage, then the big round air cleaner
+  const C=new THREE.Group(); C.position.set(-.2,.875,1.36); E.add(C);
+  const ris=new THREE.Mesh(new THREE.BoxGeometry(.17,.07,.17),alu); ris.position.y=.035; C.add(ris);
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.14,.1,.15),alu); body.position.y=.12; C.add(body);
+  const bowl=new THREE.Mesh(new THREE.BoxGeometry(.13,.06,.035),alu); bowl.position.set(0,.11,.09); C.add(bowl);
+  const lk=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,.12,8),blk); lk.rotation.z=Math.PI/2; lk.position.set(.02,.13,-.08); C.add(lk);
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.02,16),lid); base.position.y=.18; C.add(base);
+  const core=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.13,16),fil); core.position.y=.255; C.add(core);
+  const pg=new THREE.BoxGeometry(.012,.13,.02); for(let i=0;i<52;i++){ const a=i/52*Math.PI*2, p=new THREE.Mesh(pg,fil); p.position.set(Math.cos(a)*.15,.255,Math.sin(a)*.15); p.rotation.y=-a; C.add(p); }   /* pleats (merged below) */
+  const top=new THREE.Mesh(new THREE.CylinderGeometry(.165,.165,.022,16),lid); top.position.y=.33; C.add(top);
+  const nut=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.03,6),alu); nut.position.y=.35; C.add(nut);
+  // fuel line from the carby back along the bay
+  const fl=new THREE.Mesh(new THREE.CylinderGeometry(.007,.007,.5,8),blk); fl.rotation.x=Math.PI/2; fl.position.set(-.29,.95,1.15); E.add(fl);
+  bakeStatic(E, new Set([red,alu,lid,fil])); }   // one draw per material; small black bits do not cast shadows
 // NA with a carby: the air cleaner stack poking up through a round hole in the bonnet
 function addCarbyPoke(g){
   g.updateMatrixWorld(true); const box=new THREE.Box3().setFromObject(g); if(box.isEmpty()) return;
-  const sz=box.getSize(new THREE.Vector3()), cx=box.min.x+sz.x*.63, cz=box.max.z-sz.z*.52;
+  const sz=box.getSize(new THREE.Vector3()), cx=box.min.x+sz.x*.37, cz=box.max.z-sz.z*.52;   // on the driver's (right) side of the bonnet, like the real car
   const h=new THREE.Raycaster(new THREE.Vector3(cx,box.max.y+1,cz),new THREE.Vector3(0,-1,0)).intersectObject(g,true)[0], y0=h?h.point.y:box.max.y;
   const blk=new THREE.MeshStandardMaterial({color:'#050506',roughness:.95}), fil=new THREE.MeshStandardMaterial({color:'#141416',roughness:.8}), lid=new THREE.MeshStandardMaterial({color:'#1a1a1d',metalness:.5,roughness:.4});
   const C=new THREE.Group(); C.name='carbyPoke'; C.position.set(cx,y0,cz); C.scale.setScalar(1.2);
-  const hole=new THREE.Mesh(new THREE.CircleGeometry(.15,36),blk); hole.rotation.x=-Math.PI/2; hole.position.y=.008; C.add(hole);
-  const lip=new THREE.Mesh(new THREE.TorusGeometry(.15,.008,6,36),lid); lip.rotation.x=Math.PI/2; lip.position.y=.008; C.add(lip);
-  const base=new THREE.Mesh(new THREE.CylinderGeometry(.125,.125,.03,36),lid); base.position.y=.02; C.add(base);
-  const core=new THREE.Mesh(new THREE.CylinderGeometry(.112,.112,.15,36),fil); core.position.y=.11; C.add(core);
-  const pg=new THREE.BoxGeometry(.012,.15,.02); for(let i=0;i<44;i++){ const a=i/44*Math.PI*2, p=new THREE.Mesh(pg,fil); p.position.set(Math.cos(a)*.116,.11,Math.sin(a)*.116); p.rotation.y=-a; C.add(p); }   /* pleats */
-  const top=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.022,36),lid); top.position.y=.195; C.add(top);
+  const hole=new THREE.Mesh(new THREE.CircleGeometry(.15,16),blk); hole.rotation.x=-Math.PI/2; hole.position.y=.008; C.add(hole);
+  const lip=new THREE.Mesh(new THREE.TorusGeometry(.15,.008,6,16),lid); lip.rotation.x=Math.PI/2; lip.position.y=.008; C.add(lip);
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(.125,.125,.03,16),lid); base.position.y=.02; C.add(base);
+  const core=new THREE.Mesh(new THREE.CylinderGeometry(.112,.112,.15,16),fil); core.position.y=.11; C.add(core);
+  const pg=new THREE.BoxGeometry(.012,.15,.02); for(let i=0;i<44;i++){ const a=i/44*Math.PI*2, p=new THREE.Mesh(pg,fil); p.position.set(Math.cos(a)*.116,.11,Math.sin(a)*.116); p.rotation.y=-a; C.add(p); }   /* pleats (merged below) */
+  const top=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.022,16),lid); top.position.y=.195; C.add(top);
   const nut=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.03,6),lid); nut.position.y=.215; C.add(nut);
-  C.traverse(o=>{ if(o.isMesh) o.castShadow=true; }); g.add(C); }
+  bakeStatic(C, new Set([lid,fil])); g.add(C); }
 function optNodes(slot,key){ const o=(SWAP[slot]||[]).find(o=>o[0]===key); return o?o[2]:(key?[key]:[]); }
 async function installSlot(slot,key){
   build.parts[slot]=key;
   const objs = (await Promise.all(optNodes(slot,key).map(n=>loadPart(n)))).filter(Boolean);
   if(build.parts[slot]!==key) return; // changed while loading
   const g=new THREE.Group(); objs.forEach(o=>g.add(o));
-  if(key==='turbo_poke') addTurboPoke(g); if(key==='carby_poke') addCarbyPoke(g);
+  if(key==='turbo_poke') addTurboPoke(g); if(key==='carby_poke') addCarbyPoke(g); if(key==='carby_open') addCarbyOpen(g);
   if(slotObj[slot]) stance.remove(slotObj[slot]);
   slotObj[slot]=g; stance.add(g); queueBodyFx();
 }
@@ -1358,7 +1425,7 @@ async function loadVehicle(vid, progress=()=>{}){
   // normalise swap lists to [key,label,[meshes]]
   if(swap.swap){ SWAP=swap.swap; VEH.rims=swap.rims; }
   else { SWAP={}; for(const [k,list] of Object.entries(swap)) SWAP[k]=list.map(([n,l])=>[n,l,n?[n]:[]]); }
-  if(SWAP.hood && SWAP.hood.some(o=>o[0]==='xr6t_hood') && !SWAP.hood.some(o=>o[0]==='turbo_poke')) SWAP.hood.push(['turbo_poke','Turbo through bonnet',['xr6t_hood']],['carby_poke','Carby through bonnet',['xr6t_hood']]);
+  if(SWAP.hood && SWAP.hood.some(o=>o[0]==='xr6t_hood') && !SWAP.hood.some(o=>o[0]==='turbo_poke')) SWAP.hood.push(['turbo_poke','Turbo through bonnet',['xr6t_hood']],['carby_poke','Carby through bonnet',['xr6t_hood']],['carby_open','No bonnet · carby',[]]);
   stance.clear(); for(const k in slotObj) delete slotObj[k];
   for(const w of wheels) carRoot.remove(w.grp); wheels.length=0;
   dmgReset(); baseScene=base; applyMats(base); makeFlames(new THREE.Box3().setFromObject(base)); stance.add(base);
@@ -2073,7 +2140,7 @@ function startAudio(){
     rev.buffer=ir; const revG=AC.createGain(); revG.gain.value=0; const revLP=AC.createBiquadFilter(); revLP.type='lowpass'; revLP.frequency.value=3500;
     camG.connect(revLP).connect(rev).connect(revG).connect(safe);   /* one last brick-wall stage on the summed output so loud moments never clip and crackle */
     master=AC.createGain(); master.gain.value=.9; master.__out=outB; master.__safe=safe; master.__cam={lp:camLP,ls:camLS,g:camG,rev:revG}; const comp=AC.createDynamicsCompressor(); comp.threshold.value=-14; comp.ratio.value=4; master.connect(comp).connect(outB);
-    loadFlutter(); loadDose(); loadNaLim(); loadEcoLim(); loadTLim(); loadTLimS(); loadScreamer(); loadFart(); loadCamIdle('t','assets/cam_idle.wav'); loadCamIdle('na','assets/na_cam_idle.wav'); loadLs2(); loadCamIdle('ls1','assets/ls1_cam_idle.wav'); loadCamIdle('ls3','assets/ls3_cam_idle.wav'); loadCamIdle('v8','assets/v8_cam_idle.wav'); loadCamIdle('au8cam','assets/au8cam_idle.wav'); loadCamIdle('ecocam','assets/ecocam_idle.wav'); loadV8Lim(); await ensurePack(ENG.sound);
+    loadFlutter(); loadDose(); loadNaLim(); loadCarbySound(); loadEcoLim(); loadTLim(); loadTLimS(); loadScreamer(); loadFart(); loadCamIdle('t','assets/cam_idle.wav'); loadCamIdle('na','assets/na_cam_idle.wav'); loadLs2(); loadCamIdle('ls1','assets/ls1_cam_idle.wav'); loadCamIdle('ls3','assets/ls3_cam_idle.wav'); loadCamIdle('v8','assets/v8_cam_idle.wav'); loadCamIdle('au8cam','assets/au8cam_idle.wav'); loadCamIdle('ecocam','assets/ecocam_idle.wav'); loadV8Lim(); await ensurePack(ENG.sound);
     eng=packs; setEngineSound();
     const sco=AC.createOscillator(); sco.type='sawtooth'; const scf=AC.createBiquadFilter(); scf.type='bandpass'; scf.Q.value=6; const scg=AC.createGain(); scg.gain.value=0; sco.connect(scf).connect(scg).connect(master); sco.start(); sfx.sc={o:sco,f:scf,g:scg};
     const nb=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate), nd=nb.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1; sfx.nb=nb;
@@ -2335,11 +2402,14 @@ function loadCamIdle(key,url){ if(camIdles[key]||!AC) return; const o=camIdles[k
   fetch(url).then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ const s=AC.createBufferSource(); s.buffer=b; s.loop=true; s.connect(o.g); s.start(); o.src=s; }).catch(()=>{}); }
 let v8Lim=null; function loadV8Lim(){ if(v8Lim||!AC) return; v8Lim={g:AC.createGain()}; v8Lim.g.gain.value=0; v8Lim.g.connect(master);
   fetch('assets/v8_limiter.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ const s=AC.createBufferSource(); s.buffer=b; s.loop=true; s.connect(v8Lim.g); s.start(); v8Lim.src=s; }).catch(()=>{}); }
-let tLimS=null, scrOpenV=0, v8LimOn=false, tLimV=0, tLim=null, naLim=null, naMixV=0, scrLoop=null, scrKick=0, fartBuf=null, fartAt=0;
-function loadFart(){ if(fartBuf||!AC) return; fartBuf=1; fetch('assets/zf_fart.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ fartBuf=b; }).catch(()=>{ fartBuf=null; }); }
+let tLimS=null, scrOpenV=0, v8LimOn=false, tLimV=0, tLim=null, naLim=null, naMixV=0, scrLoop=null, scrKick=0, fartBuf=null, fartBufNa=null, fartAt=0;
+function loadFart(){ if(fartBuf||!AC) return; fartBuf=1;
+  fetch('assets/zf_fart.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ fartBuf=b; }).catch(()=>{ fartBuf=null; });
+  fetch('assets/zf_fart_na.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ fartBufNa=b; }).catch(()=>{ fartBufNa=null; }); }
 let limFart=null;
-function realFart(amount,onLimiter){ // the real ZF fart, cut from the user's FG screamer flyby
-  if(!(fartBuf instanceof AudioBuffer)) return false; const t=AC.currentTime; const s=AC.createBufferSource(); s.buffer=fartBuf;
+function realFart(amount,onLimiter){ // the real ZF fart, cut from the user's FG screamer flyby. NA cars use a version with the turbo whoosh taken out.
+  const buf=(!ENG.turbo && fartBufNa instanceof AudioBuffer)?fartBufNa:fartBuf;
+  if(!(buf instanceof AudioBuffer)) return false; const t=AC.currentTime; const s=AC.createBufferSource(); s.buffer=buf;
   const g=AC.createGain();
   if(onLimiter){ // a touch quicker, and each one hands over to the next so they keep pace with the bounce
     s.playbackRate.value=1.12+Math.random()*.04; g.gain.value=1.3*amount;
@@ -2361,10 +2431,27 @@ function loadEcoLim(){ if(ecoLim||!AC) return; ecoLim={g:AC.createGain()}; ecoLi
   fetch('assets/ecotec_limiter.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ const s=AC.createBufferSource(); s.buffer=b; s.loop=true; s.connect(ecoLim.g); s.start(); ecoLim.src=s; ecoLim.pos=0; ecoLim.tl=AC.currentTime; }).catch(()=>{}); }
 function loadNaLim(){ if(naLim||!AC) return; naLim={g:AC.createGain()}; naLim.g.gain.value=0; naLim.g.connect(master);
   fetch('assets/na_limiter.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ const s=AC.createBufferSource(); s.buffer=b; s.loop=true; s.connect(naLim.g); s.start(); naLim.src=s; naLim.pos=0; naLim.tl=AC.currentTime; }).catch(()=>{}); }
+let carbyLim=null, carbyBufs=null, carbyLoops=null;
+function loadCarbySound(){ if(!AC||carbyBufs) return; carbyBufs={};
+  const get=(k,u)=>fetch(u).then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ carbyBufs[k]=b; if(k==='lim') startCarbyLim(b); if(k==='mid'||k==='high') startCarbyLoops(); }).catch(()=>{});
+  get('lim','assets/carby_limiter.wav'); get('mid','assets/carby_mid_5000.wav'); get('high','assets/carby_high_5850.wav');
+  get('shift','assets/carby_shift.wav'); get('crackle','assets/carby_liftoff_crackle.wav'); get('decel','assets/carby_decel.wav'); }
+function startCarbyLim(b){ if(carbyLim||!b||!AC) return; carbyLim={g:AC.createGain()}; carbyLim.g.gain.value=0; carbyLim.g.connect(master);
+  const s=AC.createBufferSource(); s.buffer=b; s.loop=true; s.connect(carbyLim.g); s.start(); carbyLim.src=s; carbyLim.pos=0; carbyLim.tl=AC.currentTime; }
+function startCarbyLoops(){ if(carbyLoops||!AC||!carbyBufs||!carbyBufs.mid||!carbyBufs.high) return;
+  const mk=(b,rpm)=>{ const src=AC.createBufferSource(); src.buffer=b; src.loop=true; const g=AC.createGain(); g.gain.value=0; src.connect(g).connect(master); src.start(); return {rpm,src,g}; };
+  carbyLoops=[mk(carbyBufs.mid,4990), mk(carbyBufs.high,5870)]; }
+function playCarbyShot(kind,amount){ const b=carbyBufs&&carbyBufs[kind]; if(!b||!AC||!isXr6Carby()) return false;
+  const t=AC.currentTime, s=AC.createBufferSource(); s.buffer=b; s.playbackRate.value=.97+Math.random()*.06;
+  const g=AC.createGain(), a=Math.min(1,.35+.75*(amount||1));
+  g.gain.setValueAtTime(Math.max(.001,a*1.15),t); g.gain.exponentialRampToValueAtTime(.001,t+Math.max(.08,b.duration));
+  s.connect(g).connect(master); s.start(t); s.stop(t+b.duration+.05);
+  s.onended=()=>{ try{ s.disconnect(); g.disconnect(); }catch(e){} }; return true; }
 // where the spark comes back in each limiter recording (a pop lands there), and where each cut starts (a softer crackle, with a pop tune)
 const LIM_POPS={ au6:{fire:[.14,.4,.9,1.18], cut:[.04,.3,.8,1.08]}, eco:{fire:[.09,.165,.345,.41], cut:[.055,.135,.315,.375,.63]}, na:{fire:[.962,1.525,2.037,2.348], cut:[]},
   ts:{fire:[.04,.58,1.06,1.63,1.98,2.46,3.0,3.35], cut:[.25,.73,1.36,1.80,2.13,2.67,3.12,3.65]},
-  t:{fire:[.507,.967,1.443,1.907,2.377,2.853,3.325,3.793,4.267,4.737,5.21,5.673,6.137,6.615,7.09], cut:[.222,.695,1.155,1.635,2.095,2.565,3.042,3.51,3.98,4.458,4.922,5.4,5.858,6.322,6.805,7.275]} };
+  t:{fire:[.507,.967,1.443,1.907,2.377,2.853,3.325,3.793,4.267,4.737,5.21,5.673,6.137,6.615,7.09], cut:[.222,.695,1.155,1.635,2.095,2.565,3.042,3.51,3.98,4.458,4.922,5.4,5.858,6.322,6.805,7.275]},
+  carby:(()=>{ const T=2.55,p=.052,fire=[],cut=[]; for(let x=0;x<T-1e-4;x+=p){ cut.push(+x.toFixed(4)); fire.push(+Math.min(T-.001,x+p*.5).toFixed(4)); } return {fire,cut}; })() };
 function limPops(n,K){ let bt=AC.currentTime; for(let j=0;j<n;j++){ bang(bt,.7*K*(j?.5+Math.random()*.4:1)); bt+=.035+Math.random()*.06; } }
 function limCrackle(K){ let bt=AC.currentTime; const n=1+(Math.random()<.5); for(let j=0;j<n;j++){ bang(bt,.35*K*(.7+Math.random()*.5)); bt+=.04+Math.random()*.07; } }
 let flutBuf=null, flutLoading=null;
@@ -2401,6 +2488,7 @@ function backfire(n,a){ if(!sfx.nb) return; let t=AC.currentTime; for(let i=0;i<
 function crackle(){ if(!sfx.nb) return; // overrun: bursts of 1-4 bangs
   const r=Math.random(), PL=popLv(); backfire(PL>=3?2+Math.floor(r*4):r<.45?1:r<.8?2:3+(Math.random()<.4), (.45+Math.random()*.45)*(PL===1?.7:PL>=3?1.15:1)); }
 function zfFart(amount){ // ZF upshift: spark cut on the shift, unburnt fuel pops in the pipe
+  if(isXr6Carby()){ playCarbyShot('shift',amount); return; }
   if(!sfx.nb) return; const t=AC.currentTime;
   if(['barra','synthT'].includes(ENG.sound) && realFart(Math.max(.6,amount))){ if(amount>.55 && popLv()>=2) backfire(1+(Math.random()<.5), .5*amount); return; }
   const s=AC.createBufferSource(); s.buffer=sfx.nb; const f=AC.createBiquadFilter(); f.type='bandpass'; f.frequency.value=150; f.Q.value=1.1;
@@ -2440,15 +2528,16 @@ function updateAudio(){
   v8LimOn = isV8Synth() && (input.thr>.55||revHeld) && car.shiftT<=0 && car.rpm>ENG.limit-450 && (performance.now()-(car.limAt||-1e9)<450 || (v8LimOn && car.rpm>ENG.limit-400));   /* stays on while the foot's down, so the bounce keeps its own steady rhythm */
   const pk=packs[ENG.sound]; if(!pk) return;
   { const X=eng&&packs[ENG.sound]&&packs[ENG.sound].ex; if(X&&X.mf){ exNoise(X); const r=car.rpm; X.dr.gain.setTargetAtTime(X.mf.drone*clamp(1-Math.abs(r-2600)/900,0,1),t,.08); X.hr.gain.setTargetAtTime(clamp((r-1500)/4000,0,1)*(.3+.7*Math.min(1,car.load)),t,.06); } }
-  const recLim = ENG.sound==='ecotec' ? ecoLim : ['barra','synthT'].includes(ENG.sound) ? (ENG.turbo?(build.gate!=='screamer'&&tLimS&&tLimS.src?tLimS:tLim):naLim) : null;
-  for(const o of [naLim,ecoLim,au6Lim,v8Lim,tLim,tLimS]) if(o&&o.src&&o!==recLim) o.g.gain.setTargetAtTime(0,t,.02);
+  const recLim = isXr6Carby()&&carbyLim&&carbyLim.src ? carbyLim : ENG.sound==='ecotec' ? ecoLim : ['barra','synthT'].includes(ENG.sound) ? (ENG.turbo?(build.gate!=='screamer'&&tLimS&&tLimS.src?tLimS:tLim):naLim) : null;
+  for(const o of [naLim,ecoLim,au6Lim,v8Lim,tLim,tLimS,carbyLim]) if(o&&o.src&&o!==recLim) o.g.gain.setTargetAtTime(0,t,.02);
   const naOn = recLim&&recLim.src && (input.thr>.55||revHeld) && car.shiftT<=0 && car.rpm>ENG.limit-450 && performance.now()-(car.limAt||-1e9)<650;   // never while it's pulling up through the revs or changing gear   // only once it's actually bouncing off the limiter
   naMixV+=((naOn?1:0)-naMixV)*Math.min(1,adt*(naOn?9:(input.thr<.45&&!revHeld?40:6)));   // lift off and it's gone
-  if(recLim&&recLim.src){ recLim.g.gain.setTargetAtTime(naMixV*(recLim===tLim?1:recLim===tLimS?1.1:recLim===ecoLim||recLim===au6Lim?.9:.8),t,(input.thr<.45&&!revHeld)?.012:.03); recLim.src.playbackRate.setTargetAtTime(recLim===tLim||recLim===tLimS?1:ENG.limit/(recLim===ecoLim?5695:recLim===au6Lim?5700:5820),t,.05);   /* the recording sits at ~5820 rpm: line it up with this engine's limit */ }
-  for(const [o,P] of [[au6Lim,LIM_POPS.au6],[ecoLim,LIM_POPS.eco],[naLim,LIM_POPS.na],[tLim,LIM_POPS.t],[tLimS,LIM_POPS.ts]]) if(o&&o.src){ const L=o.src.buffer.duration, p0=o.pos, p1=p0+Math.max(0,t-o.tl)*o.src.playbackRate.value; o.tl=t; o.pos=p1%L;
+  if(recLim&&recLim.src){ recLim.g.gain.setTargetAtTime(naMixV*(recLim===tLim?1:recLim===tLimS?1.1:recLim===ecoLim||recLim===au6Lim?.9:.8),t,(input.thr<.45&&!revHeld)?.012:.03); recLim.src.playbackRate.setTargetAtTime(recLim===tLim||recLim===tLimS?1:ENG.limit/(recLim===ecoLim?5695:recLim===au6Lim?5700:recLim===carbyLim?6920:5820),t,.05);   /* carby limiter sits at ~6920 rpm; other NA at ~5820 */ }
+  for(const [o,P] of [[au6Lim,LIM_POPS.au6],[ecoLim,LIM_POPS.eco],[naLim,LIM_POPS.na],[tLim,LIM_POPS.t],[tLimS,LIM_POPS.ts],[carbyLim,LIM_POPS.carby]]) if(o&&o.src){ const L=o.src.buffer.duration, p0=o.pos, p1=p0+Math.max(0,t-o.tl)*o.src.playbackRate.value; o.tl=t; o.pos=p1%L;
     if(recLim!==o||naMixV<=.45) continue; const PL=popLv(), K=(PL>=3?1.5:PL>=2?1.25:1)*Math.min(1,naMixV*1.2), hit=c=>(c>p0&&c<=p1)||(c+L>p0&&c+L<=p1);
     sndLim.at=performance.now(); for(const c of (P.cut.length?P.cut:P.fire.map(f=>f-.11))) if(hit(c)) sndLim.cut=true; for(const c of P.fire) if(hit(c)) sndLim.cut=false;   // the recording's own bounce drives the tacho
     if(!limSettled()) continue;
+    if(o===carbyLim) continue;   // carby_limiter.wav already carries the bounce; firing synth pops/flames every 52 ms was spawning ~200 BufferSources/s and dropping frames
     for(const c of P.fire) if(hit(c)) limPops(1+(Math.random()<.35*K)+(K>1&&Math.random()<.4),K);
     if(PL>=2) for(const c of P.cut) if(hit(c)) limCrackle(K); }
   // ghost cams at idle: the real recording, blending into the live engine between ~1300 and 1900 rpm
@@ -2456,11 +2545,24 @@ function updateAudio(){
   const ci = camKey&&camIdles[camKey]&&camIdles[camKey].src ? clamp((1900-car.rpm)/600,0,1)*(input.thr>.5&&car.rpm>1500?.3:1) : 0;
   camIdleMix+=(ci-camIdleMix)*Math.min(1,adt*8);
   for(const [k,o] of Object.entries(camIdles)){ if(!o.src) continue; o.g.gain.setTargetAtTime(k===camKey?camIdleMix*(k==='ls1'||k==='ls3'?1.5:1.1):0,t,.04); if(k===camKey) o.src.playbackRate.setTargetAtTime(clamp(car.rpm/850,.92,1.6),t,.04);   /* natural speed at the game's idle */ }
+  // XR6 Carby only: mid (~4990) and high (~5870) loops blended by rpm like the barra pack; idle stays on na_cam_idle
+  if(isXr6Carby()&&!carbyLoops){ loadCarbySound(); startCarbyLoops(); }
+  let cbyMix=0;
+  const cbySet=(s,g,rate)=>{ if(Math.abs((s._g??-1)-g)>.02){ s._g=g; s.g.gain.setTargetAtTime(g,t,.03); } if(rate!=null&&Math.abs((s._r??-1)-rate)>.01){ s._r=rate; s.src.playbackRate.setTargetAtTime(rate,t,.02); } };
+  if(isXr6Carby()&&carbyLoops){
+    const mid=carbyLoops[0], hi=carbyLoops[1], inAmt=clamp((rpm-3800)/600,0,1)*(1-naMixV);
+    let gm=0, gh=0, k=0;
+    if(rpm<=mid.rpm){ gm=inAmt; }
+    else if(rpm>=hi.rpm){ gh=inAmt; }
+    else { k=clamp((rpm-mid.rpm)/(hi.rpm-mid.rpm),0,1); gm=Math.cos(k*Math.PI/2)*inAmt; gh=Math.sin(k*Math.PI/2)*inAmt; }
+    cbySet(mid,gm*1.05,clamp(rpm/mid.rpm,.55,1.35)); cbySet(hi,gh*1.05,clamp(rpm/hi.rpm,.55,1.35));
+    cbyMix=Math.max(gm,gh);
+  } else if(carbyLoops){ for(const s of carbyLoops) cbySet(s,0,null); }
   const scrDuck = scrLoop&&scrLoop.g ? Math.min(.45,scrLoop.g.gain.value*.4) : 0;
-  if(pk.node){ const tw=ls2Tick(t); pk.node.port.postMessage({on:(car.cutT>0&&(car.twoStep||car.alsOn||settings.limiter==='hard'))?0:1, lf:tw?.0278:(V8PACKS[ENG.sound]?.opt.limFire||.32), lcut:tw?.0108:(V8PACKS[ENG.sound]?.opt.limCut||.15), rpm:rpm, lope:isGM()?(ENG.lope||(camLv()>=1?.6:0)):0, load:Math.max(.12,Math.min(1,car.load)), rk:(pk.ex&&pk.ex.mf?pk.ex.mf.rasp:0)*(.4+.6*Math.min(1,car.load)), lim:v8LimOn||(ENG.lsTwo&&ls2.on)?1:0, ov:(input.thr<.08&&!revHeld&&!rollCruise()&&car.rpm>1700&&state==='drive')?clamp((car.rpm-1700)/2200,0,1)*(popLv()===0?.3:1):0});   /* a stock LS winds down smooth: only a hint of overrun burble */ if(ENG.sound==='synthT'&&pk.lp){ const rb=clamp((rpm-1500)/3000,0,1); pk.lp.frequency.setTargetAtTime(ENG.turbo?7000:4200,t,.1); pk.eqHi.gain.setTargetAtTime(ENG.turbo?5:0,t,.1); }   /* brighter as it revs, to meet the real limiter recording */ if(isV8Synth()) pk.eqBass.gain.setTargetAtTime(6*clamp((rpm-1500)/2500,0,1),t,.08); pk.bus.gain.setTargetAtTime(exVol()*1.5*synthBoostGain(),t,.03); }
+  if(pk.node){ const tw=ls2Tick(t); pk.node.port.postMessage({on:(car.cutT>0&&(car.twoStep||car.alsOn||settings.limiter==='hard'))?0:1, lf:tw?.0278:(V8PACKS[ENG.sound]?.opt.limFire||.32), lcut:tw?.0108:(V8PACKS[ENG.sound]?.opt.limCut||.15), rpm:rpm, lope:isGM()?(ENG.lope||(camLv()>=1?.6:0)):0, load:Math.max(.12,Math.min(1,car.load)), rk:(pk.ex&&pk.ex.mf?pk.ex.mf.rasp:0)*(.4+.6*Math.min(1,car.load)), lim:v8LimOn||(ENG.lsTwo&&ls2.on)?1:0, ov:(input.thr<.08&&!revHeld&&!rollCruise()&&car.rpm>1700&&state==='drive')?clamp((car.rpm-1700)/2200,0,1)*(popLv()===0?.3:1):0});   /* a stock LS winds down smooth: only a hint of overrun burble */ if(ENG.sound==='synthT'&&pk.lp){ const rb=clamp((rpm-1500)/3000,0,1); pk.lp.frequency.setTargetAtTime(ENG.turbo?7000:4200,t,.1); pk.eqHi.gain.setTargetAtTime(ENG.turbo?5:0,t,.1); }   /* brighter as it revs, to meet the real limiter recording */ if(isV8Synth()) pk.eqBass.gain.setTargetAtTime(6*clamp((rpm-1500)/2500,0,1),t,.08); pk.bus.gain.setTargetAtTime(exVol()*1.5*synthBoostGain()*(1-.85*cbyMix),t,.03); }
   tLimV+=((onLim?1:0)-tLimV)*Math.min(1,adt*(onLim?12:40));   /* XR6T on the limiter: the real fart does the bouncing, the live engine gets out of the way */
   const limDuck = 1-.93*tLimV;
-  pk.lope.gain.setTargetAtTime((1-ls2.duck)*(camIdleMix>0?1-.85*camIdleMix:(1-lopeAmt*.45*(1-pulse)))*(1-(isSynth()?1:.8)*naMixV)*(1-scrDuck)*limDuck,t,onLim?.005:.012);   // keep some of the live engine under the recording so the tone carries through
+  pk.lope.gain.setTargetAtTime((1-ls2.duck)*(camIdleMix>0?1-.85*camIdleMix:(1-lopeAmt*.45*(1-pulse)))*(1-(isSynth()?1:.8)*naMixV)*(1-scrDuck)*limDuck*(1-.85*cbyMix),t,onLim?.005:.012);   // keep some of the live engine under the recording so the tone carries through
   pk.layers.forEach((L,li)=>{ const lg = (li===1?(0.25+0.75*load):(1-load)*0.85+0.15)*(cut?.28:1);
     let i=0; while(i<L.length-2 && L[i+1].rpm<rpm) i++; const a=L[i], b=L[i+1]; let k=Math.min(1,Math.max(0,(rpm-a.rpm)/(b.rpm-a.rpm)));
     for(let j=0;j<L.length;j++){ const s=L[j]; let g=0; if(j===i) g=Math.cos(k*Math.PI/2); else if(j===i+1) g=Math.sin(k*Math.PI/2); g*=lg*(li===1?.9:.75);
@@ -2557,7 +2659,7 @@ function gearUp(){ if(!manual) return; if(car.gear<RATIOS.length-1){ if(input.th
 function gearDown(){ if(!manual) return; if(car.gear>0){ const ng=car.gear-1; if(ng>=2){ const w=Math.abs(car.vLong)/WR*60/(2*Math.PI); if(w*RATIOS[ng]*FINAL>6300) return; } car.gear=ng; car.shiftT=.18; } }
 function autoShift(up){ if(up){ if(car.gear<RATIOS.length-1){ if(input.thr>.6&&car.rpm>3300&&(build.vehicle||'falcon')==='falcon'&&!isGM()) zfFart(Math.min(1,car.rpm/6000));   /* the ZF fart is a Falcon thing: Commodores (6L80/4L60) shift clean, no pops going up the gears */ if(build.gate==='screamer'&&car.boost>.5*ENG.boost) screamDump(.7*car.boost/ENG.boost); if(ENG.turbo&&car.boost>.5*ENG.boost&&input.thr>.6) turboRelease(.45*car.boost/ENG.boost,true); car.gear++; car.shiftT=.18; shiftClunk(); } } else if(car.gear>2){ car.gear--; car.shiftT=.18; } }
 let liftArm=false, revCounter=0;
-function liftCheck(thr){ if(thr>.6) liftArm=true; else if(liftArm && thr<.3){ liftArm=false; if(car.rpm>3400 && popLv()>=2 && !rollCruise()) setTimeout(()=>backfire((popLv()>=3?4:2)+Math.floor(Math.random()*3),.85),60+Math.random()*80); if(ENG.turbo && car.boost>.22*ENG.boost) turboRelease(Math.min(1,car.boost/ENG.boost)); } }
+function liftCheck(thr){ if(thr>.6) liftArm=true; else if(liftArm && thr<.3){ liftArm=false; if(isXr6Carby()&&car.rpm>5000&&!rollCruise()) playCarbyShot(car.rpm>6400?'decel':'crackle',1); else if(car.rpm>3400 && popLv()>=2 && !rollCruise()) setTimeout(()=>backfire((popLv()>=3?4:2)+Math.floor(Math.random()*3),.85),60+Math.random()*80); if(ENG.turbo && car.boost>.22*ENG.boost) turboRelease(Math.min(1,car.boost/ENG.boost)); } }
 // ---- tyre model: combined-slip magic formula with a peak and a sliding fall-off ----
 const MF_C=1.4, MF_B=Math.tan(Math.PI/(2*MF_C));
 const MF = s => Math.sin(MF_C*Math.atan(MF_B*s));            // 1.0 at s=1 (peak), ~0.81 fully sliding
@@ -2593,7 +2695,7 @@ function surface(){ if(MAP) return mapSurface(); rampSurface(); const v=settings
 /* ---------- livery, stickers and rego plates: canvas art projected onto the body with decals ---------- */
 const LIVERY=[['none','No livery','clean paint'],['twin','Twin stripes','bonnet, roof and boot'],['side','Side stripe','full length, belt line'],['lower','Rocker stripe','low down the doors'],['checker','Chequered rockers','race-day check'],['flames','Bonnet flames','old-school hot rod'],['number','Race number','roundels on both doors']];
 const LIV_COLS=[['#f4f4f0','White'],['#121316','Black'],['#d0231c','Red'],['#ffc81e','Yellow'],['#1f5fd6','Blue'],['#9aa1a8','Silver'],['#ff6a00','Orange'],['#35b04a','Green']];
-const STICKERS=[['none','No stickers','clean glass'],['street','Street pack','banner, quarter and rear window'],['burnout','Burnout pack','skid club decals'],['track','Track pack','numbers, tow hooks, sponsor strip'],['full','Full send','everything at once']];
+const STICKERS=[['none','No stickers','clean glass'],['street','Street pack','banner, quarter and rear window'],['burnout','Burnout pack','skid club decals'],['track','Track pack','numbers, tow hooks, sponsor strip'],['full','Full send','everything at once'],['pops','Pops Performance','windscreen banner · comp number 110']];
 const PLATES=[['wa','WA standard','white with blue characters'],['black','Black custom','white on black'],['euro','Slim euro','narrow custom plate'],['series','Burnout Series','gold on black']];
 function canvasDecal(w,h,draw){ const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); draw(x,w,h); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=4; return t; }
 function bannerTex(txt,fg,bg,font){ return canvasDecal(1024,128,(x,w,h)=>{ if(bg){ x.fillStyle=bg; x.fillRect(0,0,w,h); } x.fillStyle=fg; x.textAlign='center'; x.textBaseline='middle'; let s=96; x.font=`italic 900 ${s}px ${font||'Arial Black, Impact, sans-serif'}`; while(x.measureText(txt).width>w*.94&&s>20){ s-=4; x.font=`italic 900 ${s}px ${font||'Arial Black, Impact, sans-serif'}`; } x.fillText(txt,w/2,h/2+4); }); }
@@ -2618,6 +2720,13 @@ const decalMats={};
 function decalMat(key,mk,opt={}){ if(!decalMats[key]){ decalMats[key]=new THREE.MeshStandardMaterial({map:mk(),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4,roughness:opt.r??.35,metalness:opt.m??0,side:THREE.FrontSide}); if(envTex) decalMats[key].envMap=envTex; } return decalMats[key]; }
 const isPaintMat=m=>m&&(m===MATS.xr6t||m===MATS.etk800||m===AMAT.paint||paintClones.includes(m));
 let livSig='', livGrp=null, DecalGeometry=null;
+const PLATE_Y={ falcon:[.535,null] };   // [front, rear] plate centre height in body space (null = work it out from the body): the BA/BF front plate sits on the bumper bar under the grille
+function bakedPlates(){ // plate meshes built into the body model (AU, VS): [front box, rear box] in body space, split by which end they're on
+  stance.updateMatrixWorld(true); const inv=stance.matrixWorld.clone().invert(), m=new THREE.Matrix4(), v=new THREE.Vector3(), out=[null,null];
+  stance.traverse(o=>{ if(!o.isMesh||!o.visible||o.userData.decal||!o.geometry.attributes.position||!/plate/i.test(o.name+' '+(o.material&&o.material.name||''))) return;
+    m.multiplyMatrices(inv,o.matrixWorld); const a=o.geometry.attributes.position;
+    for(let i=0;i<a.count;i++){ v.fromBufferAttribute(a,i).applyMatrix4(m); const k=v.z>0?0:1; (out[k]||(out[k]=new THREE.Box3())).expandByPoint(v); } });
+  return out; }
 function livBox(){ stance.updateMatrixWorld(true); const inv=stance.matrixWorld.clone().invert(), b=new THREE.Box3(); stance.traverse(o=>{ if(o.isMesh&&o.visible&&!o.userData.decal){ o.geometry.computeBoundingBox(); b.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv)); } }); return b; }
 function livCast(origin,dir,glass){ const W=stance.matrixWorld, o=origin.clone().applyMatrix4(W), d=dir.clone().transformDirection(W);
   const rc=new THREE.Raycaster(o,d,0,12), hits=rc.intersectObject(stance,true).filter(h=>h.object.visible&&!h.object.userData.decal&&(glass?(h.object.material.transparent||isPaintMat(h.object.material)):isPaintMat(h.object.material)));
@@ -2645,21 +2754,37 @@ async function applyLivery(force){
   if(lv==='flames'){ const m=decalMat('fl'+col,()=>livFlameTex(col),{r:.3}); livAt(B,V(0,B.max.y+out,B.max.z-len*.14),V(0,-1,0),1.25,len*.26,hgt*.9,m,Z,false); }
   if(lv==='number'||st==='track'||st==='full'){ const n=build.num||(build.num=1+Math.floor(Math.random()*98)); const m=decalMat('num'+n+col,()=>roundelTex(n,col),{r:.4}); for(const [s,o,d] of sides){ o.y=WY+.18; o.z=midZ+.12; livAt(B,o.clone(),d,.52,.52,.6,m,Y,false); } }
   /* stickers */
+  // windscreen / rear window height: scan down from the top for the glass (the body box includes the aerial, so a fixed fraction of it can miss the glass entirely)
+  const glassSpan=front=>{ let top=null, bot=null; for(let y=B.max.y; y>B.min.y+hgt*.4; y-=.04){ const h=livCast(V(0,y,front?B.max.z+out:B.min.z-out),V(0,0,front?-1:1),true); if(h&&h.object.material.transparent){ if(top==null) top=y; bot=y; } }
+    if(top!=null) for(let y=top+.01; y<top+.04; y+=.01){ const h=livCast(V(0,y,front?B.max.z+out:B.min.z-out),V(0,0,front?-1:1),true); if(h&&h.object.material.transparent) top=y; else break; }   // refine the top edge
+    return top==null?null:[top,bot]; };
+  const gF=st!=='none'?glassSpan(1):null, gR=st!=='none'&&st!=='pops'?glassSpan(0):null, wsY=gF?gF[0]-.07:B.max.y-hgt*.09, rwY=gR?gR[0]-.07:B.max.y-hgt*.12;
   const banner=(t,fg,bg,k)=>decalMat('bn'+k,()=>bannerTex(t,fg,bg),{r:.5});
-  if(st!=='none'){ const wind=st==='burnout'?banner('SKID CREW WA','#fff','#111','skid'):banner('PROJECT AUSSIE','#fff','#141414','br');
-    livAt(B,V(0,B.max.y-hgt*.09,B.max.z+out),V(0,0,-1),1.25,.15,.8,wind,Y,true);
+  if(st==='pops'){ // the real XR6 Carby's decals (used with the owner's permission): banner across the top of the windscreen, comp number up the passenger-side edge
+    livAt(B,V(0,wsY,B.max.z+out),V(0,0,-1),1.28,.17,.8,banner('POPS PERFORMANCE','#fff','','pops'),Y,true);
+    livAt(B,V(.5,wsY-.24,B.max.z+out),V(0,0,-1),.08,.2,.8,decalMat('pops110v',()=>canvasDecal(128,320,(x,w,h)=>{ x.fillStyle='#f4f4f0'; x.fillRect(0,0,w,h); x.fillStyle='#111'; x.translate(w/2,h/2); x.rotate(-Math.PI/2); x.textAlign='center'; x.textBaseline='middle'; x.font='900 108px Arial Black, Impact, sans-serif'; x.fillText('110',0,6); }),{r:.5}),Y,true); }
+  else if(st!=='none'){ const wind=st==='burnout'?banner('SKID CREW WA','#fff','#111','skid'):banner('PROJECT AUSSIE','#fff','#141414','br');
+    livAt(B,V(0,wsY,B.max.z+out),V(0,0,-1),1.25,.15,.8,wind,Y,true);
     const q=st==='burnout'?decalMat('lg_b',()=>logoTex('STAY','SIDEWAYS','#ffc81e','#111')):st==='track'?decalMat('lg_t',()=>logoTex('DYNO','TUNED · WA','#fff','#c21d16')):decalMat('lg_s',()=>logoTex('WA','BUILT TOUGH','#111','#ffc81e'));
     for(const [s,o,d] of sides){ o.y=WY+.42; o.z=WRZ+.05; livAt(B,o.clone(),d,.34,.17,.5,q,Y,false); }
     const rw=st==='track'?banner('RACE · PERTH','#ffc81e','','rp'):banner(st==='burnout'?'BURNOUT SERIES':'PERTH STREET','#fff','','ps');
-    livAt(B,V(0,B.max.y-hgt*.12,B.min.z-out),V(0,0,1),.9,.11,.8,rw,Y,true);
+    livAt(B,V(0,rwY,B.min.z-out),V(0,0,1),.9,.11,.8,rw,Y,true);
     if(st==='track'||st==='full'){ const sp=decalMat('spon',()=>bannerTex('MOTORPLEX · KWINANA · RED GUM','#111','#f4f4f0'),{r:.5}); for(const [s,o,d] of sides){ o.y=WY+.48; o.z=WF-.15; livAt(B,o.clone(),d,.5,.06,.5,sp,Y,false); } }
     if(st==='full'||st==='burnout'){ const tk=decalMat('lg_f',()=>logoTex('BURNOUT','BROS','#ff6a00','#111')); livAt(B,V(0,B.max.y+out,B.min.z+len*.08),V(0,-1,0),.4,.2,hgt*.8,tk,V(-1,0,0),false); } }
   /* rego plates */
   const txt=(build.plate||'1BRR 123').toUpperCase().slice(0,8), pm=new THREE.MeshStandardMaterial({map:plateTex(txt,build.plateS||'wa'),roughness:.4,metalness:.15,polygonOffset:true,polygonOffsetFactor:-2});
   const pw=build.plateS==='euro'?.46:.372, ph=build.plateS==='euro'?.11:.134;
-  for(const [front,y] of [[1,B.min.y+hgt*.27],[0,B.min.y+hgt*.44]]){ const o=V(0,y,front?B.max.z+out:B.min.z-out), d=V(0,0,front?-1:1); const W=stance.matrixWorld;
-    const rc=new THREE.Raycaster(o.clone().applyMatrix4(W),d.clone().transformDirection(W),0,8), h=rc.intersectObject(stance,true).filter(h=>h.object.visible&&!h.object.userData.decal&&!h.object.material.transparent)[0];
-    const p=new THREE.Mesh(new THREE.PlaneGeometry(pw,ph),pm); p.userData.decal=1; const loc=h?stance.worldToLocal(h.point.clone()):V(0,y,front?B.max.z:B.min.z); loc.z+=front?.012:-.012; p.position.copy(loc); if(!front) p.rotation.y=Math.PI; livGrp.add(p); }
+  const PY=PLATE_Y[vehId]||[], BP=bakedPlates();   // a fixed mount height where the body-box guess misses (it also moved whenever a tall part changed the box)
+  for(const [front,y0] of [[1,B.min.y+hgt*.27],[0,B.min.y+hgt*.44]]){
+    const bp=BP[front?0:1]; if(bp){ // the model has its own plate: cover it exactly, same centre, at least as big
+      const c=bp.getCenter(V(0,0,0)), sz=bp.getSize(V(0,0,0)), p=new THREE.Mesh(new THREE.PlaneGeometry(Math.max(pw,sz.x+.012),Math.max(ph,sz.y+.012)),pm); p.userData.decal=1;
+      p.position.set(c.x,c.y,front?bp.max.z+.006:bp.min.z-.006); if(!front) p.rotation.y=Math.PI; livGrp.add(p); continue; }
+    const y=PY[front?0:1]??y0, d=V(0,0,front?-1:1); const W=stance.matrixWorld, dW=d.clone().transformDirection(W);
+    // cast at the centre and the four corners and sit the plate on the outermost hit, so it never sinks into a curved bumper or boot lid
+    let z=null; for(const [dx,dy] of [[0,0],[-pw*.42,-ph*.42],[pw*.42,-ph*.42],[-pw*.42,ph*.42],[pw*.42,ph*.42]]){ const o=V(dx,y+dy,front?B.max.z+out:B.min.z-out);
+      const h=new THREE.Raycaster(o.applyMatrix4(W),dW,0,8).intersectObject(stance,true).filter(h=>h.object.visible&&!h.object.userData.decal&&!h.object.material.transparent)[0];
+      if(h){ const hz=stance.worldToLocal(h.point.clone()).z; if(z==null||(front?hz>z:hz<z)) z=hz; } }
+    const p=new THREE.Mesh(new THREE.PlaneGeometry(pw,ph),pm); p.userData.decal=1; p.position.set(0,y,(z??(front?B.max.z:B.min.z))+(front?.008:-.008)); if(!front) p.rotation.y=Math.PI; livGrp.add(p); }
 }
 function renderLiveryOpts(row){ const mk=(t,l,f)=>{ const b=document.createElement('button'); b.className='arrow'; b.textContent=t; b.setAttribute('aria-label',l); b.onclick=f; return b; };
   const L=shopCat==='livery'?LIVERY:shopCat==='stickers'?STICKERS:PLATES, key=shopCat==='livery'?'livery':shopCat==='stickers'?'stickers':'plateS', keys=L.map(o=>o[0]), cur=Math.max(0,keys.indexOf(build[key]||keys[0])), o=L[cur];
@@ -2888,16 +3013,25 @@ function step(dt){
   car.shiftT=Math.max(0,car.shiftT-dt); car.cutT=Math.max(0,car.cutT-dt);
   const rpmW = Math.abs(car.wR*gr)*60/(2*Math.PI);
   let coupled=false; const thrL=limiterThrottle(dt,thr);
-  const clutchIn = input.clutch>.5 && ratio!==0;   // works on auto too: hold it and the engine free-revs
-  if(clutchPrev>.5 && input.clutch<=.5 && ratio!==0){ // clutch kick: dump the spinning engine into the axle
-    const Ie=.2, we=car.rpm*2*Math.PI/60*Math.sign(gr), Iw=2.4; car.wR=(Iw*car.wR+Ie*Math.abs(gr)*we)/(Iw+Ie*gr*gr); if(car.rpm>3000) thud(.25);
-    // clutch-kick 360: dump it with the wheel on lock (or flick within a third of a second) and it snaps round a full turn
-    if(car.rpm>3000 && speed>1 && !burnVenue()){ if(Math.abs(sIn)>.5) car.c360={dir:Math.sign(sIn),yaw:0,t:0}; else car.ckWin=.35; shake=Math.max(shake,.3); } }
-  car.ckWin=Math.max(0,(car.ckWin||0)-dt); if(car.ckWin>0 && Math.abs(sIn)>.5 && !car.c360 && !burnVenue()){ car.c360={dir:Math.sign(sIn),yaw:0,t:0}; car.ckWin=0; }
-  clutchPrev=input.clutch;
+  const clPed=input.clutch;   // 0 = fully engaged (driving), 1 = fully in
+  const clutchWas=!!car.clutchHeld;
+  if(clPed>.55) car.clutchHeld=true; else if(clPed<.40) car.clutchHeld=false;   // hysteresis so a noisy pad doesn't chatter the kick
+  const clutchIn = clPed>.92 && ratio!==0;   // works on auto too: hold it and the engine free-revs
+  // skidder: below ~50 km/h a clutch kick only keeps the revs up and the rears lit; it doesn't throw the tail out. From ~45 to ~55 km/h
+  // its tip-in help (the rear letting go and the clutch-kick 360) fades in, full from ~55 km/h as before.
+  const ckOn=(settings.steerMode||'classic')==='skidder'?(u=>u*u*(3-2*u))(clamp((speed-12.5)/2.78,0,1)):1;
+  if(clutchWas && clPed<=.40 && ratio!==0 && (car.ckDump||0)<=0){ // clutch kick: dump the spinning engine into the axle over a beat, not in one spike
+    const Ie=.2, we=car.rpm*2*Math.PI/60*Math.sign(gr), Iw=2.4;
+    car.ckW0=car.wR; car.ckW1=(Iw*car.wR+Ie*Math.abs(gr)*we)/(Iw+Ie*gr*gr); car.ckRpm0=car.rpm; car.ckDump=car.ckDump0=.20; car.ckK=ckOn; car.ckHold=1; car.ckR0=Math.abs(car.r||0); car.ckFree=clamp(Math.max(Math.abs(Math.atan2(vLat,Math.max(Math.abs(vLong),1)))/.35, (car.ckR0-.6)/.9),0,1); car.clutchHeld=false;
+    if(car.rpm>3000) thud(.25);
+    // clutch-kick 360: only on full lock (or a flick onto lock within a third of a second). A half-turn of the wheel while snaking must not snap into a 360.
+    if(car.rpm>3000 && speed>1 && !burnVenue() && ckOn>0){ if(CK_TIPIN){ if(Math.abs(sIn)>.85) car.c360={dir:Math.sign(sIn),yaw:0,t:0,k:ckOn}; else car.ckWin=.35; } shake=Math.max(shake,.3); } }
+  car.ckWin=Math.max(0,(car.ckWin||0)-dt); if(CK_TIPIN && car.ckWin>0 && Math.abs(sIn)>.85 && !car.c360 && !burnVenue() && ckOn>0){ car.c360={dir:Math.sign(sIn),yaw:0,t:0,k:car.ckK??ckOn}; car.ckWin=0; }
+  clutchPrev=clPed;
   if(twoStep && lsP>=1 && car.rpm>=LC-20 && car.cutT<=0){ car.cutT=.075+Math.random()*.03; if(!ENG.lsTwo) launchBang(); else flameKick(.35); }
   if(rollALS && car.rpm>=car.alsRpm && car.cutT<=0){ car.cutT=.06+Math.random()*.03; launchBang(); } car.alsOn=!!rollALS;
   if(ratio===0||clutchIn||twoStep){ const top=twoStep?(lsP<1?1500+(LC-40-1500)*lsE:LC+250):ENG.limit+300; car.rpm += ((car.cutT>0?car.rpm-(twoStep?380:1500):850+thrL*(top-850))-car.rpm)*Math.min(1,dt*(car.cutT>0?18:twoStep?(lsP<1?6:5):7)); }
+  else if((car.ckDump||0)>0){ /* rpm is eased toward the new wheel speed with the dump, no snap */ }
   else {
     const free = !manual ? 850+thrL*(ENG.stall-850) : ((Math.abs(vLong)<5&&(car.gear===2||car.gear===0)) ? 850+thrL*1700 : 780);
     if(rpmW >= free-1 && car.cutT<=0){ car.rpm=rpmW; coupled=true; }
@@ -2922,11 +3056,20 @@ function step(dt){
   const Te = effThr>.03 ? engineTorque(effThr)+nos : (coupled ? -(22+car.rpm*.009) : 0);
   const SR = rpmW/Math.max(car.rpm,1);
   const mult = (!manual && !coupled) ? 1+Math.max(0,.85-SR)/.85 : 1;
-  const Taxle = (ratio===0||clutchIn||twoStep) ? 0 : Te*mult*gr*.88;
+  const Taxle = (ratio===0||clutchIn||twoStep) ? 0 : Te*mult*gr*.88*(1-Math.min(.95,clPed));
   const Ieff = 2.4 + (coupled&&!clutchIn ? .2*gr*gr : 0);
-  const FbMax=16500*(modFx('brakes').br||1);
-  const FbF = Math.min(lineLock ? brk*FbMax*.8 : brk*FbMax*.62, mu*FzF*.97);
-  let TbR = lineLock ? 0 : brk*FbMax*.38*WR;
+  const skidder=(settings.steerMode||'classic')==='skidder';
+  // skidder only: ramp the foot brake so the front bite and the tail coming out build over a beat, not instantly
+  if(skidder && !lineLock){ const tgt=brk, up=tgt>(car.skBrk||0); car.skBrk=(car.skBrk||0)+(tgt-(car.skBrk||0))*Math.min(1,dt*(up?3.2:10)); }
+  else car.skBrk=brk;
+  const brkF=skidder&&!lineLock?car.skBrk:brk;
+  const FbMax=14000*(modFx('brakes').br||1), bias=clamp(TUNE.bias??.7,.4,.9);   // a touch softer overall (was 16500); bias splits it front to rear
+  const FbF = Math.min(lineLock ? brk*16500*(modFx('brakes').br||1)*.8 : brkF*FbMax*bias, mu*FzF*.97);   // line lock holds the fronts as before
+  let TbR = lineLock ? 0 : brkF*FbMax*(1-bias)*WR;
+  const slideLit=(car.spin||0)>.18 || Math.abs((car.wR||0)*WR)-Math.abs(vLong)>2;
+  if(slideLit) car.slideHold=true; else if(!((car.spin||0)>.10 || Math.abs((car.wR||0)*WR)-Math.abs(vLong)>1.2)) car.slideHold=false;   // hysteresis so rear-brake fade doesn't chatter at the threshold
+  const slideOn=slideLit||!!car.slideHold;
+  if(skidder && !lineLock && thr>.4 && brk>.12 && slideOn) TbR*=.22;   // brake+gas in a slide: don't let the rear brakes overpower the engine and kill the wheelspin
   if(input.hb>.5) TbR += 3400;
   // ---- rear axle: implicit wheel-speed update against the tyre ----
   const vxR=vLong, vyR=vLat-car.r*B, den=Math.max(Math.abs(vxR),3), tanAR=vyR/den;
@@ -2934,10 +3077,20 @@ function step(dt){
   const w=car.wR, F0=fxAt(w), k=Math.max(0,(fxAt(w+.3)-F0)/.3);
   const Tb = TbR*Math.sign(w||vxR||1);
   let wN = w + dt*(Taxle - WR*F0 - Tb)/(Ieff + dt*WR*k);
-  if(TbR>0 && (Math.sign(wN)!==Math.sign(w) || Math.abs(wN)<.3) && Math.abs(Taxle)<TbR) wN=0;
+  if(TbR>0 && (Math.sign(wN)!==Math.sign(w) || Math.abs(wN)<.3) && Math.abs(Taxle)<TbR && !(skidder && thr>.4 && slideOn)) wN=0;
   if(brk>.05 && input.hb<.5 && !lineLock && vxR>2) wN=Math.max(wN, vxR/WR*.86);
+  if((car.ckDump||0)>0){   // clutch re-engagement: ease wheel speed and rpm over ~0.20 s instead of a spike
+    const u=1-car.ckDump/Math.max(car.ckDump0,.001), e=u*u*(3-2*u);
+    wN=car.ckW0+(car.ckW1-car.ckW0)*e;
+    const rpmT=Math.abs(wN*gr)*60/(2*Math.PI);
+    car.rpm=car.ckRpm0+(rpmT-car.ckRpm0)*e;
+    car.ckDump=Math.max(0,car.ckDump-dt);
+    car.ckGrip+=(Math.min(1,u*1.6)-(car.ckGrip||0))*Math.min(1,dt*14);
+  } else car.ckGrip+=(0-(car.ckGrip||0))*Math.min(1,dt*5);
   car.wR=wN;
-  let [Fxr,Fyr,sR] = tyre2((wN*WR-vxR)/den, tanAR, FzR, muR, AP_R); Fyr*=TUNE.rear*(1-.65*TUNE.kick*Math.min(1,(car.kickT||0)/.45))*(1-.3*Math.min(1,TUNE.pivot)*clamp(((car.spin||0)-.3)/.4,0,1))*(car.c360?.42:1);   // the rear lets go for a clutch-kick 360   // a tip-in flick unloads the rear for a moment
+  let [Fxr,Fyr,sR] = tyre2((wN*WR-vxR)/den, tanAR, FzR, muR, AP_R); Fyr*=TUNE.rear*(1-.65*TUNE.kick*Math.min(1,(car.kickT||0)/.45))*(1-.3*Math.min(1,TUNE.pivot)*clamp(((car.spin||0)-.3)/.4,0,1))*(car.c360?1-.58*(car.c360.k??1):1);   // the rear lets go for a clutch-kick 360   // a tip-in flick unloads the rear for a moment
+  if(CK_TIPIN && car.ckGrip>0){ const u=clamp((Math.abs(sIn)-.35)/.5,0,1); Fyr*=1-.55*car.ckGrip*(car.ckK??1)*u*u*(3-2*u); }   // clutch-kick grip loss builds and eases, and only with a big steering input: a small turn just keeps the rears lit
+  car.ckHold=Math.max(0,(car.ckHold||0)-dt/1.5);
   Fyr*=SF.latR/SF.longR;   // rear camber: corners harder, launches worse
   // ---- front wheel lift: the car pivots on the rear tyres. Drive force times the effective CG height lifts the nose,
   // the weight ahead of the rear axle pulls it back down. Past ~6 degrees the wheelie bars push back.
@@ -2965,9 +3118,15 @@ function step(dt){
   const cd=Math.cos(delta), sd=Math.sin(delta);
   let Fx=Fxr+Fxf*cd-Fyf*sd+drag, Fy=Fyr+Fyf*cd+Fxf*sd; if(car.slope) Fx-=M*G*car.slope/Math.sqrt(1+car.slope*car.slope);   // gravity on a hill
   let Tz=A*(Fyf*cd+Fxf*sd)-B*Fyr;
+  // skidder, brake held with the wheel turned: the tail can swing out, but not carry on round into a donut. Count how far the car has turned
+  // since the brake and the lock went on; past ~115 degrees the assists fade and the rotation that way is bled off. Side to side stays free.
+  let bkG=1;
+  if(skidder && brk>.25 && Math.abs(sIn)>.3 && !car.c360){ const d=Math.sign(sIn); if(car.bkDir!==d){ car.bkDir=d; car.bkYaw=0; }
+    car.bkYaw=Math.max(0,(car.bkYaw||0)+car.r*dt*d); bkG=clamp((2.6-car.bkYaw)/.6,0,1); }
+  else { car.bkDir=0; car.bkYaw=Math.max(0,(car.bkYaw||0)-dt*1.5); }
   // tip-in on the line lock: brake + gas held, wheel turned. The fronts are held by the brakes, the spinning rears swing the tail around them
   if(lineLock && Math.abs(sIn)>.3 && car.spin>.3){ const k=clamp((Math.abs(sIn)-.3)/.5,0,1)*clamp((car.spin-.3)/.4,0,1), rT=Math.sign(sIn)*2.2;
-    Tz+=(rT-car.r)*IZ*3*k; Fy+=-Math.sign(sIn)*M*1.2*k*0; }
+    Tz+=(rT-car.r)*IZ*3*k*bkG; Fy+=-Math.sign(sIn)*M*1.2*k*0; }
   // 360 assist. Rolling tip-in 360s: flick it on full lock with the gas down at speed and the car keeps rotating while it
   // slides on down the road (yaw builds to ~4-5 rad/s, about a full turn a second). Let go of the lock or the gas and it stops helping.
   // Slow down near a standstill the same input does pivot donuts on the nose.
@@ -2982,18 +3141,26 @@ function step(dt){
     const rT=dir*Math.min(4.8,2.8+speed*.09)*Math.max(1,.6+.4*TUNE.spin), push=(rT-car.r)*dir;
     // tip-in, not a spin: once the tail is swung out to the max angle the assist stops pushing, so the car hangs sideways
     const useV=!TUNE.tip&&speed>4, bIn=TUNE.tip?(tipA??0)*dir:useV?-Math.atan2(vLat,Math.max(Math.abs(vLong),1))*dir:0, gate=TUNE.angle>0&&(TUNE.tip||useV)?clamp((TUNE.angle*Math.PI/180-bIn)/.3,0,1):1;
-    if(push>0) Tz+=dir*push*IZ*2.2*k*TUNE.spin*gate;
+    if(push>0) Tz+=dir*push*IZ*2.2*k*TUNE.spin*gate*bkG;
     const slow=clamp((9-speed)/3,0,1)*lit*kS, over=Math.max(0,speed-3.2);      // donut territory only: scrub speed so it pivots
     if(slow>0 && !(TUNE.tip&&TUNE.angle>0)){ Fx-=M*1.9*over*slow*vLong/speed; Fy-=M*1.9*over*slow*vLat/speed; } }
   // power rotation (skid car): rears lit up, gas down, wheel on full lock and the spinning tyres drive the tail around the
   // front wheels. Works with the 360 assist off; hold it and it keeps going round, ease off the gas or the lock and it slows.
   if(car.kickT>0 && Math.sign(sIn)===car.kickDir) Tz+=car.kickDir*IZ*TUNE.kick*5.5*(car.kickT/.45);   // the throw: yaw builds smoothly, no snap
   if(car.c360){ const C=car.c360; C.t+=dt; C.yaw+=car.r*dt*C.dir; const push=5.6-car.r*C.dir;   // drive the full turn, then hand back; let go of the lock or the gas and it ends
-    if(push>0) Tz+=C.dir*push*IZ*3.2*(C.yaw<5.2?1:clamp((6.1-C.yaw)/.9,0,1));
+    if(push>0) Tz+=C.dir*push*IZ*3.2*(C.k??1)*(C.yaw<5.2?1:clamp((6.1-C.yaw)/.9,0,1));
     if(C.yaw>=2*Math.PI*.97||C.t>2.4||Math.abs(sIn)<.2||thr<.3||Math.sign(sIn)!==C.dir){ if(C.yaw>=2*Math.PI*.9) toast('Clutch-kick 360!','var(--good)'); car.c360=null; } }
   if(TUNE.pivot>0 && !car.tc && !lineLock && thr>.7 && Math.abs(sIn)>.85 && speed>.6){
     const dir=Math.sign(sIn), lit=clamp((car.spin-.3)/.4,0,1), rMax=3.6+Math.min(1.4,speed*.08), push=(dir*rMax-car.r)*dir;
-    if(push>0) Tz+=dir*push*IZ*1.4*TUNE.pivot*lit*thr*clamp(car.lockT/.35,0,1); }   // ramps in once you've held it for a moment
+    if(push>0) Tz+=dir*push*IZ*1.4*TUNE.pivot*lit*thr*clamp(car.lockT/.35,0,1)*bkG; }   // ramps in once you've held it for a moment
+  // transition (Classic and Skidder): counter-steer against the way the car is rotating and the fronts get the authority to pull it
+  // back through centre into the other side, instead of the lit rears carrying it on round into a donut. Only while the wheel is
+  // turned against the rotation, so tip-ins from straight are untouched; it eases in with how far you steer, so there's no snap.
+  { const m=settings.steerMode||'classic';
+    const on=TR_K>0 && (m==='classic'||m==='skidder') && !car.tc && !lineLock && !car.c360 && speed>2.5 && Math.abs(sIn)>.25 && Math.abs(car.r)>.3 && Math.sign(sIn)!==Math.sign(car.r);
+    car.trA=(car.trA||0)+((on?1:0)-(car.trA||0))*Math.min(1,dt*(on?2.5:12));   // eases in over ~0.4 s so it never snaps
+    if(car.trA>.01 && Math.abs(sIn)>.25){ const dir=Math.sign(sIn), kS=clamp((Math.abs(sIn)-.25)/.5,0,1), rT=dir*(.6+.9*kS), push=(rT-car.r)*dir;
+      if(push>0 && Math.sign(car.r)!==dir) Tz+=dir*Math.min(push,3)*IZ*TR_K*kS*car.trA; } }
   // tip-in hold: once the car has swung the max angle from where the tip-in started, stop it there so it hangs sideways
   if(tipA!=null && TUNE.angle>0 && !car.tc && !car.c360){ const bm=TUNE.angle*Math.PI/180, ex=tipA-clamp(tipA,-bm,bm);
     if(ex){ Tz-=ex*IZ*22; if(Math.sign(car.r)===Math.sign(ex)) Tz-=car.r*IZ*5; } }
@@ -3004,6 +3171,32 @@ function step(dt){
     if(TUNE.angle>0 && !TUNE.tip && speed>2.5 && !car.c360){ const beta=Math.atan2(vLat,Math.max(vLong,1)), bm=TUNE.angle*Math.PI/180, ex=beta-clamp(beta,-bm,bm);
       if(ex){ Tz+=ex*IZ*22; if(Math.sign(car.r)===-Math.sign(ex)) Tz-=car.r*IZ*5; } } }
   if(car.tc && speed>3 && !car.c360){ const rLim=mu*G*.95/Math.max(speed,1), rDes=clamp(vLong*Math.tan(delta)/L,-rLim,rLim), err=car.r-rDes; if(Math.abs(err)>.08) Tz-=Math.sign(err)*(Math.abs(err)-.08)*IZ*5; }
+  // skidder: while the brake is held or a clutch kick is dumping (and this is not a tip-in throw), cap how fast yaw can build so the tail comes out smoothly
+  if(skidder && !lineLock && !car.tc && !car.c360 && (car.kickT||0)<=0 && (car.flickT||0)<=0 && (brk>.12||(car.ckDump||0)>0||(car.ckGrip||0)>.12) && speed>1){
+    const rDot=Tz/IZ, rDotMax=5.5, rCap=2.2+Math.min(1.2,speed*.08);
+    if(Math.abs(rDot)>rDotMax && Math.sign(rDot)===Math.sign(car.r||rDot)) Tz=Math.sign(rDot)*rDotMax*IZ;
+    const rNext=car.r+Tz/IZ*dt;
+    if(Math.abs(rNext)>rCap && Math.abs(rNext)>Math.abs(car.r)) Tz=(Math.sign(rNext)*Math.max(Math.abs(car.r),rCap)-car.r)*IZ/Math.max(dt,1e-4);
+  }
+  // skidder, brake held: the snakey. The tail comes across through centre into the other angle slower and progressively, so a
+  // swing-across builds instead of flicking. Peak yaw rate is lower, yaw builds at a gentler rate and the change in yaw is eased
+  // (jerk-limited). The angle it reaches on the other side isn't touched. Off the brake only snakey reversals get it (SK_REV), not tip-ins.
+  // skidder, off the brake too: once the tail is swinging back toward centre (a snakey reversal), the same easing runs at part strength
+  // through centre and into the new angle, so the rear comes across progressively instead of flicking. A tip-in from straight is untouched.
+  { const b=Math.atan2(vLat,Math.max(Math.abs(vLong),1)); if(skidder && Math.abs(b)>.08 && car.r*b>0 && Math.abs(car.r)>.4) car.revT=1.2; else car.revT=Math.max(0,(car.revT||0)-dt); }
+  { const w=skidder&&!car.tc&&!car.c360&&speed>1 ? Math.max(clamp(((lineLock?brk:(car.skBrk||0))-.12)/.35,0,1), SK_REV*Math.min(1,(car.revT||0)/.4)) : 0;
+    if(w>0){ let rDot=Tz/IZ; const build=Math.sign(rDot)===Math.sign(car.r||rDot), dMax=5.5+(3-5.5)*w, rCap=(2.2+Math.min(1.2,speed*.08))*(1-w)+(1.55+Math.min(.65,speed*.045))*w;
+      if(build && Math.abs(rDot)>dMax) rDot=Math.sign(rDot)*dMax;
+      const J=60+(12-60)*w, prev=car.bkRd??rDot; rDot=prev+clamp(rDot-prev,-J*dt,J*dt);
+      const rNext=car.r+rDot*dt; if(Math.abs(rNext)>rCap && Math.abs(rNext)>Math.abs(car.r)) rDot=(Math.sign(rNext)*Math.max(Math.abs(car.r),rCap)-car.r)/Math.max(dt,1e-4);
+      car.bkRd=rDot; Tz=rDot*IZ; } else car.bkRd=Tz/IZ; }
+  // skidder no-donut: once a brake-held full-lock swing has gone past its limit, bleed off any yaw still carrying it round that way (never the other way)
+  if(bkG<1 && car.bkDir){ if(Tz*car.bkDir>0) Tz*=bkG; if(car.r*car.bkDir>0) Tz-=car.r*IZ*8*(1-bkG); }
+  // clutch kick with a small turn: it keeps the revs up and the rears lit, but for ~1 s (fading out by 1.5 s) it can't add rotation on top of what the car
+  // already had. The cap fades out as the steering goes past ~half lock, so a big turn still lets the kick help a tip-in, and it's off
+  // if the car was already sideways or rotating when you kicked (a kick mid-snakey just keeps it lit, it doesn't lock the angle).
+  if(car.ckHold>0 && !car.c360){ const u=clamp((Math.abs(sIn)-.35)/.5,0,1), h=Math.min(1,car.ckHold*3)*(1-u*u*(3-2*u))*(1-(car.ckFree||0));
+    if(h>0){ const rNext=car.r+Tz/IZ*dt, lim=(car.ckR0||0)+.12; if(Math.abs(rNext)>lim && Math.abs(rNext)>Math.abs(car.r)){ const rT=Math.sign(rNext)*Math.max(lim,Math.abs(car.r)); Tz+=((rT-car.r)/Math.max(dt,1e-4)*IZ-Tz)*h; } } }
   car.ax=Fx/M; car.ay=Fy/M;
   vLong+=(car.ax+car.r*vLat)*dt; vLat+=(car.ay-car.r*vLong)*dt;
   car.r+=Tz/IZ*dt;
@@ -3018,15 +3211,17 @@ function step(dt){
   car.slip=Math.max(clamp(sR-.85,0,2)*.7, clamp(sF-.9,0,2)*.6, car.spin*.6);
   car.braking=brk>.1;
   car.autoT=Math.max(0,car.autoT-dt);
-  if(!manual && settings.donut!=='off' && !car.tc && car.gear>2 && car.shiftT<=0 && input.thr>.6 && Math.abs(input.steer)>.5 && speed>8){
+  const wheelAhead = Math.abs(wN*WR) - Math.abs(vxR);   // rear tyre surface speed vs the road under it
+  if(wheelAhead>Math.max(2.2,.25*Math.abs(vxR))) car.spinHold=true; else if(wheelAhead<Math.max(1,.12*Math.abs(vxR))) car.spinHold=false;   // hysteresis: light up and it holds the gear; it only lets go once the tyre has nearly hooked up
+  const holdForSkid = !!car.spinHold && (settings.venue!=='drag' || Math.abs(vxR)<10);   // never change gear while the rears are spinning well beyond road speed · on the strip it still shifts up through the skate once rolling
+  if(!manual && settings.donut!=='off' && !car.tc && car.gear>2 && car.shiftT<=0 && input.thr>.6 && Math.abs(input.steer)>.5 && speed>8 && !holdForSkid){
     let g=car.gear; while(g>2 && Math.abs(car.wR*RATIOS[g-1]*FINAL)*60/(2*Math.PI)<ENG.limit-450) g--;
-    if(g<car.gear){ car.gear=g; car.shiftT=.12; car.autoT=1.2; } }   // tip-in kickdown
-  if(!manual && car.gear>=2 && car.shiftT<=0 && (car.autoT<=0 || (thr>.6 && car.rpm>ENG.limit-250)) && !lineLock){   // the low gears rev out faster than the shift timer: never sit it on the limiter waiting to change up
+    if(g<car.gear){ car.gear=g; car.shiftT=.12; car.autoT=1.2; } }   // tip-in kickdown (not during a burnout)
+  if(!manual && car.gear>=2 && car.shiftT<=0 && (car.autoT<=0 || (!holdForSkid && thr>.6 && car.rpm>ENG.limit-250)) && !lineLock){   // the low gears rev out faster than the shift timer: never sit it on the limiter waiting to change up — but a skid holds the current gear for at least autoT
     const upAt=thr>.6?ENG.limit-200:thr<.1?ENG.limit-900:2900+thr*3000;
     const lower=car.gear>2?Math.abs(car.wR*RATIOS[car.gear-1]*FINAL)*60/(2*Math.PI):1e9;
-    const holdForSkid = settings.venue!=='drag' && ((car.spin>.4 && thr>.3) || (burnVenue() && car.spin>.2));   // never short-shift out of a skid · on the strip it shifts up through the skate
     if(rpmW>upAt&&car.gear<RATIOS.length-1&&!holdForSkid){ autoShift(true); car.autoT=.9; }
-    else if(car.gear>2&&car.spin<.3&&((thr>.85&&rpmW<2600&&lower<ENG.limit-900)||rpmW<1300||(brk>.3&&lower<4400))){ autoShift(false); car.autoT=.8; }
+    else if(!holdForSkid&&car.gear>2&&car.spin<.3&&((thr>.85&&rpmW<2600&&lower<ENG.limit-900)||rpmW<1300||(brk>.3&&lower<4400))){ autoShift(false); car.autoT=.8; }
   }
   car.wheelRot[0]+=vLong/WR*dt; car.wheelRot[1]+=vLong/WR*dt; car.wheelRot[2]+=car.wR*dt; car.wheelRot[3]+=car.wR*dt;
   collide();
@@ -3065,11 +3260,11 @@ function dynoRead(){ const F=ecuFlags(); $('dynoFlags').innerHTML=F.map(([c,t])=
   $('dynoRead').innerHTML=`<span><b>${Math.round(P.kw)}</b> rwkW @ ${Math.round(P.kr/100)*100}</span><span><b class="tq">${Math.round(P.tq)}</b> Nm @ ${Math.round(P.tr/100)*100}</span>${P.psi?`<span>${P.psi.toFixed(1)} psi</span>`:''}${dlt!=null?`<span><i class="${dlt<0?'dn':''}">${dlt>=0?'+':''}${dlt} rwkW</i> vs last pull</span>`:''}${dyno.spray&&nosKW()?'<span>on the bottle</span>':''}`; }
 const DYNO_ROWS=[['boost','Boost',-.3,.4,.01,v=>(v>=0?'+':'')+Math.round(v*100)+'%',()=>ENG.turbo],['timing','Ignition timing',-6,12,.5,v=>(v>0?'+':'')+v+'°'],
   ['lam','Mixture',.7,1,.01,v=>`λ ${v.toFixed(2)} · ${(v*14.7).toFixed(1)} AFR`],['cam','Cam timing',-8,8,1,v=>v===0?'0°':v>0?v+'° advance':(-v)+'° retard'],
-  ['rev','Rev limit',-500,1000,50,v=>(baseLim()+(modFx('head').rev||0)+(modFx('forged').rev||0)+v)+' rpm'],['lc','Launch rpm',2500,6000,100,v=>v+' rpm',()=>build.launch==='on']];
+  ['rev','Rev limit',-500,1000,50,v=>(baseLim()+(isXr6Carby()?0:(modFx('head').rev||0)+(modFx('forged').rev||0))+v)+' rpm'],['lc','Launch rpm',2500,6000,100,v=>v+' rpm',()=>build.launch==='on']];
 function buildDyno(){ refreshEcu(); const val=k=>k==='lam'?ecuLam():k==='lc'?(ECU.lc||(ENG.turbo?4000:3800)):ECU[k];
   $('dynoRows').innerHTML=DYNO_ROWS.map(([k,n,mn,mx,st,,on])=>`<div class="drow${on&&!on()?' off':''}"><label class="label" for="dy_${k}">${n}</label><span class="tv" id="dv_${k}"></span><input type="range" id="dy_${k}" min="${mn}" max="${mx}" step="${st}"${on&&!on()?' disabled':''}></div>`).join('');
   for(const [k,,,,,fmt] of DYNO_ROWS){ const el=$('dy_'+k); el.value=val(k); $('dv_'+k).textContent=fmt(+val(k));
-    el.oninput=()=>{ build.ecu={...(build.ecu||{}),[k]:+el.value}; refreshEcu(); ENG.limit=baseLim()+(modFx('head').rev||0)+(modFx('forged').rev||0)+(ECU.rev||0); $('dv_'+k).textContent=fmt(+el.value); dynoRead(); };
+    el.oninput=()=>{ build.ecu={...(build.ecu||{}),[k]:+el.value}; refreshEcu(); ENG.limit=baseLim()+(isXr6Carby()?0:(modFx('head').rev||0)+(modFx('forged').rev||0))+(ECU.rev||0); $('dv_'+k).textContent=fmt(+el.value); dynoRead(); };
     el.onchange=()=>{ toMyBuild(); }; }
   $('dynoSpray').hidden=!nosKW(); $('dynoSpray').textContent=dyno.spray?'Nitrous on':'Nitrous off';
   $('dynoSub').textContent=`${buildName(build)} · ${ENG.label} · 4th gear pull · rear-wheel kW`; dynoRead(); requestAnimationFrame(()=>drawDyno(1)); }
@@ -3371,12 +3566,26 @@ addEventListener('keydown',e=>{ if(e.repeat||e.target.tagName==='INPUT') return;
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault(); });
 addEventListener('keyup',e=>{ keys[e.code]=false; });
 addEventListener('blur',()=>{ for(const k in keys) keys[k]=false; for(const k in touch) touch[k]=0; revHeld=false; });
+// Gamepad analogue: buttons/triggers may rest at 0 or at -1 (Android/XInput axes), and a few sit inverted or slightly off zero.
+// Map to 0..1 with a deadzone so a released control is fully off and a fully pressed one is fully on, with smooth travel in between.
+function pad01(v,dz=.12){ if(v==null||Number.isNaN(+v)) return 0; v=+v; if(v<0) v=v<-1?0:(v+1)/2; if(v<=dz) return 0; if(v>=1-dz) return 1; return (v-dz)/(1-2*dz); }
+function padBtn01(b,dz=.12){ if(!b) return 0; if(!b.pressed) return 0;   // trust pressed for "at rest" so a sticky/inverted 1.0 never holds the clutch in
+  const raw=typeof b.value==='number'?b.value:1; return pad01(raw<.05?1:raw, dz); }
+function padAxis01(gp,i,dz=.12){ if(!gp||i==null||gp.axes[i]==null) return 0; return pad01(gp.axes[i],dz); }
 function readInput(dt){
   const up=keys.KeyW||keys.ArrowUp||touch.G, dn=keys.KeyS||keys.ArrowDown||touch.B, lf=keys.KeyA||keys.ArrowLeft||touch.L, rt=keys.KeyD||keys.ArrowRight||touch.R;
   let gp=null; const pads=navigator.getGamepads?navigator.getGamepads():[]; for(const p of pads) if(p){gp=p;break;}
   input.thr+=((up?1:0)-input.thr)*Math.min(1,dt*(up?8:20));   /* snappy lift so quick stabs work */ input.brk+=((dn?1:0)-input.brk)*Math.min(1,dt*10);
   input.steer=(lf?1:0)-(rt?1:0); input.hb=(keys.Space||touch.H)?1:0; input.clutch=(keys.KeyZ||touch.K)?1:0; input.als=(keys.KeyF||touch.N)?1:0; input.nos=(keys.KeyN||keys.ShiftLeft||touch.O)?1:0;
-  if(gp){ const ax=gp.axes[0]||0; if(Math.abs(ax)>.08) input.steer=-ax; const r=gp.buttons[7]?.value||0, l=gp.buttons[6]?.value||0; if(r>.05) input.thr=r; if(l>.05) input.brk=l; if(gp.buttons[0]?.pressed) input.hb=1; if(gp.buttons[4]?.pressed) input.clutch=1; if(gp.buttons[10]?.pressed||gp.buttons[11]?.pressed) input.als=1; if(gp.buttons[5]?.pressed) input.nos=1; }   // RB = nitrous, click either stick = 2-step / anti-lag
+  if(gp){ const ax=gp.axes[0]||0; if(Math.abs(ax)>.08) input.steer=-ax;
+    // RT/LT: button 7/6 (0..1), or axes 5/4 on pads that expose triggers as rest-at--1 axes. Never use axes 0-3 (sticks).
+    const r=Math.max(padBtn01(gp.buttons[7],.08), padAxis01(gp,5,.08), padAxis01(gp,7,.08));
+    const l=Math.max(padBtn01(gp.buttons[6],.08), padAxis01(gp,4,.08), padAxis01(gp,6,.08));
+    if(r>0) input.thr=r; if(l>0) input.brk=l;
+    if(gp.buttons[0]?.pressed) input.hb=1;
+    // LB clutch (button 4): analogue if the bumper reports a value, otherwise 0 or 1. Deadzoned so rest is fully engaged (clutch out).
+    const cl=padBtn01(gp.buttons[4],.12); if(cl>0||gp.buttons[4]?.pressed) input.clutch=cl;
+    if(gp.buttons[10]?.pressed||gp.buttons[11]?.pressed) input.als=1; if(gp.buttons[5]?.pressed) input.nos=1; }   // RB = nitrous, click either stick = 2-step / anti-lag
 }
 function resetCar(){ const v=settings.venue; if(MAP){ if(MAP.H&&MAP.H.chain>0){ MAP.H.chain=0; MAP.H.mult=1; toast('Reset · chain lost','var(--bad)'); } resetMap(); for(let k=0;k<4;k++) skids.lift(k); return; } if(burnVenue()){ placeFor(v); freshTyres(); run.on=false; return; } if(v==='drag'){ placeFor('drag'); dragReset(); return; } if(v==='sprint'){ placeFor('sprint'); sprint.reset(); return; } nearest(); placeCar(car.idx,0); if(lap.running) lap.invalid=true; skids.lift(0); skids.lift(1); skids.lift(2); skids.lift(3); }
 function toggleAir(){ settings.airUp=!settings.airUp; saveSettings(); airHiss(); toast(settings.airUp?'Air ride up':'Air ride down · slammed'); refreshSegs(); }
@@ -3458,7 +3667,7 @@ function drawTach(){
   tx.fillStyle='#9a948a'; tx.font='600 22px "IBM Plex Mono", monospace'; tx.textAlign='center'; tx.textBaseline='middle';
   for(let k=0;k<=7;k++){ const a=ang(k*1000); tx.fillText(k,cx+Math.cos(a)*(R-34),cy+Math.sin(a)*(R-34)); }
   const na=ang(Math.min(car.rpm,7000)); tx.strokeStyle='#efe6d8'; tx.lineWidth=5; tx.beginPath(); tx.moveTo(cx+Math.cos(na)*(R-70),cy+Math.sin(na)*(R-70)); tx.lineTo(cx+Math.cos(na)*(R+6),cy+Math.sin(na)*(R+6)); tx.stroke();
-  tx.fillStyle='#efe6d8'; tx.font='900 104px "Big Shoulders Display", Impact, sans-serif'; tx.fillText(Math.round(Math.abs(car.vLong)*3.6),cx,cy-6);
+  tx.fillStyle='#efe6d8'; tx.font='900 104px "Big Shoulders Display", Impact, sans-serif'; tx.fillText(Math.round(Math.hypot(car.vx,car.vz)*3.6),cx,cy-6);
   tx.fillStyle='#9a948a'; tx.font='600 20px "IBM Plex Mono", monospace'; tx.fillText('km/h',cx,cy+52);
   const gl=car.gear===0?'R':car.gear===1?'N':String(car.gear-1);
   tx.fillStyle=car.rpm>ENG.limit-300?'#c4552c':'#ffb347'; tx.font='800 54px "Big Shoulders Display", Impact, sans-serif'; tx.fillText(gl,cx,cy+R*.72);
@@ -4946,7 +5155,7 @@ function freeTripTick(dt){
 }
 
 /* ================= garage UI ================= */
-let state='loading', menuOpen=false, revHeld=false, shopCat=null;
+let state='loading', menuOpen=false, revHeld=false, shopCat=null, shopSel=null, shopPrevIdx=null, shopPrevTok=0;
 function stats(){
   const st=STANCES[build.stance]; const sp={'xr6turbo_wing_3_ng':.12,'xr6turbo_wing_5_ng':.06,'misc_d':.03}[build.parts.spoiler]||0;
   return { acc:.7, top:.74, han:Math.min(1,.56+(st.drop/.08)*.14+sp), sta:st.rate };
@@ -4982,30 +5191,36 @@ function changeCost(a,b){ if(!a||!b||a.id!==b.id) return 0; let c=0;
   const pa=a.parts||{}, pb=b.parts||{}; for(const k of new Set([...Object.keys(pa),...Object.keys(pb)])) if(pa[k]!==pb[k]) c+=450;
   for(const [k,p] of [['tyre',600],['wheel',900],['paint',500],['livery',600],['livCol',200],['stickers',150],['plateS',250],['plate',250],['stance',400],['cam',1500],['launch',1800],['gate',900],['box',1200],['diff',500]]) if(a[k]!==b[k]) c+=p;
   return c; }
-function careerToggle(){ CAREER.on=!CAREER.on; if(CAREER.on&&!CAREER.started){ CAREER.started=true; CAREER.cash=2500; garageCars.push(Object.assign(shopCar('au'),{name:'Tired AU Forte'})); store.set('barra.garage',garageCars); toast('Career on · $2,500 and a tired AU Forte in your garage','var(--amber)'); selectBuild(garageCars.length-1); }
+function careerToggle(){ CAREER.on=!CAREER.on; if(CAREER.on&&!CAREER.started){ CAREER.started=true; CAREER.cash=2500; garageCars.push(Object.assign(shopCar('au'),{name:'Tired AU Forte'})); store.set('barra.garage',garageCars); toast('Career on · $2,500 and a tired AU Forte in your garage','var(--amber)'); shopSel=null; shopPrevIdx=garageCars.length-1; shopPrevTok++; selectBuild(garageCars.length-1); }
   else toast(CAREER.on?`Career on · ${money(CAREER.cash)}`:'Career off · everything is free again','var(--amber)'); careerSave(); cashHud(); renderShop(); }
 setTimeout(cashHud,0);
-function toMyBuild(){ if(CAREER.on){ const prev=garageCars.find(b=>b.id===build.id), cost=changeCost(prev,build);
+function toMyBuild(){ if(shopSel) return; if(CAREER.on){ const prev=garageCars.find(b=>b.id===build.id), cost=changeCost(prev,build);
     if(cost>CAREER.cash){ const keep=JSON.parse(JSON.stringify(prev)); for(const k of Object.keys(build)) delete build[k]; Object.assign(build,keep); toast(`That's ${money(cost)} · you've got ${money(CAREER.cash)}`,'var(--bad)'); applyBuild().then(()=>{ renderBuild(); renderOpts&&renderOpts(); }); return; }
     if(cost>0){ CAREER.cash-=cost; careerSave(); cashHud(); toast(`−${money(cost)} · ${money(CAREER.cash)} left`,'var(--bone)'); } }
   build.custom=true; let i=garageCars.findIndex(b=>b.id===build.id);   // every change saves straight into the car in your garage
   if(i<0){ build.id='g_'+(build.vehicle||'falcon')+'_'+Date.now().toString(36); garageCars.push(null); i=garageCars.length-1; }
   garageCars[i]=JSON.parse(JSON.stringify(build)); store.set('barra.garage',garageCars); buildIdx=i; store.set('barra.buildIdx',buildIdx); renderBuild(); }
+// shopSel = sid being previewed on the turntable; shopPrevIdx = garage car to put back when the shop closes
+function previewShopCar(sid){ const tok=++shopPrevTok; shopSel=sid; const b=shopCar(sid); if(!ENGINES[b.engine]) b.engine='xr6t'; if(!b.vehicle) b.vehicle='falcon'; build=b; $('gmsg').textContent='Loading…'; applyBuild().then(()=>{ if(tok!==shopPrevTok) return; renderBuild(); renderShopHighlight(); $('gmsg').textContent=isTouch?'Drag the car to spin the turntable':'Drag the car to spin it · hold Rev to hear the Barra'; }); }
+function endShopPreview(){ shopPrevTok++; const restore=shopPrevIdx; shopSel=null; shopPrevIdx=null; document.body.classList.remove('carshop'); if(restore!=null&&garageCars[restore]) return selectBuild(restore); return Promise.resolve(); }
+function openCarShop(on){ const sh=$('carShop'); if(on){ if(!$('shop').hidden) openShop(false); sh.hidden=false; document.body.classList.add('shopping','carshop'); gFrameN=0; shopPrevIdx=buildIdx; renderShop(); previewShopCar(shopSel||SHOP_CARS[0].sid); } else { sh.hidden=true; if($('shop').hidden) document.body.classList.remove('shopping'); endShopPreview(); gFrameN=0; ttTarget=null; Object.assign(gcamT,{yaw:.75,pitch:.16,dist:6.4}); } }
+function renderShopHighlight(){ const L=$('csList'); if(L) for(const d of L.querySelectorAll('.cs[data-sid]')) d.classList.toggle('cur',d.dataset.sid===shopSel); const G=$('csOwned'); if(G) [...G.children].forEach((r,i)=>r.classList.toggle('cur',shopSel==null&&i===buildIdx)); }
 function renderShop(){ const L=$('csList'); if(!L) return; L.innerHTML='';
-  { const d=document.createElement('div'); d.className='cs'; d.innerHTML=`<b>Career mode</b><span>${CAREER.on?`On · ${money(CAREER.cash)} in the bank · ${money(CAREER.earned)} won so far`:'Off · everything is free. Turn it on to start with $2,500 and a tired AU Forte, and earn your way up.'}</span>`; const bt=document.createElement('button'); bt.className='btn'+(CAREER.on?'':' primary'); bt.textContent=CAREER.on?'Turn career off':'Start career'; bt.onclick=careerToggle; d.appendChild(bt); L.appendChild(d); }
+  { const d=document.createElement('div'); d.className='cs csCareer'; d.style.cursor='default'; d.innerHTML=`<b>Career mode</b><span>${CAREER.on?`On · ${money(CAREER.cash)} in the bank · ${money(CAREER.earned)} won so far`:'Off · everything is free. Turn it on to start with $2,500 and a tired AU Forte, and earn your way up.'}</span>`; const bt=document.createElement('button'); bt.className='btn'+(CAREER.on?'':' primary'); bt.textContent=CAREER.on?'Turn career off':'Start career'; bt.onclick=careerToggle; d.appendChild(bt); L.appendChild(d); }
   for(const S of SHOP_CARS){ const P=PRESETS.find(p=>p.id===S.from), E=ENGINES[P.engine]||{}, own=garageCars.filter(b=>(b.vehicle||'falcon')===(P.vehicle||'falcon')&&(b.engine===P.engine||b.id.startsWith('g_'+S.sid))).length;
-    const d=document.createElement('div'); d.className='cs'; d.innerHTML=`<b>${S.name}</b><span>${S.blurb}</span><span class="dim">${E.spec||''}${own?` · ${own} in your garage`:''}</span>`;
-    const bt=document.createElement('button'); bt.className='btn primary'; bt.textContent=CAREER.on?`Buy · ${money(carPrice(S.sid))}`:'Add to garage'; bt.onclick=()=>{ if(CAREER.on){ const p=carPrice(S.sid); if(p>CAREER.cash){ toast(`Need ${money(p)} · you've got ${money(CAREER.cash)}`,'var(--bad)'); return; } CAREER.cash-=p; careerSave(); cashHud(); } garageCars.push(shopCar(S.sid)); store.set('barra.garage',garageCars); toast(`${S.name} added to your garage`); renderShop(); selectBuild(garageCars.length-1); };
+    const d=document.createElement('div'); d.className='cs'+(shopSel===S.sid?' cur':''); d.dataset.sid=S.sid; d.innerHTML=`<b>${S.name}</b><span>${S.blurb}</span><span class="dim">${E.spec||''}${own?` · ${own} in your garage`:''}</span>`;
+    d.onclick=e=>{ if(e.target.closest('button')) return; previewShopCar(S.sid); };
+    const bt=document.createElement('button'); bt.className='btn primary'; bt.textContent=CAREER.on?`Buy · ${money(carPrice(S.sid))}`:'Add to garage'; bt.onclick=()=>{ if(CAREER.on){ const p=carPrice(S.sid); if(p>CAREER.cash){ toast(`Need ${money(p)} · you've got ${money(CAREER.cash)}`,'var(--bad)'); return; } CAREER.cash-=p; careerSave(); cashHud(); } garageCars.push(shopCar(S.sid)); store.set('barra.garage',garageCars); toast(`${S.name} added to your garage`); shopSel=null; shopPrevIdx=garageCars.length-1; shopPrevTok++; selectBuild(garageCars.length-1).then(renderShop); };
     d.appendChild(bt); L.appendChild(d); }
-  const G=$('csOwned'); G.innerHTML=''; garageCars.forEach((b,i)=>{ const r=document.createElement('div'); r.className='csO'+(i===buildIdx?' cur':''); r.innerHTML=`<span>${esc(buildName(b))}</span>`;
-    const go=document.createElement('button'); go.className='btn ghost'; go.textContent=i===buildIdx?'Driving':'Pick'; go.onclick=()=>{ selectBuild(i).then(renderShop); }; r.appendChild(go);
-    if(garageCars.length>1){ const rm=document.createElement('button'); rm.className='btn ghost'; rm.textContent='Sell'; rm.onclick=()=>{ if(rm.dataset.sure){ garageCars.splice(i,1); store.set('barra.garage',garageCars); selectBuild(Math.min(buildIdx>i?buildIdx-1:buildIdx,garageCars.length-1)).then(renderShop); } else { rm.dataset.sure=1; rm.textContent='Sure?'; } }; r.appendChild(rm); }
+  const G=$('csOwned'); G.innerHTML=''; garageCars.forEach((b,i)=>{ const r=document.createElement('div'); r.className='csO'+(shopSel==null&&i===buildIdx?' cur':''); r.innerHTML=`<span>${esc(buildName(b))}</span>`;
+    const go=document.createElement('button'); go.className='btn ghost'; go.textContent=shopSel==null&&i===buildIdx?'Driving':'Pick'; go.onclick=()=>{ shopSel=null; shopPrevIdx=i; shopPrevTok++; selectBuild(i).then(renderShop); }; r.appendChild(go);
+    if(garageCars.length>1){ const rm=document.createElement('button'); rm.className='btn ghost'; rm.textContent='Sell'; rm.onclick=()=>{ if(rm.dataset.sure){ garageCars.splice(i,1); store.set('barra.garage',garageCars); const ni=Math.min(buildIdx>i?buildIdx-1:buildIdx,garageCars.length-1); shopSel=null; shopPrevIdx=ni; shopPrevTok++; selectBuild(ni).then(renderShop); } else { rm.dataset.sure=1; rm.textContent='Sure?'; } }; r.appendChild(rm); }
     G.appendChild(r); }); }
-$('shopBtn').onclick=()=>{ const sh=$('carShop'); if(sh.hidden&&!$('shop').hidden) openShop(false); sh.hidden=!sh.hidden; if(!sh.hidden) renderShop(); };
-$('csClose').onclick=()=>{ $('carShop').hidden=true; };
+$('shopBtn').onclick=()=>{ startAudio(); openCarShop($('carShop').hidden); };
+$('csClose').onclick=()=>{ openCarShop(false); };
 
 const catsNow=()=>VEH.cats.filter(c=>(CAT_GROUP[c[0]]||'engine')===shopMode);
-function openShop(on,mode){ if(mode) shopMode=mode; $('shop').hidden=!on; gFrameN=0; document.body.classList.toggle('shopping',on); $('custBtn').hidden=!on; $('custBtn').textContent='Done';
+function openShop(on,mode){ if(mode) shopMode=mode; if($('carShop')&&!$('carShop').hidden){ $('carShop').hidden=true; endShopPreview(); } $('shop').hidden=!on; gFrameN=0; document.body.classList.toggle('shopping',on); $('custBtn').hidden=!on; $('custBtn').textContent='Done';
   for(const id of ['wsBtn','paintBtn','bodyBtn']) $(id).hidden=on; $('revBtn').hidden=on; $('dynoBtn').hidden=!(on&&shopMode==='engine'); $('carShop').hidden=true;
   $('shopTitle').textContent=on?SHOP_NAMES[shopMode]:''; $('shopTitle').hidden=!on;
   if(on){ renderCats(); const C=catsNow(); setCat(shopCat&&C.some(c=>c[0]===shopCat)?shopCat:C[0][0]); } else { shopCat=null; ttTarget=null; Object.assign(gcamT,{yaw:.75,pitch:.16,dist:6.4}); } }
@@ -5334,7 +5549,7 @@ function pollPad(){
     if(E[4]) selectBuild(buildIdx-1); if(E[5]) selectBuild(buildIdx+1);   // LB / RB change car; D-pad and stick move the highlight
     if(E[1]&&padFocus){ setPadFocus(null); const back=[...document.querySelectorAll('.back,.close,[data-close],#custClose,#dynoClose')].find(el=>!el.closest('[hidden]')&&el.getBoundingClientRect().width>0); if(back) back.click(); }
     const navd=padNav(gp,E,document.body);
-    if(E[0]&&!navd){ startAudio(); showVenue(); } if(E[3]) (document.body.classList.contains('shopping')?$('custBtn'):$('wsBtn')).click(); if(E[9]) openMenu();
+    if(E[0]&&!navd){ startAudio(); showVenue(); } if(E[3]){ if($('carShop')&&!$('carShop').hidden) openCarShop(false); else (document.body.classList.contains('shopping')?$('custBtn'):$('wsBtn')).click(); } if(E[9]) openMenu();
     const rt=gp.buttons[7]?.value||0; if(rt>.3){ startAudio(); revHeld=true; } else if(padPrev.rev) revHeld=false; padPrev.rev=rt>.3; return; }
   if(state==='drive'){
     const toManual=()=>{ if(!manual){ setManual(true); toast('Manual · B up · X down · LB clutch'); } };
@@ -5359,7 +5574,7 @@ function frame(now){
     body.rotation.x+=((-car.ax*.0045 - .014*sp1*car.load + popPitch)-body.rotation.x)*Math.min(1,dt*8);
     body.rotation.z+=((car.ay*.006 + .009*sp1*car.load + popRoll)-body.rotation.z)*Math.min(1,dt*8);
     if(sp1>.2){ const j=sp1*(car.cutT>0?.006:.0028); body.rotation.x+=(Math.random()-.5)*j; body.rotation.z+=(Math.random()-.5)*j; body.position.y=(Math.random()-.5)*j*.8; } else body.position.y=0;
-    wheels.forEach((w,i)=>{ w.spin.rotation.x=car.wheelRot[i]; if(w.front) w.steer.rotation.y=car.steer; });
+    wheels.forEach((w,i)=>{ w.spin.rotation.x=car.wheelRot[i]; w.steer.rotation.y=w.front?car.steer:0; });   // rears never steer (also clears the garage wheel-shop pose)
     brakeMats.forEach(m=>m.emissiveIntensity=(car.braking&&car.gear!==0)||(car.gear===0&&input.thr>.1)?3.2:.35);
     reverseMats.forEach(m=>m.emissiveIntensity=car.gear===0?2.2:0);
     let gx=null,gz=null;
@@ -5372,7 +5587,7 @@ function frame(now){
     hudAcc+=dt; if(hudAcc>1/30){ updateHud(hudAcc); freeTripTick(hudAcc); if(MAP||['circuit','sprint','free'].includes(settings.venue)) drawMap(gx,gz); hudAcc=0; }
   } else if(state==='garage'){
     garageEngine(dt); body.rotation.set(0,0,0); carRoot.rotation.x=0; car.pw=car.pwv=0; brakeMats.forEach(m=>m.emissiveIntensity=.35); reverseMats.forEach(m=>m.emissiveIntensity=0);
-    wheels.forEach(w=>{ w.steer.rotation.y=shopCat==='wheels'?.35:0; });
+    wheels.forEach(w=>{ w.steer.rotation.y=(w.front&&shopCat==='wheels')?.35:0; });   // only the fronts turn to show off the rims
     updateGarageCamera(dt);
   }
   updateStance(updateStanceNow?1:dt); updateStanceNow=false;
