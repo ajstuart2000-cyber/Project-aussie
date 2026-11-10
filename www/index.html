@@ -2426,7 +2426,8 @@ function playCarbyShot(kind,amount){ const b=carbyBufs&&carbyBufs[kind]; if(!b||
   const t=AC.currentTime, s=AC.createBufferSource(); s.buffer=b; s.playbackRate.value=.97+Math.random()*.06;
   const g=AC.createGain(), a=Math.min(1,.35+.75*(amount||1));
   g.gain.setValueAtTime(Math.max(.001,a*1.15),t); g.gain.exponentialRampToValueAtTime(.001,t+Math.max(.08,b.duration));
-  s.connect(g).connect(master); s.start(t); s.stop(t+b.duration+.05); return true; }
+  s.connect(g).connect(master); s.start(t); s.stop(t+b.duration+.05);
+  s.onended=()=>{ try{ s.disconnect(); g.disconnect(); }catch(e){} }; return true; }
 // where the spark comes back in each limiter recording (a pop lands there), and where each cut starts (a softer crackle, with a pop tune)
 const LIM_POPS={ au6:{fire:[.14,.4,.9,1.18], cut:[.04,.3,.8,1.08]}, eco:{fire:[.09,.165,.345,.41], cut:[.055,.135,.315,.375,.63]}, na:{fire:[.962,1.525,2.037,2.348], cut:[]},
   ts:{fire:[.04,.58,1.06,1.63,1.98,2.46,3.0,3.35], cut:[.25,.73,1.36,1.80,2.13,2.67,3.12,3.65]},
@@ -2517,6 +2518,7 @@ function updateAudio(){
     if(recLim!==o||naMixV<=.45) continue; const PL=popLv(), K=(PL>=3?1.5:PL>=2?1.25:1)*Math.min(1,naMixV*1.2), hit=c=>(c>p0&&c<=p1)||(c+L>p0&&c+L<=p1);
     sndLim.at=performance.now(); for(const c of (P.cut.length?P.cut:P.fire.map(f=>f-.11))) if(hit(c)) sndLim.cut=true; for(const c of P.fire) if(hit(c)) sndLim.cut=false;   // the recording's own bounce drives the tacho
     if(!limSettled()) continue;
+    if(o===carbyLim) continue;   // carby_limiter.wav already carries the bounce; firing synth pops/flames every 52 ms was spawning ~200 BufferSources/s and dropping frames
     for(const c of P.fire) if(hit(c)) limPops(1+(Math.random()<.35*K)+(K>1&&Math.random()<.4),K);
     if(PL>=2) for(const c of P.cut) if(hit(c)) limCrackle(K); }
   // ghost cams at idle: the real recording, blending into the live engine between ~1300 and 1900 rpm
@@ -2525,19 +2527,18 @@ function updateAudio(){
   camIdleMix+=(ci-camIdleMix)*Math.min(1,adt*8);
   for(const [k,o] of Object.entries(camIdles)){ if(!o.src) continue; o.g.gain.setTargetAtTime(k===camKey?camIdleMix*(k==='ls1'||k==='ls3'?1.5:1.1):0,t,.04); if(k===camKey) o.src.playbackRate.setTargetAtTime(clamp(car.rpm/850,.92,1.6),t,.04);   /* natural speed at the game's idle */ }
   // XR6 Carby only: mid (~4990) and high (~5870) loops blended by rpm like the barra pack; idle stays on na_cam_idle
-  if(isXr6Carby()){ loadCarbySound(); startCarbyLoops(); }
+  if(isXr6Carby()&&!carbyLoops){ loadCarbySound(); startCarbyLoops(); }
   let cbyMix=0;
+  const cbySet=(s,g,rate)=>{ if(Math.abs((s._g??-1)-g)>.02){ s._g=g; s.g.gain.setTargetAtTime(g,t,.03); } if(rate!=null&&Math.abs((s._r??-1)-rate)>.01){ s._r=rate; s.src.playbackRate.setTargetAtTime(rate,t,.02); } };
   if(isXr6Carby()&&carbyLoops){
     const mid=carbyLoops[0], hi=carbyLoops[1], inAmt=clamp((rpm-3800)/600,0,1)*(1-naMixV);
     let gm=0, gh=0, k=0;
     if(rpm<=mid.rpm){ gm=inAmt; }
     else if(rpm>=hi.rpm){ gh=inAmt; }
     else { k=clamp((rpm-mid.rpm)/(hi.rpm-mid.rpm),0,1); gm=Math.cos(k*Math.PI/2)*inAmt; gh=Math.sin(k*Math.PI/2)*inAmt; }
-    mid.g.gain.setTargetAtTime(gm*1.05,t,.03); hi.g.gain.setTargetAtTime(gh*1.05,t,.03);
-    mid.src.playbackRate.setTargetAtTime(clamp(rpm/mid.rpm,.55,1.35),t,.02);
-    hi.src.playbackRate.setTargetAtTime(clamp(rpm/hi.rpm,.55,1.35),t,.02);
+    cbySet(mid,gm*1.05,clamp(rpm/mid.rpm,.55,1.35)); cbySet(hi,gh*1.05,clamp(rpm/hi.rpm,.55,1.35));
     cbyMix=Math.max(gm,gh);
-  } else if(carbyLoops){ for(const s of carbyLoops) s.g.gain.setTargetAtTime(0,t,.04); }
+  } else if(carbyLoops){ for(const s of carbyLoops) cbySet(s,0,null); }
   const scrDuck = scrLoop&&scrLoop.g ? Math.min(.45,scrLoop.g.gain.value*.4) : 0;
   if(pk.node){ const tw=ls2Tick(t); pk.node.port.postMessage({on:(car.cutT>0&&(car.twoStep||car.alsOn||settings.limiter==='hard'))?0:1, lf:tw?.0278:(V8PACKS[ENG.sound]?.opt.limFire||.32), lcut:tw?.0108:(V8PACKS[ENG.sound]?.opt.limCut||.15), rpm:rpm, lope:isGM()?(ENG.lope||(camLv()>=1?.6:0)):0, load:Math.max(.12,Math.min(1,car.load)), rk:(pk.ex&&pk.ex.mf?pk.ex.mf.rasp:0)*(.4+.6*Math.min(1,car.load)), lim:v8LimOn||(ENG.lsTwo&&ls2.on)?1:0, ov:(input.thr<.08&&!revHeld&&!rollCruise()&&car.rpm>1700&&state==='drive')?clamp((car.rpm-1700)/2200,0,1)*(popLv()===0?.3:1):0});   /* a stock LS winds down smooth: only a hint of overrun burble */ if(ENG.sound==='synthT'&&pk.lp){ const rb=clamp((rpm-1500)/3000,0,1); pk.lp.frequency.setTargetAtTime(ENG.turbo?7000:4200,t,.1); pk.eqHi.gain.setTargetAtTime(ENG.turbo?5:0,t,.1); }   /* brighter as it revs, to meet the real limiter recording */ if(isV8Synth()) pk.eqBass.gain.setTargetAtTime(6*clamp((rpm-1500)/2500,0,1),t,.08); pk.bus.gain.setTargetAtTime(exVol()*1.5*synthBoostGain()*(1-.85*cbyMix),t,.03); }
   tLimV+=((onLim?1:0)-tLimV)*Math.min(1,adt*(onLim?12:40));   /* XR6T on the limiter: the real fart does the bouncing, the live engine gets out of the way */
