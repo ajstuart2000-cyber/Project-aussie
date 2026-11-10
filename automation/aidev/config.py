@@ -15,11 +15,16 @@ def load_config(path=None):
         'AI_MAX_OUTPUT_TOKENS': ('max_output_tokens', int),
         'AI_MAX_INPUT_CHARS': ('max_input_chars', int),
         'AI_MAX_CHANGED_LINES': ('max_changed_lines', int),
+        'AI_XAI_REASONING_ALLOWANCE_TOKENS': ('xai_reasoning_allowance_tokens', int),
     }
     for var, (key, typ) in env_map.items():
         v = os.environ.get(var, '').strip()
         if v:
             lim[key] = typ(v)
+    # Unset/empty keeps the config value; "default" sends no effort (xAI's own default, high).
+    v = os.environ.get('AI_XAI_REASONING_EFFORT', '').strip().lower()
+    if v in ('default', 'low', 'medium', 'high', 'xhigh'):
+        lim['xai_reasoning_effort'] = '' if v == 'default' else v
     for role in cfg['roles'].values():
         v = os.environ.get(role['model_var'], '').strip()
         role['model'] = v or role['default_model']

@@ -88,7 +88,11 @@ def build_context(task, cfg, root='.', feedback=''):
     budget_chars = cfg['limits']['max_input_chars']
     parts = [f'# Task: issue #{task["number"]} - {task["title"]}\nLabels: {", ".join(task["labels"])}\n\n{task.get("body", "")[:20000]}']
     if feedback:
-        parts.append('# Owner feedback on the existing AI pull request (address it)\n' + feedback[:15000])
+        parts.append('# Review feedback on the existing AI pull request (address every point)\n'
+                     'The branch already contains the earlier AI change; the file contents below are the CURRENT branch. '
+                     'Change whatever the feedback says is wrong, even code from the earlier change, and do not answer '
+                     'that the task is already done unless every point below is already satisfied in the code shown.\n\n'
+                     + feedback[:15000])
     files = [f for f in repo.git('ls-files', cwd=root).split('\n') if f and not f.startswith('www/assets/') and not f.startswith('www/vendor/')]
     parts.append('# Repository files (www/assets/** and www/vendor/** omitted; they are protected)\n' + '\n'.join(files))
     parts.append(f'# {INDEX}: {len(lines)} lines. Section markers:\n' + '\n'.join(_sections(src)))

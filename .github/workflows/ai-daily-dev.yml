@@ -42,6 +42,8 @@ env:
   AI_MAX_OUTPUT_TOKENS: ${{ vars.AI_MAX_OUTPUT_TOKENS }}
   AI_MAX_INPUT_CHARS: ${{ vars.AI_MAX_INPUT_CHARS }}
   AI_MAX_CHANGED_LINES: ${{ vars.AI_MAX_CHANGED_LINES }}
+  AI_XAI_REASONING_EFFORT: ${{ vars.AI_XAI_REASONING_EFFORT }}
+  AI_XAI_REASONING_ALLOWANCE_TOKENS: ${{ vars.AI_XAI_REASONING_ALLOWANCE_TOKENS }}
   AI_GROK_MODEL: ${{ vars.AI_GROK_MODEL }}
   AI_CLAUDE_MODEL: ${{ vars.AI_CLAUDE_MODEL }}
   AI_CHATGPT_MODEL: ${{ vars.AI_CHATGPT_MODEL }}
@@ -135,12 +137,18 @@ jobs:
           node-version: '22'
       - name: Prepare branch
         run: |
+          # The ai/* branch carries the automation code from when it was created. Keep running the
+          # orchestrator from main (copied out before checkout) so update runs use today's rules.
+          cp -r automation "$RUNNER_TEMP/automation-main"
+          echo "PYTHONPATH=$RUNNER_TEMP/automation-main" >> "$GITHUB_ENV"
+          export PYTHONPATH="$RUNNER_TEMP/automation-main"
           if [[ "$MODE" == "update" ]]; then
             git fetch --no-tags origin "$BRANCH"
             git checkout -B "$BRANCH" "origin/$BRANCH"
-            gh pr view "$EXISTING_PR" --json comments,reviews \
-              --jq '[.comments[], .reviews[]] | map(select(.author.login != "github-actions")) | .[] | "### \(.author.login)\n\(.body)\n"' \
-              > "$RUNNER_TEMP/feedback.md" || true
+            # Latest ChatGPT review + the owner's comments (automation/aidev/feedback.py). A failure here
+            # stops the run: revising without the review is what made PR #5's first revision miss it.
+            python3 -m aidev feedback --pr "$EXISTING_PR" --head-sha "$(git rev-parse HEAD)" \
+              --out "$RUNNER_TEMP/feedback.md"
           else
             git checkout -B "$BRANCH"
           fi
@@ -149,13 +157,13 @@ jobs:
         if: env.ROLE == 'grok'
         env:
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-        run: python3 -m aidev develop --plan "$RUNNER_TEMP/plan/plan.json" --out "$RUNNER_TEMP/dev-result.json" --feedback "$RUNNER_TEMP/feedback.md"
+        run: PYTHONPATH="$RUNNER_TEMP/automation-main" python3 -m aidev develop --plan "$RUNNER_TEMP/plan/plan.json" --out "$RUNNER_TEMP/dev-result.json" --feedback "$RUNNER_TEMP/feedback.md"
       - name: Claude - technical developer (Anthropic API)
         id: dev_claude
         if: env.ROLE == 'claude'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python3 -m aidev develop --plan "$RUNNER_TEMP/plan/plan.json" --out "$RUNNER_TEMP/dev-result.json" --feedback "$RUNNER_TEMP/feedback.md"
+        run: PYTHONPATH="$RUNNER_TEMP/automation-main" python3 -m aidev develop --plan "$RUNNER_TEMP/plan/plan.json" --out "$RUNNER_TEMP/dev-result.json" --feedback "$RUNNER_TEMP/feedback.md"
       - id: dev
         if: always()
         run: echo "status=$(jq -r '.status // "failed"' "$RUNNER_TEMP/dev-result.json" 2>/dev/null || echo failed)" >> "$GITHUB_OUTPUT"
@@ -175,7 +183,7 @@ jobs:
             commit -m "AI ($ROLE via $model): issue #$ISSUE" -m "$(jq -r '.summary' "$RUNNER_TEMP/dev-result.json")"
           git push origin "HEAD:refs/heads/$BRANCH"
           echo "head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          python3 -m aidev prbody --plan "$RUNNER_TEMP/plan/plan.json" --dev-result "$RUNNER_TEMP/dev-result.json" \
+          PYTHONPATH="$RUNNER_TEMP/automation-main" python3 -m aidev prbody --plan "$RUNNER_TEMP/plan/plan.json" --dev-result "$RUNNER_TEMP/dev-result.json" \
             --out "$RUNNER_TEMP/pr-body.md" > "$RUNNER_TEMP/prbody.out"
           title=$(sed -n 's/^title=//p' "$RUNNER_TEMP/prbody.out")
           labels="ai-generated,ai:$ROLE"

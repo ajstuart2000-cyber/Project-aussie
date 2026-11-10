@@ -47,6 +47,35 @@ class BudgetTests(unittest.TestCase):
         self.assertAlmostEqual(b.run_cost, 1.0)
         self.assertAlmostEqual(b.remaining(), CFG['limits']['daily_budget_usd'] - 1.0)
 
+    def test_xai_worst_case_includes_uncapped_reasoning(self):
+        """Run 42742101536 billed 38,981 Grok output tokens against a 16,000 cap; the estimate must cover that."""
+        b = B.Budget(CFG)
+        allow = CFG['limits']['xai_reasoning_allowance_tokens']
+        self.assertGreater(16000 + allow, 38981)
+        self.assertAlmostEqual(b.worst_case('xai', 'grok-4.7', 0, 16000), B.cost(CFG, 'xai', 'grok-4.7', 1, 16000 + allow))
+        # Anthropic/OpenAI caps already include reasoning: no allowance
+        self.assertAlmostEqual(b.worst_case('anthropic', 'claude-sonnet-5-5', 0, 16000),
+                               B.cost(CFG, 'anthropic', 'claude-sonnet-5-5', 1, 16000))
+
+    def test_reasoning_env_overrides(self):
+        import os
+        from aidev import config
+        old = {k: os.environ.get(k) for k in ('AI_XAI_REASONING_EFFORT', 'AI_XAI_REASONING_ALLOWANCE_TOKENS')}
+        try:
+            os.environ['AI_XAI_REASONING_EFFORT'] = ''          # unset repo variable -> config default
+            self.assertEqual(config.load_config()['limits']['xai_reasoning_effort'], 'medium')
+            os.environ['AI_XAI_REASONING_EFFORT'] = 'HIGH'
+            os.environ['AI_XAI_REASONING_ALLOWANCE_TOKENS'] = '60000'
+            lim = config.load_config()['limits']
+            self.assertEqual((lim['xai_reasoning_effort'], lim['xai_reasoning_allowance_tokens']), ('high', 60000))
+            os.environ['AI_XAI_REASONING_EFFORT'] = 'default'
+            self.assertEqual(config.load_config()['limits']['xai_reasoning_effort'], '')
+            os.environ['AI_XAI_REASONING_EFFORT'] = 'bogus'
+            self.assertEqual(config.load_config()['limits']['xai_reasoning_effort'], 'medium')
+        finally:
+            for k, v in old.items():
+                os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
+
 
 if __name__ == '__main__':
     unittest.main()
