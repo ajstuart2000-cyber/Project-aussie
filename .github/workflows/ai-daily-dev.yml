@@ -42,6 +42,8 @@ env:
   AI_MAX_OUTPUT_TOKENS: ${{ vars.AI_MAX_OUTPUT_TOKENS }}
   AI_MAX_INPUT_CHARS: ${{ vars.AI_MAX_INPUT_CHARS }}
   AI_MAX_CHANGED_LINES: ${{ vars.AI_MAX_CHANGED_LINES }}
+  AI_XAI_REASONING_EFFORT: ${{ vars.AI_XAI_REASONING_EFFORT }}
+  AI_XAI_REASONING_ALLOWANCE_TOKENS: ${{ vars.AI_XAI_REASONING_ALLOWANCE_TOKENS }}
   AI_GROK_MODEL: ${{ vars.AI_GROK_MODEL }}
   AI_CLAUDE_MODEL: ${{ vars.AI_CLAUDE_MODEL }}
   AI_CHATGPT_MODEL: ${{ vars.AI_CHATGPT_MODEL }}
@@ -138,9 +140,10 @@ jobs:
           if [[ "$MODE" == "update" ]]; then
             git fetch --no-tags origin "$BRANCH"
             git checkout -B "$BRANCH" "origin/$BRANCH"
-            gh pr view "$EXISTING_PR" --json comments,reviews \
-              --jq '[.comments[], .reviews[]] | map(select(.author.login != "github-actions")) | .[] | "### \(.author.login)\n\(.body)\n"' \
-              > "$RUNNER_TEMP/feedback.md" || true
+            # Latest ChatGPT review + the owner's comments (automation/aidev/feedback.py). A failure here
+            # stops the run: revising without the review is what made PR #5's first revision miss it.
+            python3 -m aidev feedback --pr "$EXISTING_PR" --head-sha "$(git rev-parse HEAD)" \
+              --out "$RUNNER_TEMP/feedback.md"
           else
             git checkout -B "$BRANCH"
           fi

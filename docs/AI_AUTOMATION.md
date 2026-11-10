@@ -15,6 +15,9 @@
 > `AI_AUTO_MERGE` to `false` (or delete it) under Settings → Secrets and variables →
 > Actions → *Variables*. AI PRs then wait for you again; nothing else changes. To stop a
 > single PR, add the label `do-not-merge` (or `ai-revise`).
+>
+> An `ai-revise` run gives the developer the latest ChatGPT review on the PR and your own
+> comments on it (`automation/aidev/feedback.py`). Comments from other accounts are ignored.
 
 ## What runs
 
@@ -115,7 +118,10 @@ Every AI patch that changes `www/index.html` must also pass `node --check` on th
   step, `OPENAI_API_KEY` to the review step. The code masks keys with `::add-mask::` and
   scrubs them from error messages. Keys never go into files, commits or the report.
 - **Budget.** `AI_DAILY_BUDGET_USD` (default `2.00`) is checked before every call against a
-  worst-case estimate: prompt size plus `AI_MAX_OUTPUT_TOKENS`. After each call, the real
+  worst-case estimate: prompt size plus `AI_MAX_OUTPUT_TOKENS` (plus, for Grok,
+  `AI_XAI_REASONING_ALLOWANCE_TOKENS`, default `40000`, because xAI's `max_output_tokens`
+  caps only the visible answer and Grok's reasoning tokens are billed on top; Grok's
+  reasoning is limited with `AI_XAI_REASONING_EFFORT`, default `medium`). After each call, the real
   usage numbers from the API are priced and added to the day's total, and the total goes
   into the report marker. When the budget is used up, later calls that day are skipped.
   Prices are in `automation/ai-config.json` (`pricing_usd_per_mtok`). You can override them
@@ -216,6 +222,9 @@ GitHub cron runs in UTC. Perth is UTC+8 all year with no daylight saving.
    - `AI_DAILY_BUDGET_USD` (default `2.00`), `AI_MAX_CALLS_PER_RUN` (default `2`),
      `AI_MAX_OUTPUT_TOKENS` (default `16000`), `AI_MAX_INPUT_CHARS` (default `160000`),
      `AI_MAX_CHANGED_LINES` (default `400`).
+   - `AI_XAI_REASONING_EFFORT` (`low`/`medium`/`high`/`xhigh`, or `default` to let xAI use
+     its own default `high`; config default `medium`) and `AI_XAI_REASONING_ALLOWANCE_TOKENS`
+     (default `40000`, added to Grok's worst-case cost estimate).
    - `AI_GROK_MODEL`, `AI_CLAUDE_MODEL`, `AI_CHATGPT_MODEL` override the default model names.
    - `AI_PRICING_JSON`, for example `{"grok-4.7":{"in":2,"out":6}}`, updates the price table.
 6. **Protect `main`** (optional): `main` has no branch protection, which is what lets the
