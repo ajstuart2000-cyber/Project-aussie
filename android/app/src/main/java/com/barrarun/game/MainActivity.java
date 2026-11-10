@@ -157,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         if (webView != null) {
             webView.onResume();
+            webView.resumeTimers();
         }
     }
 
@@ -164,6 +165,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         if (webView != null) {
             webView.onPause();
+            webView.pauseTimers();
         }
         super.onPause();
     }
