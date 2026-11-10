@@ -493,7 +493,7 @@ body.narrow .gside{width:auto;align-items:flex-end}
   <div id="hesiBar"><i id="hesiBarI"></i></div>
   <div class="tip">Weave through traffic flat out. Every near miss adds to your chain and bumps the multiplier; the closer and faster, the bigger. Keep it going or the chain banks after 5 s. Crash and the whole chain is gone.</div>
 </div>
-<div class="hud panel" id="freehud" hidden><div class="lapno">Free roam</div><div class="tip">Drive anywhere. Gaps in the circuit walls lead out to the round pad and the Motorplex.</div></div>
+<div class="hud panel" id="freehud" hidden><div class="lapno">Free roam</div><div id="freeTrip" style="grid-column:1/-1">Heading N · 0.0 km</div><div class="tip">Drive anywhere. Gaps in the circuit walls lead out to the round pad and the Motorplex.</div></div>
 <canvas class="hud panel" id="map" width="300" height="300"></canvas>
 <div class="hud" id="bgauge"><canvas id="boostc" width="260" height="260"></canvas><div id="nosBtl"><i></i><b><s id="nosFill"></s></b><em>NOS</em></div></div>
 <div class="hud" id="cluster"><canvas id="tach" width="460" height="460"></canvas></div>
@@ -4932,6 +4932,18 @@ function rgSkidCollide(){ const M=RGSKID.M; if(!M) return; const g=1.2;
 const BUILD_MAP={ m_hesi:buildHesi, m_perth:buildPerth, m_zigzag:()=>buildTouge('m_zigzag'), m_dale:()=>buildTouge('m_dale'), m_wanneroo:()=>buildCircuit('m_wanneroo'), m_collie:()=>buildCircuit('m_collie'), m_airfield:buildAirfield, m_harbour:buildHarbour, m_wheatbelt:buildWheatbelt, m_kalamunda:()=>buildTouge('m_kalamunda') };
 
 const FREEHUD0=document.getElementById('freehud').innerHTML;
+// Free-roam trip line only: car.h 0 faces +Z (north), clockwise toward +X (east). Label refreshes a few times a second.
+let freeKm=0, freePx=null, freePz=0, freeTripAcc=0;
+function freeHeading(){ let a=car.h%(Math.PI*2); if(a<0) a+=Math.PI*2; return ['N','NE','E','SE','S','SW','W','NW'][Math.round(a/(Math.PI/4))%8]; }
+function freeTripReset(){ freeKm=0; freePx=car.x; freePz=car.z; freeTripAcc=0; const el=$('freeTrip'); if(el) el.textContent='Heading '+freeHeading()+' · 0.0 km'; }
+function freeTripTick(dt){
+  if(!(settings.venue==='free'||(MAP&&MAP.kind==='roam'))){ freePx=null; return; }
+  if(freePx==null){ freePx=car.x; freePz=car.z; return; }
+  const dx=car.x-freePx, dz=car.z-freePz, step=Math.hypot(dx,dz); freePx=car.x; freePz=car.z;
+  if(step<40) freeKm+=step/1000;   // a respawn hop is not distance driven
+  freeTripAcc+=dt; if(freeTripAcc<.25) return; freeTripAcc=0;
+  const el=$('freeTrip'); if(el) el.textContent='Heading '+freeHeading()+' · '+freeKm.toFixed(1)+' km';
+}
 
 /* ================= garage UI ================= */
 let state='loading', menuOpen=false, revHeld=false, shopCat=null;
@@ -5270,11 +5282,12 @@ function enterDrive(v){ camera.clearViewOffset(); showTips();
   else if(v==='free'){ $('freehud').innerHTML=FREEHUD0; car.tc=false; try{ rgSkidBuild(); }catch(e){ console.warn('red gum pads',e); } toast(RGSKID.M&&RGSKID.M.skidPads.length?'Free roam · find the gaps in the walls · skid pads out in the paddocks':'Free roam · find the gaps in the walls'); }
   else if(isMapV(v)){ car.tc=MAP.kind==='circuit'||MAP.kind==='hesi'; mrunReset(); const nm=MAP_NAMES[v];
     if(MAP.kind==='hesi'){ hesiReset(true); toast('No Hesi · near misses build the chain'); } else
-    if(MAP.kind==='roam'){ $('freehud').innerHTML=`<div class="lapno">${nm} free roam</div><div class="tip">${MAP.tip?esc(MAP.tip):`Riverside Dr past Langley Park, Terrace Rd, Adelaide Tce to the Causeway and Heirisson Island, the WACA, Elizabeth Quay and the Bell Tower, Kings Park, the servo on Canning Hwy, the Welshpool Rd car park and the skid pads at Burswood, Kewdale and South Perth. R puts you back on the nearest road.`}</div>`; toast(`${nm} · free roam`); }
+    if(MAP.kind==='roam'){ $('freehud').innerHTML=`<div class="lapno">${nm} free roam</div><div id="freeTrip" style="grid-column:1/-1">Heading N · 0.0 km</div><div class="tip">${MAP.tip?esc(MAP.tip):`Riverside Dr past Langley Park, Terrace Rd, Adelaide Tce to the Causeway and Heirisson Island, the WACA, Elizabeth Quay and the Bell Tower, Kings Park, the servo on Canning Hwy, the Welshpool Rd car park and the skid pads at Burswood, Kewdale and South Perth. R puts you back on the nearest road.`}</div>`; toast(`${nm} · free roam`); }
     else toast(MAP.best!=null?`${nm} · best ${fmt(MAP.best)}`:`${nm} · ${MAP.kind==='touge'?'roll over the start line':'out lap · cross the line'}`); }
   else if(v==='sprint'){ car.tc=true; sprint.reset(); toast(sprint.best!=null?`Sprint record ${fmt(sprint.best)}`:'Sprint · go when ready'); }
   else { car.tc=true; toast(lap.best!=null?`Best ${fmt(lap.best)} · ghost loaded`:'Out lap · cross the line to start timing'); }
   prevPos={x:car.x,z:car.z,d:0,inPad:false,inMP:false}; nearest(); prevPos.d=car.d;
+  if(v==='free'||(MAP&&MAP.kind==='roam')) freeTripReset();
   resetLap(); lap.prevIdx=car.idx; skids.clear(); drift.pts=0; freshTyres(); run.on=false; camInit=false; camMode=0; placeButtons(); last=performance.now();
 }
 
@@ -5356,7 +5369,7 @@ function frame(now){
           ghostRoot.position.set(gx,0,gz); ghostRoot.rotation.y=g[a+2]+dh*k; ghostRoot.visible=Math.hypot(gx-car.x,gz-car.z)>2.5||camMode<=1; } else ghostRoot.visible=false; } else ghostRoot.visible=false; }
     sun.position.set(car.x+sunDir.x*80,(car.y||0)+sunDir.y*80,car.z+sunDir.z*80); sun.target.position.set(car.x,car.y||0,car.z); skyMesh.position.copy(camera.position);
     updateDriveCamera(dt); if(photo) photoCam(); if(RP.on) rpCam(dt);
-    hudAcc+=dt; if(hudAcc>1/30){ updateHud(hudAcc); if(MAP||['circuit','sprint','free'].includes(settings.venue)) drawMap(gx,gz); hudAcc=0; }
+    hudAcc+=dt; if(hudAcc>1/30){ updateHud(hudAcc); freeTripTick(hudAcc); if(MAP||['circuit','sprint','free'].includes(settings.venue)) drawMap(gx,gz); hudAcc=0; }
   } else if(state==='garage'){
     garageEngine(dt); body.rotation.set(0,0,0); carRoot.rotation.x=0; car.pw=car.pwv=0; brakeMats.forEach(m=>m.emissiveIntensity=.35); reverseMats.forEach(m=>m.emissiveIntensity=0);
     wheels.forEach(w=>{ w.steer.rotation.y=shopCat==='wheels'?.35:0; });

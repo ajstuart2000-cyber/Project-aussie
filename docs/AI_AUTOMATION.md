@@ -121,8 +121,23 @@ Every AI patch that changes `www/index.html` must also pass `node --check` on th
   Prices are in `automation/ai-config.json` (`pricing_usd_per_mtok`). You can override them
   with `AI_PRICING_JSON`. Unknown models use a deliberately high fallback price. These are
   **estimates**; your provider bill is the real number.
-- **Call limits.** `AI_MAX_CALLS_PER_RUN` (default 2: one developer call and one review
-  call). There are no automatic retries.
+- **Call limits.** `AI_MAX_CALLS_PER_RUN` (default 2: normally one developer call and one review
+  call). The only retry is the **patch repair** below, and it uses the same call limit and budget.
+- **Applying the developer's edits.** Each `search` must match the current file exactly once.
+  If the exact text is not found, the orchestrator also tries the same text with CRLF and copied
+  line-number prefixes removed, then a whitespace-normalised match (indentation and runs of
+  spaces/newlines ignored; every other character must match). A fallback is only used when it
+  finds exactly one place; ambiguous matches are always rejected. Guardrails (protected files,
+  audio freeze, save keys, vehicle models, changed-lines limit, JS syntax) run on the result as before.
+- **Patch repair (one retry).** If an edit still does not match, the developer model is asked
+  ONCE more, by the same provider, with the error and the real file lines around the closest
+  match (`automation/aidev/patching.py`). This second call counts toward `AI_MAX_CALLS_PER_RUN`
+  and the daily budget; if either would be exceeded there is no retry. When the repair used the
+  run's second call, the ChatGPT review in that run is skipped by the call limit and the 05:30
+  AWST merge-gate sweep reviews the PR instead, so the PR is not auto-merged before it is reviewed.
+- **Context for the developer.** Besides functions and line numbers named in the issue, every
+  line that mentions an element id or name from the issue (for example `#freehud`) is shown with
+  a few lines either side, so the model can copy the real markup.
 - **No overlap.** `concurrency: ai-daily-development` with `cancel-in-progress: false` means
   only one daily run at a time. A second trigger waits, then sees today's report and does
   nothing.
