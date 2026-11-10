@@ -3110,10 +3110,10 @@ function step(dt){
   let Fx=Fxr+Fxf*cd-Fyf*sd+drag, Fy=Fyr+Fyf*cd+Fxf*sd; if(car.slope) Fx-=M*G*car.slope/Math.sqrt(1+car.slope*car.slope);   // gravity on a hill
   let Tz=A*(Fyf*cd+Fxf*sd)-B*Fyr;
   // skidder, brake held with the wheel turned: the tail can swing out, but not carry on round into a donut. Count how far the car has turned
-  // since the brake and the lock went on; past ~90 degrees the assists fade and the rotation that way is bled off. Side to side stays free.
+  // since the brake and the lock went on; past ~115 degrees the assists fade and the rotation that way is bled off. Side to side stays free.
   let bkG=1;
   if(skidder && brk>.25 && Math.abs(sIn)>.3 && !car.c360){ const d=Math.sign(sIn); if(car.bkDir!==d){ car.bkDir=d; car.bkYaw=0; }
-    car.bkYaw=Math.max(0,(car.bkYaw||0)+car.r*dt*d); bkG=clamp((2.1-car.bkYaw)/.55,0,1); }
+    car.bkYaw=Math.max(0,(car.bkYaw||0)+car.r*dt*d); bkG=clamp((2.6-car.bkYaw)/.6,0,1); }
   else { car.bkDir=0; car.bkYaw=Math.max(0,(car.bkYaw||0)-dt*1.5); }
   // tip-in on the line lock: brake + gas held, wheel turned. The fronts are held by the brakes, the spinning rears swing the tail around them
   if(lineLock && Math.abs(sIn)>.3 && car.spin>.3){ const k=clamp((Math.abs(sIn)-.3)/.5,0,1)*clamp((car.spin-.3)/.4,0,1), rT=Math.sign(sIn)*2.2;
@@ -3161,6 +3161,15 @@ function step(dt){
     const rNext=car.r+Tz/IZ*dt;
     if(Math.abs(rNext)>rCap && Math.abs(rNext)>Math.abs(car.r)) Tz=(Math.sign(rNext)*Math.max(Math.abs(car.r),rCap)-car.r)*IZ/Math.max(dt,1e-4);
   }
+  // skidder, brake held: the snakey. The tail comes across through centre into the other angle slower and progressively, so a
+  // swing-across builds instead of flicking. Peak yaw rate is lower, yaw builds at a gentler rate and the change in yaw is eased
+  // (jerk-limited). The angle it reaches on the other side isn't touched. Off the brake (tip-ins) nothing here applies.
+  { const w=skidder&&!car.tc&&!car.c360&&speed>1 ? clamp(((lineLock?brk:(car.skBrk||0))-.12)/.35,0,1) : 0;
+    if(w>0){ let rDot=Tz/IZ; const build=Math.sign(rDot)===Math.sign(car.r||rDot), dMax=5.5+(3-5.5)*w, rCap=(2.2+Math.min(1.2,speed*.08))*(1-w)+(1.55+Math.min(.65,speed*.045))*w;
+      if(build && Math.abs(rDot)>dMax) rDot=Math.sign(rDot)*dMax;
+      const J=60+(12-60)*w, prev=car.bkRd??rDot; rDot=prev+clamp(rDot-prev,-J*dt,J*dt);
+      const rNext=car.r+rDot*dt; if(Math.abs(rNext)>rCap && Math.abs(rNext)>Math.abs(car.r)) rDot=(Math.sign(rNext)*Math.max(Math.abs(car.r),rCap)-car.r)/Math.max(dt,1e-4);
+      car.bkRd=rDot; Tz=rDot*IZ; } else car.bkRd=Tz/IZ; }
   // skidder no-donut: once a brake-held full-lock swing has gone past its limit, bleed off any yaw still carrying it round that way (never the other way)
   if(bkG<1 && car.bkDir){ if(Tz*car.bkDir>0) Tz*=bkG; if(car.r*car.bkDir>0) Tz-=car.r*IZ*8*(1-bkG); }
   car.ax=Fx/M; car.ay=Fy/M;
