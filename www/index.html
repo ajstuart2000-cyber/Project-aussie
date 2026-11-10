@@ -757,7 +757,7 @@ const VFP = { bumperF:'ss', bumperR:'ss', hood:'stock', fenders:'stock', spoiler
 const R8P = { bumperF:'club', bumperR:'f2', hood:'vent', fenders:'stock', spoiler:'club', skirts:'gts', tails:'gts', badge:'r8' };
 const PRESETS = [
   { id:'xr6na', name:'XR6 NA', engine:'na', paint:'Crimson Red', rim:'Silver', stance:'stock', parts:{...BASE_PARTS, badge:'xr6turbo_badge_5_ng'} },
-  { id:'xr6carby', name:'XR6 Carby', engine:'na', cam:'ghost', paint:'Jet Black', rim:'Chrome', stance:'low', stickers:'burnout', mods:{finish:'matte',head:'port',pipe:'35',tint:'dark'}, parts:{...BASE_PARTS, hood:'carby_poke', badge:'xr6turbo_badge_5_ng'} },   // NA Barra on a carby: air cleaner through the bonnet, matte black, chrome rims
+  { id:'xr6carby', name:'XR6 Carby', engine:'na', cam:'ghost', paint:'Jet Black', rim:'Chrome', stance:'low', stickers:'pops', plate:'LONGNAME', plateS:'black', mods:{finish:'matte',head:'port',pipe:'35',tint:'dark'}, parts:{...BASE_PARTS, hood:'carby_open', badge:'xr6turbo_badge_5_ng'} },   // NA Barra on a carby, bonnet off, done like the real car (decals and plate used with the owner's permission): air cleaner through the bonnet, matte black, chrome rims
   { id:'xr6na_bag', name:'Bagged XR6 NA', engine:'na', paint:'Winter White', rim:'Gunmetal', stance:'slammed', parts:{...BASE_PARTS, badge:'xr6turbo_badge_5_ng'} },
   { id:'xr6t', name:'XR6T', engine:'xr6t', cam:'ghost', gate:'screamer', launch:'on', paint:'Electric Blue', rim:'Silver', stance:'stock', parts:{...BASE_PARTS} },
   { id:'xr6t_bag', name:'XR6T Bagged', engine:'xr6t', cam:'ghost', gate:'screamer', launch:'on', paint:'Winter White', rim:'Gunmetal', stance:'slammed', parts:{...BASE_PARTS} },
@@ -1310,10 +1310,35 @@ function addTurboPoke(g){
   /* flanged vent inboard of the turbo, and a bonnet pin in front */
   const px=box.min.x+sz.x*.5, pz=box.max.z-sz.z*.18; const pin=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.008,20),blk); pin.scale.z=.6; pin.position.set(px,surf(px,pz)+.004,pz); g.add(pin);
   g.traverse(o=>{ if(o.isMesh&&o.parent!==g) o.castShadow=true; }); }
+// bonnet off: a red rocker cover on the Barra in the bay and a carby on a riser on the driver's side, air cleaner on top (BA/BF bay, body space)
+function addCarbyOpen(g){
+  const red=new THREE.MeshPhysicalMaterial({color:'#b3120d',metalness:.35,roughness:.32,clearcoat:.8}), alu=new THREE.MeshStandardMaterial({color:'#b9bcc0',metalness:.9,roughness:.32}),
+        blk=new THREE.MeshStandardMaterial({color:'#0b0b0c',roughness:.7}), fil=new THREE.MeshStandardMaterial({color:'#141416',roughness:.8}), lid=new THREE.MeshStandardMaterial({color:'#1a1a1d',metalness:.5,roughness:.4});
+  const E=new THREE.Group(); E.name='carbyOpen'; g.add(E);
+  // rocker cover: long rounded lid along the head with fins and the oil cap
+  const rk=new THREE.Mesh(new THREE.BoxGeometry(.2,.055,.7),red); rk.position.set(.06,.9,1.36); E.add(rk);
+  const rt=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.7,20,1,false,-Math.PI/2,Math.PI).rotateX(Math.PI/2),red); rt.scale.y=.35; rt.position.set(.06,.925,1.36); E.add(rt);
+  for(let i=0;i<6;i++){ const f=new THREE.Mesh(new THREE.BoxGeometry(.2,.012,.012),red); f.position.set(.06,.958,1.08+i*.11); E.add(f); }
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.025,16),blk); cap.position.set(.1,.965,1.62); E.add(cap);
+  const lip=new THREE.Mesh(new THREE.BoxGeometry(.23,.012,.73),alu); lip.position.set(.06,.873,1.36); E.add(lip);
+  // carby: riser plate, square carby body with linkage, then the big round air cleaner
+  const C=new THREE.Group(); C.position.set(-.2,.875,1.36); E.add(C);
+  const ris=new THREE.Mesh(new THREE.BoxGeometry(.17,.07,.17),alu); ris.position.y=.035; C.add(ris);
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.14,.1,.15),alu); body.position.y=.12; C.add(body);
+  const bowl=new THREE.Mesh(new THREE.BoxGeometry(.13,.06,.035),alu); bowl.position.set(0,.11,.09); C.add(bowl);
+  const lk=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,.12,8),blk); lk.rotation.z=Math.PI/2; lk.position.set(.02,.13,-.08); C.add(lk);
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.02,36),lid); base.position.y=.18; C.add(base);
+  const core=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.13,36),fil); core.position.y=.255; C.add(core);
+  const pg=new THREE.BoxGeometry(.012,.13,.02); for(let i=0;i<52;i++){ const a=i/52*Math.PI*2, p=new THREE.Mesh(pg,fil); p.position.set(Math.cos(a)*.15,.255,Math.sin(a)*.15); p.rotation.y=-a; C.add(p); }   /* pleats */
+  const top=new THREE.Mesh(new THREE.CylinderGeometry(.165,.165,.022,36),lid); top.position.y=.33; C.add(top);
+  const nut=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.03,6),alu); nut.position.y=.35; C.add(nut);
+  // fuel line from the carby back along the bay
+  const fl=new THREE.Mesh(new THREE.CylinderGeometry(.007,.007,.5,8),blk); fl.rotation.x=Math.PI/2; fl.position.set(-.29,.95,1.15); E.add(fl);
+  E.traverse(o=>{ if(o.isMesh) o.castShadow=true; }); }
 // NA with a carby: the air cleaner stack poking up through a round hole in the bonnet
 function addCarbyPoke(g){
   g.updateMatrixWorld(true); const box=new THREE.Box3().setFromObject(g); if(box.isEmpty()) return;
-  const sz=box.getSize(new THREE.Vector3()), cx=box.min.x+sz.x*.63, cz=box.max.z-sz.z*.52;
+  const sz=box.getSize(new THREE.Vector3()), cx=box.min.x+sz.x*.37, cz=box.max.z-sz.z*.52;   // on the driver's (right) side of the bonnet, like the real car
   const h=new THREE.Raycaster(new THREE.Vector3(cx,box.max.y+1,cz),new THREE.Vector3(0,-1,0)).intersectObject(g,true)[0], y0=h?h.point.y:box.max.y;
   const blk=new THREE.MeshStandardMaterial({color:'#050506',roughness:.95}), fil=new THREE.MeshStandardMaterial({color:'#141416',roughness:.8}), lid=new THREE.MeshStandardMaterial({color:'#1a1a1d',metalness:.5,roughness:.4});
   const C=new THREE.Group(); C.name='carbyPoke'; C.position.set(cx,y0,cz); C.scale.setScalar(1.2);
@@ -1331,7 +1356,7 @@ async function installSlot(slot,key){
   const objs = (await Promise.all(optNodes(slot,key).map(n=>loadPart(n)))).filter(Boolean);
   if(build.parts[slot]!==key) return; // changed while loading
   const g=new THREE.Group(); objs.forEach(o=>g.add(o));
-  if(key==='turbo_poke') addTurboPoke(g); if(key==='carby_poke') addCarbyPoke(g);
+  if(key==='turbo_poke') addTurboPoke(g); if(key==='carby_poke') addCarbyPoke(g); if(key==='carby_open') addCarbyOpen(g);
   if(slotObj[slot]) stance.remove(slotObj[slot]);
   slotObj[slot]=g; stance.add(g); queueBodyFx();
 }
@@ -1359,7 +1384,7 @@ async function loadVehicle(vid, progress=()=>{}){
   // normalise swap lists to [key,label,[meshes]]
   if(swap.swap){ SWAP=swap.swap; VEH.rims=swap.rims; }
   else { SWAP={}; for(const [k,list] of Object.entries(swap)) SWAP[k]=list.map(([n,l])=>[n,l,n?[n]:[]]); }
-  if(SWAP.hood && SWAP.hood.some(o=>o[0]==='xr6t_hood') && !SWAP.hood.some(o=>o[0]==='turbo_poke')) SWAP.hood.push(['turbo_poke','Turbo through bonnet',['xr6t_hood']],['carby_poke','Carby through bonnet',['xr6t_hood']]);
+  if(SWAP.hood && SWAP.hood.some(o=>o[0]==='xr6t_hood') && !SWAP.hood.some(o=>o[0]==='turbo_poke')) SWAP.hood.push(['turbo_poke','Turbo through bonnet',['xr6t_hood']],['carby_poke','Carby through bonnet',['xr6t_hood']],['carby_open','No bonnet · carby',[]]);
   stance.clear(); for(const k in slotObj) delete slotObj[k];
   for(const w of wheels) carRoot.remove(w.grp); wheels.length=0;
   dmgReset(); baseScene=base; applyMats(base); makeFlames(new THREE.Box3().setFromObject(base)); stance.add(base);
@@ -2594,7 +2619,7 @@ function surface(){ if(MAP) return mapSurface(); rampSurface(); const v=settings
 /* ---------- livery, stickers and rego plates: canvas art projected onto the body with decals ---------- */
 const LIVERY=[['none','No livery','clean paint'],['twin','Twin stripes','bonnet, roof and boot'],['side','Side stripe','full length, belt line'],['lower','Rocker stripe','low down the doors'],['checker','Chequered rockers','race-day check'],['flames','Bonnet flames','old-school hot rod'],['number','Race number','roundels on both doors']];
 const LIV_COLS=[['#f4f4f0','White'],['#121316','Black'],['#d0231c','Red'],['#ffc81e','Yellow'],['#1f5fd6','Blue'],['#9aa1a8','Silver'],['#ff6a00','Orange'],['#35b04a','Green']];
-const STICKERS=[['none','No stickers','clean glass'],['street','Street pack','banner, quarter and rear window'],['burnout','Burnout pack','skid club decals'],['track','Track pack','numbers, tow hooks, sponsor strip'],['full','Full send','everything at once']];
+const STICKERS=[['none','No stickers','clean glass'],['street','Street pack','banner, quarter and rear window'],['burnout','Burnout pack','skid club decals'],['track','Track pack','numbers, tow hooks, sponsor strip'],['full','Full send','everything at once'],['pops','Pops Performance','windscreen banner · comp number 110']];
 const PLATES=[['wa','WA standard','white with blue characters'],['black','Black custom','white on black'],['euro','Slim euro','narrow custom plate'],['series','Burnout Series','gold on black']];
 function canvasDecal(w,h,draw){ const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); draw(x,w,h); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=4; return t; }
 function bannerTex(txt,fg,bg,font){ return canvasDecal(1024,128,(x,w,h)=>{ if(bg){ x.fillStyle=bg; x.fillRect(0,0,w,h); } x.fillStyle=fg; x.textAlign='center'; x.textBaseline='middle'; let s=96; x.font=`italic 900 ${s}px ${font||'Arial Black, Impact, sans-serif'}`; while(x.measureText(txt).width>w*.94&&s>20){ s-=4; x.font=`italic 900 ${s}px ${font||'Arial Black, Impact, sans-serif'}`; } x.fillText(txt,w/2,h/2+4); }); }
@@ -2653,13 +2678,21 @@ async function applyLivery(force){
   if(lv==='flames'){ const m=decalMat('fl'+col,()=>livFlameTex(col),{r:.3}); livAt(B,V(0,B.max.y+out,B.max.z-len*.14),V(0,-1,0),1.25,len*.26,hgt*.9,m,Z,false); }
   if(lv==='number'||st==='track'||st==='full'){ const n=build.num||(build.num=1+Math.floor(Math.random()*98)); const m=decalMat('num'+n+col,()=>roundelTex(n,col),{r:.4}); for(const [s,o,d] of sides){ o.y=WY+.18; o.z=midZ+.12; livAt(B,o.clone(),d,.52,.52,.6,m,Y,false); } }
   /* stickers */
+  // windscreen / rear window height: scan down from the top for the glass (the body box includes the aerial, so a fixed fraction of it can miss the glass entirely)
+  const glassSpan=front=>{ let top=null, bot=null; for(let y=B.max.y; y>B.min.y+hgt*.4; y-=.04){ const h=livCast(V(0,y,front?B.max.z+out:B.min.z-out),V(0,0,front?-1:1),true); if(h&&h.object.material.transparent){ if(top==null) top=y; bot=y; } }
+    if(top!=null) for(let y=top+.01; y<top+.04; y+=.01){ const h=livCast(V(0,y,front?B.max.z+out:B.min.z-out),V(0,0,front?-1:1),true); if(h&&h.object.material.transparent) top=y; else break; }   // refine the top edge
+    return top==null?null:[top,bot]; };
+  const gF=st!=='none'?glassSpan(1):null, gR=st!=='none'&&st!=='pops'?glassSpan(0):null, wsY=gF?gF[0]-.07:B.max.y-hgt*.09, rwY=gR?gR[0]-.07:B.max.y-hgt*.12;
   const banner=(t,fg,bg,k)=>decalMat('bn'+k,()=>bannerTex(t,fg,bg),{r:.5});
-  if(st!=='none'){ const wind=st==='burnout'?banner('SKID CREW WA','#fff','#111','skid'):banner('PROJECT AUSSIE','#fff','#141414','br');
-    livAt(B,V(0,B.max.y-hgt*.09,B.max.z+out),V(0,0,-1),1.25,.15,.8,wind,Y,true);
+  if(st==='pops'){ // the real XR6 Carby's decals (used with the owner's permission): banner across the top of the windscreen, comp number up the passenger-side edge
+    livAt(B,V(0,wsY,B.max.z+out),V(0,0,-1),1.28,.17,.8,banner('POPS PERFORMANCE','#fff','','pops'),Y,true);
+    livAt(B,V(.5,wsY-.24,B.max.z+out),V(0,0,-1),.08,.2,.8,decalMat('pops110v',()=>canvasDecal(128,320,(x,w,h)=>{ x.fillStyle='#f4f4f0'; x.fillRect(0,0,w,h); x.fillStyle='#111'; x.translate(w/2,h/2); x.rotate(-Math.PI/2); x.textAlign='center'; x.textBaseline='middle'; x.font='900 108px Arial Black, Impact, sans-serif'; x.fillText('110',0,6); }),{r:.5}),Y,true); }
+  else if(st!=='none'){ const wind=st==='burnout'?banner('SKID CREW WA','#fff','#111','skid'):banner('PROJECT AUSSIE','#fff','#141414','br');
+    livAt(B,V(0,wsY,B.max.z+out),V(0,0,-1),1.25,.15,.8,wind,Y,true);
     const q=st==='burnout'?decalMat('lg_b',()=>logoTex('STAY','SIDEWAYS','#ffc81e','#111')):st==='track'?decalMat('lg_t',()=>logoTex('DYNO','TUNED · WA','#fff','#c21d16')):decalMat('lg_s',()=>logoTex('WA','BUILT TOUGH','#111','#ffc81e'));
     for(const [s,o,d] of sides){ o.y=WY+.42; o.z=WRZ+.05; livAt(B,o.clone(),d,.34,.17,.5,q,Y,false); }
     const rw=st==='track'?banner('RACE · PERTH','#ffc81e','','rp'):banner(st==='burnout'?'BURNOUT SERIES':'PERTH STREET','#fff','','ps');
-    livAt(B,V(0,B.max.y-hgt*.12,B.min.z-out),V(0,0,1),.9,.11,.8,rw,Y,true);
+    livAt(B,V(0,rwY,B.min.z-out),V(0,0,1),.9,.11,.8,rw,Y,true);
     if(st==='track'||st==='full'){ const sp=decalMat('spon',()=>bannerTex('MOTORPLEX · KWINANA · RED GUM','#111','#f4f4f0'),{r:.5}); for(const [s,o,d] of sides){ o.y=WY+.48; o.z=WF-.15; livAt(B,o.clone(),d,.5,.06,.5,sp,Y,false); } }
     if(st==='full'||st==='burnout'){ const tk=decalMat('lg_f',()=>logoTex('BURNOUT','BROS','#ff6a00','#111')); livAt(B,V(0,B.max.y+out,B.min.z+len*.08),V(0,-1,0),.4,.2,hgt*.8,tk,V(-1,0,0),false); } }
   /* rego plates */
