@@ -38,3 +38,4 @@ assets/carby_high_5850.wav
 assets/carby_shift.wav
 assets/carby_liftoff_crackle.wav
 assets/carby_decel.wav
+assets/zf_fart_na.wav

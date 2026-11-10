@@ -2397,11 +2397,14 @@ function loadCamIdle(key,url){ if(camIdles[key]||!AC) return; const o=camIdles[k
   fetch(url).then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ const s=AC.createBufferSource(); s.buffer=b; s.loop=true; s.connect(o.g); s.start(); o.src=s; }).catch(()=>{}); }
 let v8Lim=null; function loadV8Lim(){ if(v8Lim||!AC) return; v8Lim={g:AC.createGain()}; v8Lim.g.gain.value=0; v8Lim.g.connect(master);
   fetch('assets/v8_limiter.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ const s=AC.createBufferSource(); s.buffer=b; s.loop=true; s.connect(v8Lim.g); s.start(); v8Lim.src=s; }).catch(()=>{}); }
-let tLimS=null, scrOpenV=0, v8LimOn=false, tLimV=0, tLim=null, naLim=null, naMixV=0, scrLoop=null, scrKick=0, fartBuf=null, fartAt=0;
-function loadFart(){ if(fartBuf||!AC) return; fartBuf=1; fetch('assets/zf_fart.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ fartBuf=b; }).catch(()=>{ fartBuf=null; }); }
+let tLimS=null, scrOpenV=0, v8LimOn=false, tLimV=0, tLim=null, naLim=null, naMixV=0, scrLoop=null, scrKick=0, fartBuf=null, fartBufNa=null, fartAt=0;
+function loadFart(){ if(fartBuf||!AC) return; fartBuf=1;
+  fetch('assets/zf_fart.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ fartBuf=b; }).catch(()=>{ fartBuf=null; });
+  fetch('assets/zf_fart_na.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ fartBufNa=b; }).catch(()=>{ fartBufNa=null; }); }
 let limFart=null;
-function realFart(amount,onLimiter){ // the real ZF fart, cut from the user's FG screamer flyby
-  if(!(fartBuf instanceof AudioBuffer)) return false; const t=AC.currentTime; const s=AC.createBufferSource(); s.buffer=fartBuf;
+function realFart(amount,onLimiter){ // the real ZF fart, cut from the user's FG screamer flyby. NA cars use a version with the turbo whoosh taken out.
+  const buf=(!ENG.turbo && fartBufNa instanceof AudioBuffer)?fartBufNa:fartBuf;
+  if(!(buf instanceof AudioBuffer)) return false; const t=AC.currentTime; const s=AC.createBufferSource(); s.buffer=buf;
   const g=AC.createGain();
   if(onLimiter){ // a touch quicker, and each one hands over to the next so they keep pace with the bounce
     s.playbackRate.value=1.12+Math.random()*.04; g.gain.value=1.3*amount;
