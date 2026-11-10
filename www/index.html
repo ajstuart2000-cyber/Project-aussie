@@ -921,7 +921,8 @@ const boosted=()=>ENG.turbo||ENG.sc;
 const lamOpt=()=>(boosted()?.8:.88)-(modKey('fuel')==='meth'?.02:0), lamDef=()=>boosted()?.78:.87, ecuLam=()=>ECU.lam??lamDef();
 function knockLim(){ const f={'98':3,c16:6,e85:8,meth:9}[modKey('fuel')]??3;
   return f+(modOn('wmi')&&modKey('wmi')==='on'?2:0)+(modOn('cooler')?({fmic:.8,big:1.5}[modKey('cooler')]||0):0)+(boosted()?0:2)-(ENG.turbo?10*Math.max(0,ECU.boost):0)-8*Math.max(0,ecuLam()-lamOpt()); }
-const revAllow=()=>(modFx('head').rev||0)+(modFx('forged').rev||0)+300, baseLim=()=>(ENGINES[build.engine]||ENG).limit;
+function isXr6Carby(){ if(typeof build==='undefined'||!build) return false; if((build.engine||'')!=='na') return false; const id=build.id||'', h=(build.parts||{}).hood; return id==='xr6carby'||id.indexOf('g_xr6carby')===0||h==='carby_open'||h==='carby_poke'; }
+const revAllow=()=>(modFx('head').rev||0)+(modFx('forged').rev||0)+300, baseLim=()=>isXr6Carby()?6900:(ENGINES[build.engine]||ENG).limit;
 function ecuK(r){ const t=ECU.timing, kl=knockLim(); let f=1+.012*Math.min(t,kl); if(t>kl) f-=.035*(t-kl);
   const dl=ecuLam()-lamOpt(); f*=1-3.5*dl*dl;
   f*=1+.008*ECU.cam*clamp((4200-r)/1800,0,1)-.008*ECU.cam*clamp((r-4200)/1500,0,1);
@@ -958,7 +959,7 @@ function targetKW(){ if(_tk!=null) return _tk; const E0=ENGINES[build.engine]||E
   return _tk=Math.round(P); }
 function kwWith(cat,v){ const keep=JSON.stringify([build.mods||{},build.cam]); if(cat==='cams') build.cam=v; else build.mods={...(build.mods||{}),[cat]:v};
   _tk=null; const r=targetKW(); const [m,c]=JSON.parse(keep); build.mods=m; build.cam=c; _tk=null; targetKW(); return r; }
-function engFor(E){ refreshEcu(); const o=Object.assign({},E); o.limit=E.limit+(modFx('head').rev||0)+(modFx('forged').rev||0)+(ECU.rev||0);
+function engFor(E){ refreshEcu(); const o=Object.assign({},E); o.limit=baseLim()+(isXr6Carby()?0:(modFx('head').rev||0)+(modFx('forged').rev||0))+(ECU.rev||0);
   if(modFx('conv').stall) o.stall=Math.max(E.stall,modFx('conv').stall); if(modOn('blower',E)&&modFx('blower').pw) o.sc=true; return o; }
 // slot the new engine categories into every car's shop, right after the turbo
 { const NEWC=[['manifold','Exhaust manifold'],['cooler','Intercooler'],['wmi','Water-meth'],['blower','Supercharger kit'],['head','Head work'],['tb','Throttle body'],['forged','Bottom end'],['nos','Nitrous'],['conv','Torque converter']];
@@ -2123,7 +2124,7 @@ function startAudio(){
     rev.buffer=ir; const revG=AC.createGain(); revG.gain.value=0; const revLP=AC.createBiquadFilter(); revLP.type='lowpass'; revLP.frequency.value=3500;
     camG.connect(revLP).connect(rev).connect(revG).connect(safe);   /* one last brick-wall stage on the summed output so loud moments never clip and crackle */
     master=AC.createGain(); master.gain.value=.9; master.__out=outB; master.__safe=safe; master.__cam={lp:camLP,ls:camLS,g:camG,rev:revG}; const comp=AC.createDynamicsCompressor(); comp.threshold.value=-14; comp.ratio.value=4; master.connect(comp).connect(outB);
-    loadFlutter(); loadDose(); loadNaLim(); loadEcoLim(); loadTLim(); loadTLimS(); loadScreamer(); loadFart(); loadCamIdle('t','assets/cam_idle.wav'); loadCamIdle('na','assets/na_cam_idle.wav'); loadLs2(); loadCamIdle('ls1','assets/ls1_cam_idle.wav'); loadCamIdle('ls3','assets/ls3_cam_idle.wav'); loadCamIdle('v8','assets/v8_cam_idle.wav'); loadCamIdle('au8cam','assets/au8cam_idle.wav'); loadCamIdle('ecocam','assets/ecocam_idle.wav'); loadV8Lim(); await ensurePack(ENG.sound);
+    loadFlutter(); loadDose(); loadNaLim(); loadCarbySound(); loadEcoLim(); loadTLim(); loadTLimS(); loadScreamer(); loadFart(); loadCamIdle('t','assets/cam_idle.wav'); loadCamIdle('na','assets/na_cam_idle.wav'); loadLs2(); loadCamIdle('ls1','assets/ls1_cam_idle.wav'); loadCamIdle('ls3','assets/ls3_cam_idle.wav'); loadCamIdle('v8','assets/v8_cam_idle.wav'); loadCamIdle('au8cam','assets/au8cam_idle.wav'); loadCamIdle('ecocam','assets/ecocam_idle.wav'); loadV8Lim(); await ensurePack(ENG.sound);
     eng=packs; setEngineSound();
     const sco=AC.createOscillator(); sco.type='sawtooth'; const scf=AC.createBiquadFilter(); scf.type='bandpass'; scf.Q.value=6; const scg=AC.createGain(); scg.gain.value=0; sco.connect(scf).connect(scg).connect(master); sco.start(); sfx.sc={o:sco,f:scf,g:scg};
     const nb=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate), nd=nb.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1; sfx.nb=nb;
@@ -2411,10 +2412,26 @@ function loadEcoLim(){ if(ecoLim||!AC) return; ecoLim={g:AC.createGain()}; ecoLi
   fetch('assets/ecotec_limiter.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ const s=AC.createBufferSource(); s.buffer=b; s.loop=true; s.connect(ecoLim.g); s.start(); ecoLim.src=s; ecoLim.pos=0; ecoLim.tl=AC.currentTime; }).catch(()=>{}); }
 function loadNaLim(){ if(naLim||!AC) return; naLim={g:AC.createGain()}; naLim.g.gain.value=0; naLim.g.connect(master);
   fetch('assets/na_limiter.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ const s=AC.createBufferSource(); s.buffer=b; s.loop=true; s.connect(naLim.g); s.start(); naLim.src=s; naLim.pos=0; naLim.tl=AC.currentTime; }).catch(()=>{}); }
+let carbyLim=null, carbyBufs=null, carbyLoops=null;
+function loadCarbySound(){ if(!AC||carbyBufs) return; carbyBufs={};
+  const get=(k,u)=>fetch(u).then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ carbyBufs[k]=b; if(k==='lim') startCarbyLim(b); if(k==='mid'||k==='high') startCarbyLoops(); }).catch(()=>{});
+  get('lim','assets/carby_limiter.wav'); get('mid','assets/carby_mid_5000.wav'); get('high','assets/carby_high_5850.wav');
+  get('shift','assets/carby_shift.wav'); get('crackle','assets/carby_liftoff_crackle.wav'); get('decel','assets/carby_decel.wav'); }
+function startCarbyLim(b){ if(carbyLim||!b||!AC) return; carbyLim={g:AC.createGain()}; carbyLim.g.gain.value=0; carbyLim.g.connect(master);
+  const s=AC.createBufferSource(); s.buffer=b; s.loop=true; s.connect(carbyLim.g); s.start(); carbyLim.src=s; carbyLim.pos=0; carbyLim.tl=AC.currentTime; }
+function startCarbyLoops(){ if(carbyLoops||!AC||!carbyBufs||!carbyBufs.mid||!carbyBufs.high) return;
+  const mk=(b,rpm)=>{ const src=AC.createBufferSource(); src.buffer=b; src.loop=true; const g=AC.createGain(); g.gain.value=0; src.connect(g).connect(master); src.start(); return {rpm,src,g}; };
+  carbyLoops=[mk(carbyBufs.mid,4990), mk(carbyBufs.high,5870)]; }
+function playCarbyShot(kind,amount){ const b=carbyBufs&&carbyBufs[kind]; if(!b||!AC||!isXr6Carby()) return false;
+  const t=AC.currentTime, s=AC.createBufferSource(); s.buffer=b; s.playbackRate.value=.97+Math.random()*.06;
+  const g=AC.createGain(), a=Math.min(1,.35+.75*(amount||1));
+  g.gain.setValueAtTime(Math.max(.001,a*1.15),t); g.gain.exponentialRampToValueAtTime(.001,t+Math.max(.08,b.duration));
+  s.connect(g).connect(master); s.start(t); s.stop(t+b.duration+.05); return true; }
 // where the spark comes back in each limiter recording (a pop lands there), and where each cut starts (a softer crackle, with a pop tune)
 const LIM_POPS={ au6:{fire:[.14,.4,.9,1.18], cut:[.04,.3,.8,1.08]}, eco:{fire:[.09,.165,.345,.41], cut:[.055,.135,.315,.375,.63]}, na:{fire:[.962,1.525,2.037,2.348], cut:[]},
   ts:{fire:[.04,.58,1.06,1.63,1.98,2.46,3.0,3.35], cut:[.25,.73,1.36,1.80,2.13,2.67,3.12,3.65]},
-  t:{fire:[.507,.967,1.443,1.907,2.377,2.853,3.325,3.793,4.267,4.737,5.21,5.673,6.137,6.615,7.09], cut:[.222,.695,1.155,1.635,2.095,2.565,3.042,3.51,3.98,4.458,4.922,5.4,5.858,6.322,6.805,7.275]} };
+  t:{fire:[.507,.967,1.443,1.907,2.377,2.853,3.325,3.793,4.267,4.737,5.21,5.673,6.137,6.615,7.09], cut:[.222,.695,1.155,1.635,2.095,2.565,3.042,3.51,3.98,4.458,4.922,5.4,5.858,6.322,6.805,7.275]},
+  carby:(()=>{ const T=2.55,p=.052,fire=[],cut=[]; for(let x=0;x<T-1e-4;x+=p){ cut.push(+x.toFixed(4)); fire.push(+Math.min(T-.001,x+p*.5).toFixed(4)); } return {fire,cut}; })() };
 function limPops(n,K){ let bt=AC.currentTime; for(let j=0;j<n;j++){ bang(bt,.7*K*(j?.5+Math.random()*.4:1)); bt+=.035+Math.random()*.06; } }
 function limCrackle(K){ let bt=AC.currentTime; const n=1+(Math.random()<.5); for(let j=0;j<n;j++){ bang(bt,.35*K*(.7+Math.random()*.5)); bt+=.04+Math.random()*.07; } }
 let flutBuf=null, flutLoading=null;
@@ -2451,6 +2468,7 @@ function backfire(n,a){ if(!sfx.nb) return; let t=AC.currentTime; for(let i=0;i<
 function crackle(){ if(!sfx.nb) return; // overrun: bursts of 1-4 bangs
   const r=Math.random(), PL=popLv(); backfire(PL>=3?2+Math.floor(r*4):r<.45?1:r<.8?2:3+(Math.random()<.4), (.45+Math.random()*.45)*(PL===1?.7:PL>=3?1.15:1)); }
 function zfFart(amount){ // ZF upshift: spark cut on the shift, unburnt fuel pops in the pipe
+  if(isXr6Carby()){ playCarbyShot('shift',amount); return; }
   if(!sfx.nb) return; const t=AC.currentTime;
   if(['barra','synthT'].includes(ENG.sound) && realFart(Math.max(.6,amount))){ if(amount>.55 && popLv()>=2) backfire(1+(Math.random()<.5), .5*amount); return; }
   const s=AC.createBufferSource(); s.buffer=sfx.nb; const f=AC.createBiquadFilter(); f.type='bandpass'; f.frequency.value=150; f.Q.value=1.1;
@@ -2490,12 +2508,12 @@ function updateAudio(){
   v8LimOn = isV8Synth() && (input.thr>.55||revHeld) && car.shiftT<=0 && car.rpm>ENG.limit-450 && (performance.now()-(car.limAt||-1e9)<450 || (v8LimOn && car.rpm>ENG.limit-400));   /* stays on while the foot's down, so the bounce keeps its own steady rhythm */
   const pk=packs[ENG.sound]; if(!pk) return;
   { const X=eng&&packs[ENG.sound]&&packs[ENG.sound].ex; if(X&&X.mf){ exNoise(X); const r=car.rpm; X.dr.gain.setTargetAtTime(X.mf.drone*clamp(1-Math.abs(r-2600)/900,0,1),t,.08); X.hr.gain.setTargetAtTime(clamp((r-1500)/4000,0,1)*(.3+.7*Math.min(1,car.load)),t,.06); } }
-  const recLim = ENG.sound==='ecotec' ? ecoLim : ['barra','synthT'].includes(ENG.sound) ? (ENG.turbo?(build.gate!=='screamer'&&tLimS&&tLimS.src?tLimS:tLim):naLim) : null;
-  for(const o of [naLim,ecoLim,au6Lim,v8Lim,tLim,tLimS]) if(o&&o.src&&o!==recLim) o.g.gain.setTargetAtTime(0,t,.02);
+  const recLim = isXr6Carby()&&carbyLim&&carbyLim.src ? carbyLim : ENG.sound==='ecotec' ? ecoLim : ['barra','synthT'].includes(ENG.sound) ? (ENG.turbo?(build.gate!=='screamer'&&tLimS&&tLimS.src?tLimS:tLim):naLim) : null;
+  for(const o of [naLim,ecoLim,au6Lim,v8Lim,tLim,tLimS,carbyLim]) if(o&&o.src&&o!==recLim) o.g.gain.setTargetAtTime(0,t,.02);
   const naOn = recLim&&recLim.src && (input.thr>.55||revHeld) && car.shiftT<=0 && car.rpm>ENG.limit-450 && performance.now()-(car.limAt||-1e9)<650;   // never while it's pulling up through the revs or changing gear   // only once it's actually bouncing off the limiter
   naMixV+=((naOn?1:0)-naMixV)*Math.min(1,adt*(naOn?9:(input.thr<.45&&!revHeld?40:6)));   // lift off and it's gone
-  if(recLim&&recLim.src){ recLim.g.gain.setTargetAtTime(naMixV*(recLim===tLim?1:recLim===tLimS?1.1:recLim===ecoLim||recLim===au6Lim?.9:.8),t,(input.thr<.45&&!revHeld)?.012:.03); recLim.src.playbackRate.setTargetAtTime(recLim===tLim||recLim===tLimS?1:ENG.limit/(recLim===ecoLim?5695:recLim===au6Lim?5700:5820),t,.05);   /* the recording sits at ~5820 rpm: line it up with this engine's limit */ }
-  for(const [o,P] of [[au6Lim,LIM_POPS.au6],[ecoLim,LIM_POPS.eco],[naLim,LIM_POPS.na],[tLim,LIM_POPS.t],[tLimS,LIM_POPS.ts]]) if(o&&o.src){ const L=o.src.buffer.duration, p0=o.pos, p1=p0+Math.max(0,t-o.tl)*o.src.playbackRate.value; o.tl=t; o.pos=p1%L;
+  if(recLim&&recLim.src){ recLim.g.gain.setTargetAtTime(naMixV*(recLim===tLim?1:recLim===tLimS?1.1:recLim===ecoLim||recLim===au6Lim?.9:.8),t,(input.thr<.45&&!revHeld)?.012:.03); recLim.src.playbackRate.setTargetAtTime(recLim===tLim||recLim===tLimS?1:ENG.limit/(recLim===ecoLim?5695:recLim===au6Lim?5700:recLim===carbyLim?6920:5820),t,.05);   /* carby limiter sits at ~6920 rpm; other NA at ~5820 */ }
+  for(const [o,P] of [[au6Lim,LIM_POPS.au6],[ecoLim,LIM_POPS.eco],[naLim,LIM_POPS.na],[tLim,LIM_POPS.t],[tLimS,LIM_POPS.ts],[carbyLim,LIM_POPS.carby]]) if(o&&o.src){ const L=o.src.buffer.duration, p0=o.pos, p1=p0+Math.max(0,t-o.tl)*o.src.playbackRate.value; o.tl=t; o.pos=p1%L;
     if(recLim!==o||naMixV<=.45) continue; const PL=popLv(), K=(PL>=3?1.5:PL>=2?1.25:1)*Math.min(1,naMixV*1.2), hit=c=>(c>p0&&c<=p1)||(c+L>p0&&c+L<=p1);
     sndLim.at=performance.now(); for(const c of (P.cut.length?P.cut:P.fire.map(f=>f-.11))) if(hit(c)) sndLim.cut=true; for(const c of P.fire) if(hit(c)) sndLim.cut=false;   // the recording's own bounce drives the tacho
     if(!limSettled()) continue;
@@ -2506,11 +2524,25 @@ function updateAudio(){
   const ci = camKey&&camIdles[camKey]&&camIdles[camKey].src ? clamp((1900-car.rpm)/600,0,1)*(input.thr>.5&&car.rpm>1500?.3:1) : 0;
   camIdleMix+=(ci-camIdleMix)*Math.min(1,adt*8);
   for(const [k,o] of Object.entries(camIdles)){ if(!o.src) continue; o.g.gain.setTargetAtTime(k===camKey?camIdleMix*(k==='ls1'||k==='ls3'?1.5:1.1):0,t,.04); if(k===camKey) o.src.playbackRate.setTargetAtTime(clamp(car.rpm/850,.92,1.6),t,.04);   /* natural speed at the game's idle */ }
+  // XR6 Carby only: mid (~4990) and high (~5870) loops blended by rpm like the barra pack; idle stays on na_cam_idle
+  if(isXr6Carby()){ loadCarbySound(); startCarbyLoops(); }
+  let cbyMix=0;
+  if(isXr6Carby()&&carbyLoops){
+    const mid=carbyLoops[0], hi=carbyLoops[1], inAmt=clamp((rpm-3800)/600,0,1)*(1-naMixV);
+    let gm=0, gh=0, k=0;
+    if(rpm<=mid.rpm){ gm=inAmt; }
+    else if(rpm>=hi.rpm){ gh=inAmt; }
+    else { k=clamp((rpm-mid.rpm)/(hi.rpm-mid.rpm),0,1); gm=Math.cos(k*Math.PI/2)*inAmt; gh=Math.sin(k*Math.PI/2)*inAmt; }
+    mid.g.gain.setTargetAtTime(gm*1.05,t,.03); hi.g.gain.setTargetAtTime(gh*1.05,t,.03);
+    mid.src.playbackRate.setTargetAtTime(clamp(rpm/mid.rpm,.55,1.35),t,.02);
+    hi.src.playbackRate.setTargetAtTime(clamp(rpm/hi.rpm,.55,1.35),t,.02);
+    cbyMix=Math.max(gm,gh);
+  } else if(carbyLoops){ for(const s of carbyLoops) s.g.gain.setTargetAtTime(0,t,.04); }
   const scrDuck = scrLoop&&scrLoop.g ? Math.min(.45,scrLoop.g.gain.value*.4) : 0;
-  if(pk.node){ const tw=ls2Tick(t); pk.node.port.postMessage({on:(car.cutT>0&&(car.twoStep||car.alsOn||settings.limiter==='hard'))?0:1, lf:tw?.0278:(V8PACKS[ENG.sound]?.opt.limFire||.32), lcut:tw?.0108:(V8PACKS[ENG.sound]?.opt.limCut||.15), rpm:rpm, lope:isGM()?(ENG.lope||(camLv()>=1?.6:0)):0, load:Math.max(.12,Math.min(1,car.load)), rk:(pk.ex&&pk.ex.mf?pk.ex.mf.rasp:0)*(.4+.6*Math.min(1,car.load)), lim:v8LimOn||(ENG.lsTwo&&ls2.on)?1:0, ov:(input.thr<.08&&!revHeld&&!rollCruise()&&car.rpm>1700&&state==='drive')?clamp((car.rpm-1700)/2200,0,1)*(popLv()===0?.3:1):0});   /* a stock LS winds down smooth: only a hint of overrun burble */ if(ENG.sound==='synthT'&&pk.lp){ const rb=clamp((rpm-1500)/3000,0,1); pk.lp.frequency.setTargetAtTime(ENG.turbo?7000:4200,t,.1); pk.eqHi.gain.setTargetAtTime(ENG.turbo?5:0,t,.1); }   /* brighter as it revs, to meet the real limiter recording */ if(isV8Synth()) pk.eqBass.gain.setTargetAtTime(6*clamp((rpm-1500)/2500,0,1),t,.08); pk.bus.gain.setTargetAtTime(exVol()*1.5*synthBoostGain(),t,.03); }
+  if(pk.node){ const tw=ls2Tick(t); pk.node.port.postMessage({on:(car.cutT>0&&(car.twoStep||car.alsOn||settings.limiter==='hard'))?0:1, lf:tw?.0278:(V8PACKS[ENG.sound]?.opt.limFire||.32), lcut:tw?.0108:(V8PACKS[ENG.sound]?.opt.limCut||.15), rpm:rpm, lope:isGM()?(ENG.lope||(camLv()>=1?.6:0)):0, load:Math.max(.12,Math.min(1,car.load)), rk:(pk.ex&&pk.ex.mf?pk.ex.mf.rasp:0)*(.4+.6*Math.min(1,car.load)), lim:v8LimOn||(ENG.lsTwo&&ls2.on)?1:0, ov:(input.thr<.08&&!revHeld&&!rollCruise()&&car.rpm>1700&&state==='drive')?clamp((car.rpm-1700)/2200,0,1)*(popLv()===0?.3:1):0});   /* a stock LS winds down smooth: only a hint of overrun burble */ if(ENG.sound==='synthT'&&pk.lp){ const rb=clamp((rpm-1500)/3000,0,1); pk.lp.frequency.setTargetAtTime(ENG.turbo?7000:4200,t,.1); pk.eqHi.gain.setTargetAtTime(ENG.turbo?5:0,t,.1); }   /* brighter as it revs, to meet the real limiter recording */ if(isV8Synth()) pk.eqBass.gain.setTargetAtTime(6*clamp((rpm-1500)/2500,0,1),t,.08); pk.bus.gain.setTargetAtTime(exVol()*1.5*synthBoostGain()*(1-.85*cbyMix),t,.03); }
   tLimV+=((onLim?1:0)-tLimV)*Math.min(1,adt*(onLim?12:40));   /* XR6T on the limiter: the real fart does the bouncing, the live engine gets out of the way */
   const limDuck = 1-.93*tLimV;
-  pk.lope.gain.setTargetAtTime((1-ls2.duck)*(camIdleMix>0?1-.85*camIdleMix:(1-lopeAmt*.45*(1-pulse)))*(1-(isSynth()?1:.8)*naMixV)*(1-scrDuck)*limDuck,t,onLim?.005:.012);   // keep some of the live engine under the recording so the tone carries through
+  pk.lope.gain.setTargetAtTime((1-ls2.duck)*(camIdleMix>0?1-.85*camIdleMix:(1-lopeAmt*.45*(1-pulse)))*(1-(isSynth()?1:.8)*naMixV)*(1-scrDuck)*limDuck*(1-.85*cbyMix),t,onLim?.005:.012);   // keep some of the live engine under the recording so the tone carries through
   pk.layers.forEach((L,li)=>{ const lg = (li===1?(0.25+0.75*load):(1-load)*0.85+0.15)*(cut?.28:1);
     let i=0; while(i<L.length-2 && L[i+1].rpm<rpm) i++; const a=L[i], b=L[i+1]; let k=Math.min(1,Math.max(0,(rpm-a.rpm)/(b.rpm-a.rpm)));
     for(let j=0;j<L.length;j++){ const s=L[j]; let g=0; if(j===i) g=Math.cos(k*Math.PI/2); else if(j===i+1) g=Math.sin(k*Math.PI/2); g*=lg*(li===1?.9:.75);
@@ -2607,7 +2639,7 @@ function gearUp(){ if(!manual) return; if(car.gear<RATIOS.length-1){ if(input.th
 function gearDown(){ if(!manual) return; if(car.gear>0){ const ng=car.gear-1; if(ng>=2){ const w=Math.abs(car.vLong)/WR*60/(2*Math.PI); if(w*RATIOS[ng]*FINAL>6300) return; } car.gear=ng; car.shiftT=.18; } }
 function autoShift(up){ if(up){ if(car.gear<RATIOS.length-1){ if(input.thr>.6&&car.rpm>3300&&(build.vehicle||'falcon')==='falcon'&&!isGM()) zfFart(Math.min(1,car.rpm/6000));   /* the ZF fart is a Falcon thing: Commodores (6L80/4L60) shift clean, no pops going up the gears */ if(build.gate==='screamer'&&car.boost>.5*ENG.boost) screamDump(.7*car.boost/ENG.boost); if(ENG.turbo&&car.boost>.5*ENG.boost&&input.thr>.6) turboRelease(.45*car.boost/ENG.boost,true); car.gear++; car.shiftT=.18; shiftClunk(); } } else if(car.gear>2){ car.gear--; car.shiftT=.18; } }
 let liftArm=false, revCounter=0;
-function liftCheck(thr){ if(thr>.6) liftArm=true; else if(liftArm && thr<.3){ liftArm=false; if(car.rpm>3400 && popLv()>=2 && !rollCruise()) setTimeout(()=>backfire((popLv()>=3?4:2)+Math.floor(Math.random()*3),.85),60+Math.random()*80); if(ENG.turbo && car.boost>.22*ENG.boost) turboRelease(Math.min(1,car.boost/ENG.boost)); } }
+function liftCheck(thr){ if(thr>.6) liftArm=true; else if(liftArm && thr<.3){ liftArm=false; if(isXr6Carby()&&car.rpm>5000&&!rollCruise()) playCarbyShot(car.rpm>6400?'decel':'crackle',1); else if(car.rpm>3400 && popLv()>=2 && !rollCruise()) setTimeout(()=>backfire((popLv()>=3?4:2)+Math.floor(Math.random()*3),.85),60+Math.random()*80); if(ENG.turbo && car.boost>.22*ENG.boost) turboRelease(Math.min(1,car.boost/ENG.boost)); } }
 // ---- tyre model: combined-slip magic formula with a peak and a sliding fall-off ----
 const MF_C=1.4, MF_B=Math.tan(Math.PI/(2*MF_C));
 const MF = s => Math.sin(MF_C*Math.atan(MF_B*s));            // 1.0 at s=1 (peak), ~0.81 fully sliding
@@ -3154,11 +3186,11 @@ function dynoRead(){ const F=ecuFlags(); $('dynoFlags').innerHTML=F.map(([c,t])=
   $('dynoRead').innerHTML=`<span><b>${Math.round(P.kw)}</b> rwkW @ ${Math.round(P.kr/100)*100}</span><span><b class="tq">${Math.round(P.tq)}</b> Nm @ ${Math.round(P.tr/100)*100}</span>${P.psi?`<span>${P.psi.toFixed(1)} psi</span>`:''}${dlt!=null?`<span><i class="${dlt<0?'dn':''}">${dlt>=0?'+':''}${dlt} rwkW</i> vs last pull</span>`:''}${dyno.spray&&nosKW()?'<span>on the bottle</span>':''}`; }
 const DYNO_ROWS=[['boost','Boost',-.3,.4,.01,v=>(v>=0?'+':'')+Math.round(v*100)+'%',()=>ENG.turbo],['timing','Ignition timing',-6,12,.5,v=>(v>0?'+':'')+v+'°'],
   ['lam','Mixture',.7,1,.01,v=>`λ ${v.toFixed(2)} · ${(v*14.7).toFixed(1)} AFR`],['cam','Cam timing',-8,8,1,v=>v===0?'0°':v>0?v+'° advance':(-v)+'° retard'],
-  ['rev','Rev limit',-500,1000,50,v=>(baseLim()+(modFx('head').rev||0)+(modFx('forged').rev||0)+v)+' rpm'],['lc','Launch rpm',2500,6000,100,v=>v+' rpm',()=>build.launch==='on']];
+  ['rev','Rev limit',-500,1000,50,v=>(baseLim()+(isXr6Carby()?0:(modFx('head').rev||0)+(modFx('forged').rev||0))+v)+' rpm'],['lc','Launch rpm',2500,6000,100,v=>v+' rpm',()=>build.launch==='on']];
 function buildDyno(){ refreshEcu(); const val=k=>k==='lam'?ecuLam():k==='lc'?(ECU.lc||(ENG.turbo?4000:3800)):ECU[k];
   $('dynoRows').innerHTML=DYNO_ROWS.map(([k,n,mn,mx,st,,on])=>`<div class="drow${on&&!on()?' off':''}"><label class="label" for="dy_${k}">${n}</label><span class="tv" id="dv_${k}"></span><input type="range" id="dy_${k}" min="${mn}" max="${mx}" step="${st}"${on&&!on()?' disabled':''}></div>`).join('');
   for(const [k,,,,,fmt] of DYNO_ROWS){ const el=$('dy_'+k); el.value=val(k); $('dv_'+k).textContent=fmt(+val(k));
-    el.oninput=()=>{ build.ecu={...(build.ecu||{}),[k]:+el.value}; refreshEcu(); ENG.limit=baseLim()+(modFx('head').rev||0)+(modFx('forged').rev||0)+(ECU.rev||0); $('dv_'+k).textContent=fmt(+el.value); dynoRead(); };
+    el.oninput=()=>{ build.ecu={...(build.ecu||{}),[k]:+el.value}; refreshEcu(); ENG.limit=baseLim()+(isXr6Carby()?0:(modFx('head').rev||0)+(modFx('forged').rev||0))+(ECU.rev||0); $('dv_'+k).textContent=fmt(+el.value); dynoRead(); };
     el.onchange=()=>{ toMyBuild(); }; }
   $('dynoSpray').hidden=!nosKW(); $('dynoSpray').textContent=dyno.spray?'Nitrous on':'Nitrous off';
   $('dynoSub').textContent=`${buildName(build)} · ${ENG.label} · 4th gear pull · rear-wheel kW`; dynoRead(); requestAnimationFrame(()=>drawDyno(1)); }
