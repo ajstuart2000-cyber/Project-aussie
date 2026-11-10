@@ -81,6 +81,20 @@ class WorkflowUsesFeedbackModule(unittest.TestCase):
         self.assertIn('python3 -m aidev feedback --pr "$EXISTING_PR"', wf)
         self.assertNotIn('select(.author.login != "github-actions")', wf)
 
+    def test_update_mode_runs_main_automation_not_the_branch_copy(self):
+        """Run 42780701058 failed: after checking out the old ai/* branch, `aidev feedback` did not exist."""
+        from helpers import ROOT
+        with open(os.path.join(ROOT, '.github', 'workflows', 'ai-daily-dev.yml')) as fh:
+            wf = fh.read()
+        step = wf[wf.index('- name: Prepare branch'):]
+        step = step[:step.index('- name: Grok')]
+        cp = step.index('cp -r automation "$RUNNER_TEMP/automation-main"')
+        self.assertLess(cp, step.index('git checkout -B "$BRANCH" "origin/$BRANCH"'))
+        self.assertIn('echo "PYTHONPATH=$RUNNER_TEMP/automation-main" >> "$GITHUB_ENV"', step)
+        self.assertEqual(wf.count('PYTHONPATH="$RUNNER_TEMP/automation-main" python3 -m aidev develop'), 2)
+        self.assertIn('PYTHONPATH="$RUNNER_TEMP/automation-main" python3 -m aidev prbody', wf)
+        self.assertLess(step.index('export PYTHONPATH="$RUNNER_TEMP/automation-main"'), step.index('python3 -m aidev feedback'))
+
 
 if __name__ == '__main__':
     unittest.main()
