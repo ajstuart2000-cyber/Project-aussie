@@ -23,17 +23,36 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--night);color:var
 #app{position:fixed;left:0;top:0;width:100%;height:100%;overflow:hidden}
 #gdeck,#shop,#shop>*,#cats,#optRow{min-width:0;max-width:100%}
 #shopTitle{font:800 13px var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--amber,#ffb000)}
-#carShop{display:grid;gap:8px;padding:10px 12px;min-width:0;max-width:100%;overflow:auto;position:relative;z-index:5}
-.csHead{display:flex;align-items:center;gap:10px;flex-wrap:wrap} .csHead b{font:800 16px var(--f-display);letter-spacing:.08em;text-transform:uppercase} .csHead .btn{margin-left:auto}
-#csList,#csOwned{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;min-width:0}
-.cs{flex:0 0 auto;display:grid;gap:4px;padding:10px;border:1px solid var(--line);border-radius:6px;background:rgba(239,230,216,.04);min-width:170px;cursor:pointer}
-.cs b{font:800 17px var(--f-display);letter-spacing:.06em} .cs span{font-size:12px} .dim{color:var(--muted);font-size:12px}
+#carShop{display:grid;gap:8px;padding:10px 12px;min-width:0;max-width:100%;overflow:hidden;position:relative;z-index:5;box-sizing:border-box}
+.csHead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0} .csHead b{font:800 16px var(--f-display);letter-spacing:.08em;text-transform:uppercase} .csHead .btn{margin-left:auto;flex:none}
+.csHead .dim{min-width:0}
+/* Horizontal scroll of whole cards only — never shrink the row and scroll inside a card (overflow-x alone would compute overflow-y to auto and let the grid squash the row) */
+#csList,#csOwned{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;min-width:0;min-height:min-content;align-items:stretch;padding:2px 4px;scroll-padding-inline:4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+#csList::-webkit-scrollbar,#csOwned::-webkit-scrollbar{display:none}
+.cs{flex:0 0 auto;display:grid;gap:4px;padding:10px;border:1px solid var(--line);border-radius:6px;background:rgba(239,230,216,.04);min-width:170px;max-width:260px;cursor:pointer;align-content:start;overflow:visible;scroll-snap-align:start;box-sizing:border-box}
+.cs b{font:800 17px var(--f-display);letter-spacing:.06em} .cs span{font-size:12px;overflow-wrap:anywhere} .dim{color:var(--muted);font-size:12px}
 .cs.cur{border-color:var(--gold,#ffc53d);box-shadow:0 0 0 1px var(--gold,#ffc53d)}
-.csO{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line);border-radius:6px} .csO.cur{border-color:var(--amber,#ffb000)} .csO .btn{padding:6px 10px;font-size:12px}
+.csO{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;scroll-snap-align:start} .csO.cur{border-color:var(--amber,#ffb000)} .csO .btn{padding:6px 10px;font-size:12px}
 /* Car shop (and any body.carshop screen): hide the left garage menu so it cannot cover the panel; frame the 3D car in the space above */
 body.carshop #actions{display:none!important}
-body.compact #carShop,body.tiny #carShop{flex:1;min-width:0}
-body.tiny.carshop #carShop,body.compact.tiny.carshop #carShop{max-height:48vh}
+body.compact #carShop,body.tiny #carShop{flex:1 1 auto;min-width:0;min-height:min-content}
+/* Landscape phones: fit name, engine, kW/Nm, status and the button on each card with no internal scroll; garage row is one compact line; leave the turntable visible above */
+body.compact.carshop #carShop,body.tiny.carshop #carShop{gap:6px;padding:8px 10px;max-height:none}
+body.compact.carshop .csHead,body.tiny.carshop .csHead{gap:6px;flex-wrap:nowrap}
+body.compact.carshop .csHead b,body.tiny.carshop .csHead b{font-size:14px}
+body.compact.carshop .csHead .dim,body.tiny.carshop .csHead .dim{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.compact.carshop .cs,body.tiny.carshop .cs{padding:6px 8px;gap:2px;min-width:168px}
+body.compact.carshop .cs b,body.tiny.carshop .cs b{font-size:15px;line-height:1.15}
+body.compact.carshop .cs span,body.tiny.carshop .cs span,body.compact.carshop .dim,body.tiny.carshop .dim{font-size:11px;line-height:1.25}
+body.compact.carshop .cs .btn,body.tiny.carshop .cs .btn{padding:6px 8px;font-size:11px;margin-top:2px}
+body.compact.carshop .cs.csCareer>span:not(.dim),body.tiny.carshop .cs.csCareer>span:not(.dim){display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* Your garage sits on one line with the owned cars, so the shop cards keep their full height */
+body.compact.carshop #carShop,body.tiny.carshop #carShop{grid-template-columns:auto minmax(0,1fr)}
+body.compact.carshop #carShop>.csHead:first-child,body.tiny.carshop #carShop>.csHead:first-child,
+body.compact.carshop #csList,body.tiny.carshop #csList{grid-column:1/-1}
+body.compact.carshop #carShop>.csHead:nth-of-type(2),body.tiny.carshop #carShop>.csHead:nth-of-type(2){flex-wrap:nowrap;align-self:center;margin:0;min-width:0}
+body.compact.carshop #carShop>.csHead:nth-of-type(2) b,body.tiny.carshop #carShop>.csHead:nth-of-type(2) b{font-size:12px;letter-spacing:.06em;white-space:nowrap}
+body.compact.carshop #csOwned,body.tiny.carshop #csOwned{align-self:center;padding:2px 0}
 #shop{overflow:hidden}
 #optRow{overflow-x:auto;scrollbar-width:none}
 body.touch #draghud,body.touch #freehud,body.touch #hesihud{max-width:calc(50% - 100px);grid-template-columns:auto minmax(0,1fr);overflow-wrap:anywhere}   /* stops short of the centred speedo */
@@ -5053,7 +5072,7 @@ function endShopPreview(){ shopPrevTok++; const restore=shopPrevIdx; shopSel=nul
 function openCarShop(on){ const sh=$('carShop'); if(on){ if(!$('shop').hidden) openShop(false); sh.hidden=false; document.body.classList.add('shopping','carshop'); gFrameN=0; shopPrevIdx=buildIdx; renderShop(); previewShopCar(shopSel||SHOP_CARS[0].sid); } else { sh.hidden=true; if($('shop').hidden) document.body.classList.remove('shopping'); endShopPreview(); gFrameN=0; ttTarget=null; Object.assign(gcamT,{yaw:.75,pitch:.16,dist:6.4}); } }
 function renderShopHighlight(){ const L=$('csList'); if(L) for(const d of L.querySelectorAll('.cs[data-sid]')) d.classList.toggle('cur',d.dataset.sid===shopSel); const G=$('csOwned'); if(G) [...G.children].forEach((r,i)=>r.classList.toggle('cur',shopSel==null&&i===buildIdx)); }
 function renderShop(){ const L=$('csList'); if(!L) return; L.innerHTML='';
-  { const d=document.createElement('div'); d.className='cs'; d.style.cursor='default'; d.innerHTML=`<b>Career mode</b><span>${CAREER.on?`On · ${money(CAREER.cash)} in the bank · ${money(CAREER.earned)} won so far`:'Off · everything is free. Turn it on to start with $2,500 and a tired AU Forte, and earn your way up.'}</span>`; const bt=document.createElement('button'); bt.className='btn'+(CAREER.on?'':' primary'); bt.textContent=CAREER.on?'Turn career off':'Start career'; bt.onclick=careerToggle; d.appendChild(bt); L.appendChild(d); }
+  { const d=document.createElement('div'); d.className='cs csCareer'; d.style.cursor='default'; d.innerHTML=`<b>Career mode</b><span>${CAREER.on?`On · ${money(CAREER.cash)} in the bank · ${money(CAREER.earned)} won so far`:'Off · everything is free. Turn it on to start with $2,500 and a tired AU Forte, and earn your way up.'}</span>`; const bt=document.createElement('button'); bt.className='btn'+(CAREER.on?'':' primary'); bt.textContent=CAREER.on?'Turn career off':'Start career'; bt.onclick=careerToggle; d.appendChild(bt); L.appendChild(d); }
   for(const S of SHOP_CARS){ const P=PRESETS.find(p=>p.id===S.from), E=ENGINES[P.engine]||{}, own=garageCars.filter(b=>(b.vehicle||'falcon')===(P.vehicle||'falcon')&&(b.engine===P.engine||b.id.startsWith('g_'+S.sid))).length;
     const d=document.createElement('div'); d.className='cs'+(shopSel===S.sid?' cur':''); d.dataset.sid=S.sid; d.innerHTML=`<b>${S.name}</b><span>${S.blurb}</span><span class="dim">${E.spec||''}${own?` · ${own} in your garage`:''}</span>`;
     d.onclick=e=>{ if(e.target.closest('button')) return; previewShopCar(S.sid); };
