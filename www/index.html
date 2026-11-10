@@ -3072,17 +3072,17 @@ function step(dt){
   car.slip=Math.max(clamp(sR-.85,0,2)*.7, clamp(sF-.9,0,2)*.6, car.spin*.6);
   car.braking=brk>.1;
   car.autoT=Math.max(0,car.autoT-dt);
-  if(!manual && settings.donut!=='off' && !car.tc && car.gear>2 && car.shiftT<=0 && input.thr>.6 && Math.abs(input.steer)>.5 && speed>8){
+  const wheelAhead = Math.abs(wN*WR) - Math.abs(vxR);   // rear tyre surface speed vs the road under it
+  if(wheelAhead>Math.max(2.2,.25*Math.abs(vxR))) car.spinHold=true; else if(wheelAhead<Math.max(1,.12*Math.abs(vxR))) car.spinHold=false;   // hysteresis: light up and it holds the gear; it only lets go once the tyre has nearly hooked up
+  const holdForSkid = !!car.spinHold && (settings.venue!=='drag' || Math.abs(vxR)<10);   // never change gear while the rears are spinning well beyond road speed · on the strip it still shifts up through the skate once rolling
+  if(!manual && settings.donut!=='off' && !car.tc && car.gear>2 && car.shiftT<=0 && input.thr>.6 && Math.abs(input.steer)>.5 && speed>8 && !holdForSkid){
     let g=car.gear; while(g>2 && Math.abs(car.wR*RATIOS[g-1]*FINAL)*60/(2*Math.PI)<ENG.limit-450) g--;
-    if(g<car.gear){ car.gear=g; car.shiftT=.12; car.autoT=1.2; } }   // tip-in kickdown
-  if(!manual && car.gear>=2 && car.shiftT<=0 && (car.autoT<=0 || (thr>.6 && car.rpm>ENG.limit-250)) && !lineLock){   // the low gears rev out faster than the shift timer: never sit it on the limiter waiting to change up
+    if(g<car.gear){ car.gear=g; car.shiftT=.12; car.autoT=1.2; } }   // tip-in kickdown (not during a burnout)
+  if(!manual && car.gear>=2 && car.shiftT<=0 && (car.autoT<=0 || (!holdForSkid && thr>.6 && car.rpm>ENG.limit-250)) && !lineLock){   // the low gears rev out faster than the shift timer: never sit it on the limiter waiting to change up — but a skid holds the current gear for at least autoT
     const upAt=thr>.6?ENG.limit-200:thr<.1?ENG.limit-900:2900+thr*3000;
     const lower=car.gear>2?Math.abs(car.wR*RATIOS[car.gear-1]*FINAL)*60/(2*Math.PI):1e9;
-    const wheelAhead = Math.abs(wN*WR) - Math.abs(vxR);   // rear tyre surface speed vs the road under it
-    const wheelsSpinning = wheelAhead > Math.max(3, .3*Math.abs(vxR));   // normal traction slip under power is allowed; a lit-up tyre is not
-    const holdForSkid = wheelsSpinning && (settings.venue!=='drag' || Math.abs(vxR)<10);   // never change up while the rears are spinning faster than the car is moving: it only shifts once road speed catches up to wheel speed · on the strip it still shifts up through the skate once rolling
     if(rpmW>upAt&&car.gear<RATIOS.length-1&&!holdForSkid){ autoShift(true); car.autoT=.9; }
-    else if(car.gear>2&&car.spin<.3&&((thr>.85&&rpmW<2600&&lower<ENG.limit-900)||rpmW<1300||(brk>.3&&lower<4400))){ autoShift(false); car.autoT=.8; }
+    else if(!holdForSkid&&car.gear>2&&car.spin<.3&&((thr>.85&&rpmW<2600&&lower<ENG.limit-900)||rpmW<1300||(brk>.3&&lower<4400))){ autoShift(false); car.autoT=.8; }
   }
   car.wheelRot[0]+=vLong/WR*dt; car.wheelRot[1]+=vLong/WR*dt; car.wheelRot[2]+=car.wR*dt; car.wheelRot[3]+=car.wR*dt;
   collide();
@@ -3514,7 +3514,7 @@ function drawTach(){
   tx.fillStyle='#9a948a'; tx.font='600 22px "IBM Plex Mono", monospace'; tx.textAlign='center'; tx.textBaseline='middle';
   for(let k=0;k<=7;k++){ const a=ang(k*1000); tx.fillText(k,cx+Math.cos(a)*(R-34),cy+Math.sin(a)*(R-34)); }
   const na=ang(Math.min(car.rpm,7000)); tx.strokeStyle='#efe6d8'; tx.lineWidth=5; tx.beginPath(); tx.moveTo(cx+Math.cos(na)*(R-70),cy+Math.sin(na)*(R-70)); tx.lineTo(cx+Math.cos(na)*(R+6),cy+Math.sin(na)*(R+6)); tx.stroke();
-  tx.fillStyle='#efe6d8'; tx.font='900 104px "Big Shoulders Display", Impact, sans-serif'; tx.fillText(Math.round(Math.abs(car.vLong)*3.6),cx,cy-6);
+  tx.fillStyle='#efe6d8'; tx.font='900 104px "Big Shoulders Display", Impact, sans-serif'; tx.fillText(Math.round(Math.hypot(car.vx,car.vz)*3.6),cx,cy-6);
   tx.fillStyle='#9a948a'; tx.font='600 20px "IBM Plex Mono", monospace'; tx.fillText('km/h',cx,cy+52);
   const gl=car.gear===0?'R':car.gear===1?'N':String(car.gear-1);
   tx.fillStyle=car.rpm>ENG.limit-300?'#c4552c':'#ffb347'; tx.font='800 54px "Big Shoulders Display", Impact, sans-serif'; tx.fillText(gl,cx,cy+R*.72);
