@@ -725,11 +725,12 @@ const saveSettings = ()=>store.set('barra.settings', settings);
 // let go; Drift adds lock, counter-steers for you and holds the car inside a set angle so it doesn't spin.
 // Clutch kick tip-in help (clutch-kick 360, rear grip drop, the 50 km/h+ throw). Off as a test: a kick only keeps the revs and wheelspin up. Set true to bring it back.
 const CK_TIPIN=false;
-const STEER_DEF={ classic:{lock:36,rate:1,front:1,rear:1.03,counter:0,spin:1,angle:0,thr:.62,kick:0,pivot:0},
+const SK_REV=.4;   // Skidder: how strongly a snakey reversal off the brake is eased (0 = off, 1 = as much as with the brake held)
+const STEER_DEF={ classic:{lock:36,rate:1,front:1,rear:1.08,counter:0,spin:1,angle:0,thr:.68,kick:0,pivot:0},
                   skidder:{lock:36,rate:1,front:1,rear:1,counter:0,spin:1,angle:0,thr:.5,kick:0,cs:0,pivot:0},
                   drift:{lock:58,rate:1.5,front:1.12,rear:.82,counter:.75,spin:.4,angle:55,thr:.5,kick:.35,cs:1,pivot:0},
                   grip:{lock:34,rate:1.7,front:1.22,rear:1.32,counter:.45,spin:0,angle:0,thr:.95,kick:0,cs:1,pivot:0,hs:1.6} };
-if(!settings.tuneV9){ if(settings.tune){ delete settings.tune.skidder; delete settings.tune.classic; } settings.tuneV2=settings.tuneV3=settings.tuneV4=settings.tuneV5=settings.tuneV6=settings.tuneV7=settings.tuneV8=settings.tuneV9=1; store.set('barra.settings',settings); }   // Skidder takes the old Classic feel; Classic is a touch harder to tip in
+if(!settings.tuneV10){ if(settings.tune){ delete settings.tune.skidder; delete settings.tune.classic; } settings.tuneV2=settings.tuneV3=settings.tuneV4=settings.tuneV5=settings.tuneV6=settings.tuneV7=settings.tuneV8=settings.tuneV9=settings.tuneV10=1; store.set('barra.settings',settings); }   // Skidder takes the old Classic feel; Classic is a touch harder to tip in
 const STEER_NOTE={ classic:'The original feel, tamed a touch. The rear holds on a little more, so a tip-in needs a bigger flick or more throttle to break it loose. 360s with the assist on.',
   grip:'Built for weaving through traffic. Sticky front and rear, quick sharp steering that stays strong at 250 km/h, and it holds a line instead of stepping out. Ideal for No Hesi.',
   skidder:'Drives like the original Classic: tip-ins, smooth snakes and gas plus full lock for 360s. Hold the brake on full lock and the tail swings out but won\'t donut. Below about 50 km/h a clutch kick just keeps the rears lit.',
@@ -3169,8 +3170,11 @@ function step(dt){
   }
   // skidder, brake held: the snakey. The tail comes across through centre into the other angle slower and progressively, so a
   // swing-across builds instead of flicking. Peak yaw rate is lower, yaw builds at a gentler rate and the change in yaw is eased
-  // (jerk-limited). The angle it reaches on the other side isn't touched. Off the brake (tip-ins) nothing here applies.
-  { const w=skidder&&!car.tc&&!car.c360&&speed>1 ? clamp(((lineLock?brk:(car.skBrk||0))-.12)/.35,0,1) : 0;
+  // (jerk-limited). The angle it reaches on the other side isn't touched. Off the brake only snakey reversals get it (SK_REV), not tip-ins.
+  // skidder, off the brake too: once the tail is swinging back toward centre (a snakey reversal), the same easing runs at part strength
+  // through centre and into the new angle, so the rear comes across progressively instead of flicking. A tip-in from straight is untouched.
+  { const b=Math.atan2(vLat,Math.max(Math.abs(vLong),1)); if(skidder && Math.abs(b)>.08 && car.r*b>0 && Math.abs(car.r)>.4) car.revT=1.2; else car.revT=Math.max(0,(car.revT||0)-dt); }
+  { const w=skidder&&!car.tc&&!car.c360&&speed>1 ? Math.max(clamp(((lineLock?brk:(car.skBrk||0))-.12)/.35,0,1), SK_REV*Math.min(1,(car.revT||0)/.4)) : 0;
     if(w>0){ let rDot=Tz/IZ; const build=Math.sign(rDot)===Math.sign(car.r||rDot), dMax=5.5+(3-5.5)*w, rCap=(2.2+Math.min(1.2,speed*.08))*(1-w)+(1.55+Math.min(.65,speed*.045))*w;
       if(build && Math.abs(rDot)>dMax) rDot=Math.sign(rDot)*dMax;
       const J=60+(12-60)*w, prev=car.bkRd??rDot; rDot=prev+clamp(rDot-prev,-J*dt,J*dt);
