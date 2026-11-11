@@ -1,1 +1,3 @@
 Barra engine mesh by TAXI_DRIVER (BeamNG.drive mod, via modland). Used in test build; permission pending.
+Barra engine sounds (XR6 Carby "Barra" sound option, assets/barra_mod/): exhaust/engine rpm loops and cam idle from the same TAXI_DRIVER BeamNG.drive Barra mod, trimmed and re-looped. Used in test build; permission pending.
+Barra option limiter (assets/barra_mod/lim_v5b.wav): built from a phone screen recording of a YouTube clip, "N/A xr6 burnout" by @HoonsRUS, mixed with the mod loops above. Reference recording supplied by the owner for the test build.
