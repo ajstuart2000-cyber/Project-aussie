@@ -781,6 +781,16 @@ const VEHICLES = {
     geo:{ WF:1.549, WRZ:-1.549, WY:0.333, WX:[0.725,0.725], lift:0, M:1620, IZ:3200, TR:0.333 },
     defParts:{bed:'tub'},
     cats:[['engine','Engine'],['paint','Paint'],['wheels','Wheels & stance'],['tyres','Tyres'],['gearbox','Gearbox'],['diff','Diff ratio'],['cams','Cams'],['gate','Wastegate'],['launch','Launch control'],['intake','Intake & exhaust'],['tune','ECU tune'],['turbo','Turbo'],['fuel','Fuel'],['weight','Weight'],['finish','Paint finish'],['tint','Window tint'],['glow','Underglow'],['pops','Pops & crackles'],['smoke','Tyre smoke'],['bed','Tub or tray'],['bedTop','Bed extras'],['hood','Bonnet'],['skirts','Side skirts'],['lip','Front lip']] },
+  // test-build mod cars (BeamNG mods, trimmed and baked to GLB): their files live in assets/carmods/, local only, bundled into test APKs and never pushed
+  ef:{ name:'Ford Falcon EF', short:'EF', base:'assets/carmods/ef/body.glb', swap:'assets/carmods/ef/swap.json', partsDir:'assets/carmods/ef/', mats:'assets/carmods/ef/mats.json', texBase:'assets/carmods/ef/', rimsDir:'assets/carmods/ef/', rimExt:'.glb', wheelKind:'rims', rimFaceNeg:false,
+    geo:{ WF:1.444, WRZ:-1.176, WY:.305, WX:[.745,.745], lift:0, M:1550, IZ:2700, TR:.305 }, fill:{brakes:1,frontSusp:1,wells:1},
+    cats:[['engine','Engine'],['paint','Paint'],['wheels','Wheels & stance'],['tyres','Tyres'],['gearbox','Gearbox'],['diff','Diff ratio'],['cams','Cams'],['gate','Wastegate'],['launch','Launch control'],['intake','Intake & exhaust'],['tune','ECU tune'],['turbo','Turbo'],['fuel','Fuel'],['weight','Weight'],['finish','Paint finish'],['tint','Window tint'],['glow','Underglow'],['pops','Pops & crackles'],['smoke','Tyre smoke']] },
+  vk:{ name:'Holden VK Commodore', short:'VK', base:'assets/carmods/vk/body.glb', swap:'assets/carmods/vk/swap.json', partsDir:'assets/carmods/vk/', mats:'assets/carmods/vk/mats.json', texBase:'assets/carmods/vk/', rimsDir:'assets/carmods/vk/', rimExt:'.glb', wheelKind:'rims', rimFaceNeg:false,
+    geo:{ WF:1.449, WRZ:-1.219, WY:.32, WX:[.732,.732], lift:0, M:1370, IZ:2450, TR:.32 },
+    cats:[['engine','Engine'],['paint','Paint'],['wheels','Wheels & stance'],['tyres','Tyres'],['gearbox','Gearbox'],['diff','Diff ratio'],['cams','Cams'],['gate','Wastegate'],['launch','Launch control'],['intake','Intake & exhaust'],['tune','ECU tune'],['turbo','Turbo'],['fuel','Fuel'],['weight','Weight'],['finish','Paint finish'],['tint','Window tint'],['glow','Underglow'],['pops','Pops & crackles'],['smoke','Tyre smoke']] },
+  fg:{ name:'Ford Falcon FG', short:'FG', base:'assets/carmods/fg/body.glb', swap:'assets/carmods/fg/swap.json', partsDir:'assets/carmods/fg/', mats:'assets/carmods/fg/mats.json', texBase:'assets/carmods/fg/', rimsDir:'assets/carmods/fg/', rimExt:'.glb', wheelKind:'rims', rimFaceNeg:false, fill:{brakes:1,frontSusp:1,wells:1},
+    geo:{ WF:1.45, WRZ:-1.45, WY:.33, WX:[.80,.80], lift:0, M:1700, IZ:2950, TR:.33 },
+    cats:[['engine','Engine'],['paint','Paint'],['wheels','Wheels & stance'],['tyres','Tyres'],['gearbox','Gearbox'],['diff','Diff ratio'],['cams','Cams'],['gate','Wastegate'],['launch','Launch control'],['intake','Intake & exhaust'],['tune','ECU tune'],['turbo','Turbo'],['fuel','Fuel'],['weight','Weight'],['finish','Paint finish'],['tint','Window tint'],['glow','Underglow'],['pops','Pops & crackles'],['smoke','Tyre smoke']] },
 };
 const BASE_PARTS = { bumperF:'xr6t_bumper_F', bumperR:'xr6t_bumper_R', hood:'xr6t_hood', spoiler:'misc_d', skirts:'xr6turbo_skirt_1_ng', grille:'xr6t_grille', badge:'xr6t_lettering_854' };
 const FPVP = {...BASE_PARTS, bumperF:'xr6turbo_bumf_11_ng', bumperR:'xr6turbo_bumr_6_ng', spoiler:'xr6turbo_wing_5_ng', skirts:'xr6turbo_skirt_2_ng', grille:'xr6t_grille_custom', badge:'xr6turbo_badge_9_ng'};
@@ -816,6 +826,9 @@ const PRESETS = [
   { id:'autray', vehicle:'auute', name:'AU Tray Back', engine:'au6', paint:'Winter White', wheel:'auute_stock', stance:'stock', parts:{bed:'tray',bedTop:'load'} },
   { id:'auute8', vehicle:'auute', name:'AU XR8 Ute', engine:'au8', paint:'Crimson Red', wheel:'auute_stock', stance:'low', parts:{bed:'tub',bedTop:'sportsbar'} },
   { id:'auuteskid', vehicle:'auute', name:'AU Ute Skidder', tyre:'burnout', box:'skid', diff:3.91, engine:'xr8t', paint:'Super Yellow', wheel:'CGC_VF_Raiper_20x9', stance:'low', parts:{bed:'traysteel',bedTop:'none'} },
+  { id:'efxr6', vehicle:'ef', name:'EF Falcon XR6', engine:'na', paint:'Crimson Red', wheel:'rim', stance:'stock', parts:{} },   // test-build mod car: our NA Barra sound
+  { id:'fgxr6', vehicle:'fg', name:'FG Falcon XR6', engine:'na', paint:'Electric Blue', wheel:'rim', stance:'stock', parts:{} },   // test-build mod car: our NA Barra sound
+  { id:'vkss', vehicle:'vk', name:'VK Commodore SS', engine:'ls1', paint:'Winter White', wheel:'rim', stance:'stock', parts:{} },   // test-build mod car: our VS's LS1 Holden V8 sound (the old 5.0 Holden V8 sample sound has no limiter pops)
   { id:'skidder', vehicle:'vf', name:'VF Skidder', tyre:'burnout', box:'skid', diff:3.91, engine:'cam', paint:'Spitfire Green', wheel:'CGC_VF_Raiper_20x9', stance:'low', parts:{...VFP, spoiler:'none'} },
 ];
 PRESETS.forEach(p=>{ if(!p.vehicle) p.vehicle='falcon'; });
@@ -990,7 +1003,8 @@ const myBuilds = store.get('barra.mybuilds') || {};
 // your garage: the cars you own (each one keeps its own paint, parts, engine swap and stance); the car shop sells the four base cars
 const SHOP_CARS=[ {sid:'xr6',from:'xr6t',name:'XR6 Turbo',blurb:'BA/BF Falcon · 4.0 Barra turbo'}, {sid:'xr8',from:'xr8',name:'XR8',blurb:'BA/BF Falcon · 5.4 Boss V8'}, {sid:'xr6carby',from:'xr6carby',name:'XR6 Carby',blurb:'BA/BF Falcon · 4.0 Barra on a carby'},
   {sid:'vf',from:'vfss',name:'VF SS',blurb:'VF Commodore · 6.2 LS3'}, {sid:'vs',from:'vsv8',name:'VS SS',blurb:'VS Commodore · 5.7 LS1'},
-  {sid:'au',from:'auforte',name:'AU Forte',blurb:'AU Falcon sedan · 4.0 I6'}, {sid:'auute',from:'auute8',name:'AU XR8 Ute',blurb:'AU Falcon ute · 5.0 V8'} ];
+  {sid:'au',from:'auforte',name:'AU Forte',blurb:'AU Falcon sedan · 4.0 I6'}, {sid:'auute',from:'auute8',name:'AU XR8 Ute',blurb:'AU Falcon ute · 5.0 V8'},
+  {sid:'ef',from:'efxr6',name:'EF Falcon XR6',blurb:'EF Falcon · 4.0 I6 (test build)'}, {sid:'fg',from:'fgxr6',name:'FG Falcon XR6',blurb:'FG Falcon · 4.0 Barra I6 (test build)'}, {sid:'vk',from:'vkss',name:'VK Commodore SS',blurb:'VK Commodore · Holden V8 (test build)'} ];
 const shopCar=sid=>{ const S=SHOP_CARS.find(c=>c.sid===sid), P=JSON.parse(JSON.stringify(PRESETS.find(p=>p.id===S.from))); return Object.assign(P,{id:'g_'+sid+'_'+Date.now().toString(36),name:S.name,custom:true,vehicle:P.vehicle||'falcon'}); };
 const garageCars = store.get('barra.garage') || (()=>{ const g=[]; for(const v of ['falcon','vf','vs']) if(myBuilds[v]) g.push(myBuilds[v]); if(!g.length) g.push(shopCar('xr6')); store.set('barra.buildIdx',0); return g; })();
 store.set('barra.garage',garageCars);
@@ -1165,6 +1179,7 @@ function applyLook(){
 const loader = new GLTFLoader();
 async function loadModel(url){
   const res = await fetch(url); if(!res.ok) throw new Error(url+' '+res.status);
+  if(/\.glb$/i.test(url)) return (await loader.parseAsync(await res.arrayBuffer(),'')).scene;   // the mod cars are plain GLB files
   const {gltf, bin} = await res.json();
   const raw = Uint8Array.from(atob(bin), c=>c.charCodeAt(0));
   const enc = new TextEncoder().encode(JSON.stringify(gltf)); const jl=(enc.length+3)&~3, bl=(raw.length+3)&~3;
@@ -1424,13 +1439,30 @@ const rimCache={};
 async function setWheel(id){
   if(VEH.wheelKind!=='rims') return;
   const list=VEH.rims; const r=list.find(x=>x[0]===id)||list[0]; build.wheel=r[0];
-  const rk=vehId+'/'+r[0]; if(!rimCache[rk]) rimCache[rk]=loadModel((r[3]||VEH.rimsDir)+r[0]+'.json').then(s=>{ applyMats(s); return s; });
+  const rk=vehId+'/'+r[0]; if(!rimCache[rk]) rimCache[rk]=loadModel((r[3]||VEH.rimsDir)+r[0]+(VEH.rimExt||'.json')).then(s=>{ applyMats(s); return s; });
   const rim=await rimCache[rk]; if(build.wheel!==r[0]) return;
   const tg=buildTireR(r[2]-.004, VEH.geo.TR||.338);
   const RC=build.rimcol&&RIMS[build.rimcol]; let rcm=null; if(RC){ rcm=new THREE.MeshStandardMaterial({color:RC[0],metalness:RC[1],roughness:RC[2]}); if(envTex) rcm.envMap=envTex; }
   for(const w of wheels){ w.spin.clear(); const m=rim.clone(); if(w.left===!!VEH.rimFaceNeg) m.rotation.y=Math.PI; w.spin.add(m);
     if(rcm) m.traverse(o=>{ if(o.isMesh&&o.material&&!o.material.transparent&&o.material!==rubber&&((o.material.metalness??0)>=.5||/rim|wheel|spoke/i.test(o.material.name||''))) o.material=rcm; });   /* painted rims: the metal faces take the colour */
     const t=new THREE.Mesh(tg,rubber); t.castShadow=true; w.spin.add(t); w.tire=t; }
+}
+// stand-in brakes, front suspension and wheel-well liners for the mod cars whose packs lack them (VEH.fill): simple shapes, low poly
+const fillMat={ liner:new THREE.MeshStandardMaterial({color:'#0a0a0b',roughness:.95,side:THREE.DoubleSide}), metal:new THREE.MeshStandardMaterial({color:'#2c2d30',metalness:.6,roughness:.45}),
+  disc:new THREE.MeshStandardMaterial({color:'#6d6e70',metalness:.85,roughness:.38}), cal:new THREE.MeshStandardMaterial({color:'#7d1410',metalness:.3,roughness:.45}) };
+function addFill(base){ const F=VEH.fill; if(!F) return; const g=VEH.geo, TR=g.TR||.33, rr=(VEH.rims&&VEH.rims[0]&&VEH.rims[0][2])||TR*.66, add=(p,m)=>{ m.castShadow=false; m.receiveShadow=true; p.add(m); return m; };
+  const box=b=>b.position, cyl=(r1,r2,h,n)=>new THREE.CylinderGeometry(r1,r2,h,n);
+  if(F.wells) for(const [z,front] of [[g.WF,1],[g.WRZ,0]]) for(const sx of [1,-1]){ const x=sx*g.WX[front?0:1], R=TR+.05;
+    const shell=add(base,new THREE.Mesh(new THREE.CylinderGeometry(R,R,.2,22,1,true,-Math.PI*.12,Math.PI*1.24),fillMat.liner)); shell.rotation.z=Math.PI/2; shell.position.set(x-sx*.04,g.WY,z);   // arch from the front, over the top, to the back
+    const wall=add(base,new THREE.Mesh(new THREE.CircleGeometry(R,22,Math.PI*-.12,Math.PI*1.24),fillMat.liner)); wall.rotation.y=Math.PI/2; wall.position.set(x-sx*.14,g.WY,z); }   // inner wall, so you can't see through the arch
+  if(F.frontSusp) for(const sx of [1,-1]){ const x=sx*g.WX[0], z=g.WF;
+    const arm=add(base,new THREE.Mesh(new THREE.BoxGeometry(Math.abs(x)-.3,.035,.16),fillMat.metal)); arm.position.set(sx*(Math.abs(x)+.3)/2-sx*.1,g.WY-.12,z-.02);
+    const strut=add(base,new THREE.Mesh(cyl(.026,.026,.3,8),fillMat.metal)); strut.position.set(x-sx*.2,g.WY+.12,z-.03); strut.rotation.z=sx*.12;
+    const coil=add(base,new THREE.Mesh(cyl(.06,.06,.14,10),fillMat.metal)); coil.position.set(x-sx*.21,g.WY+.17,z-.03); coil.rotation.z=sx*.12;
+    const tie=add(base,new THREE.Mesh(cyl(.012,.012,Math.abs(x)-.25,6),fillMat.metal)); tie.rotation.z=Math.PI/2; tie.position.set(sx*(Math.abs(x)+.2)/2-sx*.1,g.WY-.02,z-.12); }
+  if(F.brakes) for(const w of wheels){ const sx=w.left?1:-1, front=w.front, dr=Math.min(rr-.035,front?.17:.155);
+    const disc=add(w.camber,new THREE.Mesh(cyl(dr,dr,.026,28),fillMat.disc)); disc.rotation.z=Math.PI/2; disc.position.x=-sx*.055;   // camber group: it steers with the wheel but doesn't need to spin
+    const cal=add(w.camber,new THREE.Mesh(new THREE.BoxGeometry(.06,.1,.13),fillMat.cal)); cal.position.set(-sx*.06,dr*.55,front?-dr*.62:dr*.62); cal.rotation.x=front?.75:-.75; }
 }
 function setGeo(g){ WF=g.WF; WRZ=g.WRZ; WY=g.WY; A=WF-CGZ; B=CGZ-WRZ; L=A+B; M=g.M; IZ=g.IZ; }
 let vehLoading=null;
@@ -1454,6 +1486,7 @@ async function loadVehicle(vid, progress=()=>{}){
     const wheel=await falconWheel(); const tg=buildTire();
     for(const w of wheels){ const m=wheel.clone(); if(!w.left) m.rotation.y=Math.PI; w.spin.add(m); const t=new THREE.Mesh(tg,rubber); t.castShadow=true; w.spin.add(t); w.tire=t; }
   } else await setWheel(build.wheel);
+  addFill(base);
   if(ghostRoot) world.remove(ghostRoot);
   ghostRoot=new THREE.Group(); const gm=new THREE.MeshBasicMaterial({color:'#7fd6ff',transparent:true,opacity:.22,depthWrite:false});
   const gc=base.clone(); gc.traverse(o=>{ if(o.isMesh){ o.material=gm; o.castShadow=o.receiveShadow=false; } }); ghostRoot.add(gc); ghostRoot.visible=false; world.add(ghostRoot);
