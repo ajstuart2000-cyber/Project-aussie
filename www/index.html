@@ -2635,7 +2635,7 @@ function updateAudio(){
   if(master.__cam){ const C=master.__cam, cm=state==='drive'&&camMode<=3?camMode:0;   /* inside the car: muffled and boomy; front bumper: further from the pipes */
     C.lp.frequency.setTargetAtTime([18000,9000,1900,6000][cm],t,.15); C.ls.gain.setTargetAtTime([0,0,5,0][cm],t,.15); C.g.gain.setTargetAtTime([1,.82,.95,.8][cm],t,.15);
     C.rev.gain.setTargetAtTime(state!=='drive'||cm===2?0:({mp:.22,drag:.14,pad:.05}[settings.venue]||0),t,.3); }
-  const sg=(brMix?1:1-naMixV)*Math.max(gate*0+open*((input.thr>.4||revHeld)?1:0), scrKick*clamp((car.rpm-2500)/1500,0,1));
+  const sg=(1-naMixV)*Math.max(gate*0+open*((input.thr>.4||revHeld)?1:0), scrKick*clamp((car.rpm-2500)/1500,0,1));
   if(scrLoop&&scrLoop.src){ scrLoop.g.gain.setTargetAtTime(sg*1.15,t,.06); scrLoop.src.playbackRate.setTargetAtTime(clamp(.92+.18*(car.rpm-3200)/2800,.92,1.1),t,.08); }   // keeps the recording's natural pitch
   sfx.scream.g.gain.setTargetAtTime(0,t,.05); sfx.hiss.g.gain.setTargetAtTime(0,t,.05);
   // overrun crackle: V8s always pop a little, cammed engines more
@@ -2764,7 +2764,7 @@ const decalMats={};
 function decalMat(key,mk,opt={}){ if(!decalMats[key]){ decalMats[key]=new THREE.MeshStandardMaterial({map:mk(),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4,roughness:opt.r??.35,metalness:opt.m??0,side:THREE.FrontSide}); if(envTex) decalMats[key].envMap=envTex; } return decalMats[key]; }
 const isPaintMat=m=>m&&(m===MATS.xr6t||m===MATS.etk800||m===AMAT.paint||paintClones.includes(m));
 let livSig='', livGrp=null, DecalGeometry=null;
-const PLATE_Y={ falcon:[.535,null] };   // [front, rear] plate centre height in body space (null = work it out from the body): the BA/BF front plate sits on the bumper bar under the grille
+const PLATE_Y={ falcon:[.535,.80] };   // [front, rear] plate centre height in body space (null = work it out from the body): the BA/BF front plate sits on the bumper bar under the grille, the rear one in the middle of the boot-lid recess
 function bakedPlates(){ // plate meshes built into the body model (AU, VS): [front box, rear box] in body space, split by which end they're on
   stance.updateMatrixWorld(true); const inv=stance.matrixWorld.clone().invert(), m=new THREE.Matrix4(), v=new THREE.Vector3(), out=[null,null];
   stance.traverse(o=>{ if(!o.isMesh||!o.visible||o.userData.decal||!o.geometry.attributes.position||!/plate/i.test(o.name+' '+(o.material&&o.material.name||''))) return;
