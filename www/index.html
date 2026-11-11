@@ -634,7 +634,6 @@ body.narrow .gside{width:auto;align-items:flex-end}
       <div class="row" data-tab="look"><span class="label">Time of day</span><div class="seg" id="segTod"></div></div>
       <div class="row" data-tab="look"><span class="label">Weather</span><div class="seg" id="segWx"></div></div>
       <div class="row" data-tab="look"><span class="label">Graphics</span><div class="seg" id="segGfx"></div></div>
-      <div class="row" data-tab="sound" id="rowCarbySound" hidden><span class="label">Carby sound</span><div class="seg" id="segCarbySound"></div></div>
       <div class="row" data-tab="sound"><span class="label">Turbo sound</span><div class="seg" id="segTurbo"></div></div>
       <div class="row" data-tab="sound"><label class="label" for="turboVol">Turbo volume</label><input type="range" id="turboVol" min="0" max="250" value="140"></div>
       <div class="row" data-tab="sound"><span class="label">Rev limiter</span><div class="seg" id="segLimiter"></div></div>
@@ -929,7 +928,7 @@ const lamOpt=()=>(boosted()?.8:.88)-(modKey('fuel')==='meth'?.02:0), lamDef=()=>
 function knockLim(){ const f={'98':3,c16:6,e85:8,meth:9}[modKey('fuel')]??3;
   return f+(modOn('wmi')&&modKey('wmi')==='on'?2:0)+(modOn('cooler')?({fmic:.8,big:1.5}[modKey('cooler')]||0):0)+(boosted()?0:2)-(ENG.turbo?10*Math.max(0,ECU.boost):0)-8*Math.max(0,ecuLam()-lamOpt()); }
 function isXr6Carby(){ if(typeof build==='undefined'||!build) return false; if((build.engine||'')!=='na') return false; const id=build.id||'', h=(build.parts||{}).hood; return id==='xr6carby'||id.indexOf('g_xr6carby')===0||h==='carby_open'||h==='carby_poke'; }
-const revAllow=()=>(modFx('head').rev||0)+(modFx('forged').rev||0)+300, baseLim=()=>isXr6Carby()?(build.carbySound==='barra'?5900:6900):(ENGINES[build.engine]||ENG).limit;
+const revAllow=()=>(modFx('head').rev||0)+(modFx('forged').rev||0)+300, baseLim=()=>isXr6Carby()?6900:(ENGINES[build.engine]||ENG).limit;
 function ecuK(r){ const t=ECU.timing, kl=knockLim(); let f=1+.012*Math.min(t,kl); if(t>kl) f-=.035*(t-kl);
   const dl=ecuLam()-lamOpt(); f*=1-3.5*dl*dl;
   f*=1+.008*ECU.cam*clamp((4200-r)/1800,0,1)-.008*ECU.cam*clamp((r-4200)/1500,0,1);
@@ -2462,12 +2461,12 @@ function playCarbyShot(kind,amount){ const b=carbyBufs&&carbyBufs[kind]; if(!b||
   g.gain.setValueAtTime(Math.max(.001,a*1.15),t); g.gain.exponentialRampToValueAtTime(.001,t+Math.max(.08,b.duration));
   s.connect(g).connect(master); s.start(t); s.stop(t+b.duration+.05);
   s.onended=()=>{ try{ s.disconnect(); g.disconnect(); }catch(e){} }; return true; }
-// XR6 Carby "Barra" sound option (build.carbySound==='barra', test build). Sounds: TAXI_DRIVER's BeamNG Barra mod loops, blended by rpm/load like its sfxBlend2D
+// Barra sound for the NA Falcon and the XR6T engines (not the XR6 Carby, which keeps its own recordings). Sounds: TAXI_DRIVER's BeamNG Barra mod loops, blended by rpm/load like its sfxBlend2D
 // (equal-power between neighbouring rpm samples, off/light-load rows mixed by .8*load, exhaust +8 dB, engine +5 dB). Limiter = v5b, precomputed in lim_v5b.wav:
 // half the user's N/A XR6 limiter recording, half the Barra loops cut by that recording's own bounce on its pitch, EQ'd to it. Upshift = zf_fart.wav with the whoosh filtered out.
 const BRM={rpms:[625, 1200, 1400, 1700, 2100, 2400, 2600, 2900, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000], loopG:0.19892, limG:0.66076, fartG:1.49891, lvl:0.83089, limRpm:5900, lim:{cut:[0.04, 0.578, 1.08, 1.431, 1.729, 2.214, 2.65, 3.208, 3.662, 4.096, 4.468, 4.879, 5.233, 5.582, 5.956, 6.312, 6.701, 7.075, 7.419, 7.755, 8.036, 8.473, 8.869], fire:[0.105, 0.643, 1.145, 1.496, 1.794, 2.279, 2.715, 3.273, 3.727, 4.161, 4.533, 4.944, 5.298, 5.647, 6.021, 6.377, 6.766, 7.14, 7.484, 7.82, 8.101, 8.538, 8.934]}};   // levels from the approved preview (v5b_fix); lvl matches the stock Carby's loudness
 let brBufs=null, brLim=null, brSrc={}, brMix=0;
-const carbyBarra=()=>isXr6Carby()&&build.carbySound==='barra', brOn=()=>carbyBarra()&&!!brBufs&&!!brBufs.ok;
+const barraCar=()=>!isXr6Carby()&&['na','xr6t'].includes((typeof build!=='undefined'&&build&&build.engine)||''), brOn=()=>barraCar()&&!!brBufs&&!!brBufs.ok;
 function loadBarraSound(){ if(!AC||brBufs) return; brBufs={n:0};
   const keys=['cam',...BRM.rpms.slice(1).flatMap(r=>['e_'+r+'o','e_'+r+'l']),'lim','fart'];
   for(const k of keys) fetch('assets/barra_mod/'+(k==='lim'?'lim_v5b':k==='fart'?'zf_fart_1c':k)+'.wav').then(r=>r.arrayBuffer()).then(b=>AC.decodeAudioData(b)).then(b=>{ brBufs[k]=b; if(k==='lim') startBarraLim(b); if(++brBufs.n===keys.length) brBufs.ok=true; }).catch(()=>{}); }   // until every file is in, the stock Carby sound plays
@@ -2529,8 +2528,9 @@ function backfire(n,a){ if(!sfx.nb) return; let t=AC.currentTime; for(let i=0;i<
 function crackle(){ if(!sfx.nb) return; // overrun: bursts of 1-4 bangs
   const r=Math.random(), PL=popLv(); backfire(PL>=3?2+Math.floor(r*4):r<.45?1:r<.8?2:3+(Math.random()<.4), (.45+Math.random()*.45)*(PL===1?.7:PL>=3?1.15:1)); }
 function zfFart(amount){ // ZF upshift: spark cut on the shift, unburnt fuel pops in the pipe
-  if(isXr6Carby()){ if(!(brOn()&&barraFart(amount))) playCarbyShot('shift',amount); return; }
+  if(isXr6Carby()){ playCarbyShot('shift',amount); return; }
   if(!sfx.nb) return; const t=AC.currentTime;
+  if(brOn()&&barraFart(amount)){ if(amount>.55 && popLv()>=2) backfire(1+(Math.random()<.5), .5*amount); return; }   // NA + XR6T: the 1c fart (whoosh filtered out), same on both
   if(['barra','synthT'].includes(ENG.sound) && realFart(Math.max(.6,amount))){ if(amount>.55 && popLv()>=2) backfire(1+(Math.random()<.5), .5*amount); return; }
   const s=AC.createBufferSource(); s.buffer=sfx.nb; const f=AC.createBiquadFilter(); f.type='bandpass'; f.frequency.value=150; f.Q.value=1.1;
   const lp=AC.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=700;
@@ -2591,7 +2591,7 @@ function updateAudio(){
   if(isXr6Carby()&&!carbyLoops){ loadCarbySound(); startCarbyLoops(); }
   let cbyMix=0;
   const cbySet=(s,g,rate)=>{ if(Math.abs((s._g??-1)-g)>.02){ s._g=g; s.g.gain.setTargetAtTime(g,t,.03); } if(rate!=null&&Math.abs((s._r??-1)-rate)>.01){ s._r=rate; s.src.playbackRate.setTargetAtTime(rate,t,.02); } };
-  if(carbyBarra()&&!brBufs) loadBarraSound();
+  if(barraCar()&&!brBufs) loadBarraSound();
   brMix=brOn()?1:0; if(brMix) barraEngine(t,rpm,load,Math.cos(naMixV*Math.PI/2)); else for(const k in brSrc) brSet(k,0,null,t);
   if(isXr6Carby()&&carbyLoops&&!brMix){
     const mid=carbyLoops[0], hi=carbyLoops[1], inAmt=clamp((rpm-3800)/600,0,1)*(1-naMixV);
@@ -2632,10 +2632,10 @@ function updateAudio(){
   scrOpenV=open*((input.thr>.4||revHeld)?1:0);
   if(curFlut && (input.thr>.5||revHeld) && t-curFlut.t0>.06){ curFlut.g.gain.cancelScheduledValues(t); curFlut.g.gain.setTargetAtTime(0,t,.018); curFlut=null; }   // back on it: the valve snaps shut, flutter stops dead
   scrKick=Math.max(0,scrKick-adt*2.5);
-  if(master.__cam){ const C=master.__cam, cm=state==='drive'?camMode:0;   /* inside the car: muffled and boomy; front bumper: further from the pipes */
+  if(master.__cam){ const C=master.__cam, cm=state==='drive'&&camMode<=3?camMode:0;   /* inside the car: muffled and boomy; front bumper: further from the pipes */
     C.lp.frequency.setTargetAtTime([18000,9000,1900,6000][cm],t,.15); C.ls.gain.setTargetAtTime([0,0,5,0][cm],t,.15); C.g.gain.setTargetAtTime([1,.82,.95,.8][cm],t,.15);
     C.rev.gain.setTargetAtTime(state!=='drive'||cm===2?0:({mp:.22,drag:.14,pad:.05}[settings.venue]||0),t,.3); }
-  const sg=(1-naMixV)*Math.max(gate*0+open*((input.thr>.4||revHeld)?1:0), scrKick*clamp((car.rpm-2500)/1500,0,1));
+  const sg=(brMix?1:1-naMixV)*Math.max(gate*0+open*((input.thr>.4||revHeld)?1:0), scrKick*clamp((car.rpm-2500)/1500,0,1));
   if(scrLoop&&scrLoop.src){ scrLoop.g.gain.setTargetAtTime(sg*1.15,t,.06); scrLoop.src.playbackRate.setTargetAtTime(clamp(.92+.18*(car.rpm-3200)/2800,.92,1.1),t,.08); }   // keeps the recording's natural pitch
   sfx.scream.g.gain.setTargetAtTime(0,t,.05); sfx.hiss.g.gain.setTargetAtTime(0,t,.05);
   // overrun crackle: V8s always pop a little, cammed engines more
@@ -2703,7 +2703,7 @@ function gearUp(){ if(!manual) return; if(car.gear<RATIOS.length-1){ if(input.th
 function gearDown(){ if(!manual) return; if(car.gear>0){ const ng=car.gear-1; if(ng>=2){ const w=Math.abs(car.vLong)/WR*60/(2*Math.PI); if(w*RATIOS[ng]*FINAL>6300) return; } car.gear=ng; car.shiftT=.18; } }
 function autoShift(up){ if(up){ if(car.gear<RATIOS.length-1){ if(input.thr>.6&&car.rpm>3300&&(build.vehicle||'falcon')==='falcon'&&!isGM()) zfFart(Math.min(1,car.rpm/6000));   /* the ZF fart is a Falcon thing: Commodores (6L80/4L60) shift clean, no pops going up the gears */ if(build.gate==='screamer'&&car.boost>.5*ENG.boost) screamDump(.7*car.boost/ENG.boost); if(ENG.turbo&&car.boost>.5*ENG.boost&&input.thr>.6) turboRelease(.45*car.boost/ENG.boost,true); car.gear++; car.shiftT=.18; shiftClunk(); } } else if(car.gear>2){ car.gear--; car.shiftT=.18; } }
 let liftArm=false, revCounter=0;
-function liftCheck(thr){ if(thr>.6) liftArm=true; else if(liftArm && thr<.3){ liftArm=false; if(isXr6Carby()&&!brOn()&&car.rpm>5000&&!rollCruise()) playCarbyShot(car.rpm>6400?'decel':'crackle',1); else if(car.rpm>3400 && popLv()>=2 && !rollCruise()) setTimeout(()=>backfire((popLv()>=3?4:2)+Math.floor(Math.random()*3),.85),60+Math.random()*80); if(ENG.turbo && car.boost>.22*ENG.boost) turboRelease(Math.min(1,car.boost/ENG.boost)); } }
+function liftCheck(thr){ if(thr>.6) liftArm=true; else if(liftArm && thr<.3){ liftArm=false; if(isXr6Carby()&&car.rpm>5000&&!rollCruise()) playCarbyShot(car.rpm>6400?'decel':'crackle',1); else if(car.rpm>3400 && popLv()>=2 && !rollCruise()) setTimeout(()=>backfire((popLv()>=3?4:2)+Math.floor(Math.random()*3),.85),60+Math.random()*80); if(ENG.turbo && car.boost>.22*ENG.boost) turboRelease(Math.min(1,car.boost/ENG.boost)); } }
 // ---- tyre model: combined-slip magic formula with a peak and a sliding fall-off ----
 const MF_C=1.4, MF_B=Math.tan(Math.PI/(2*MF_C));
 const MF = s => Math.sin(MF_C*Math.atan(MF_B*s));            // 1.0 at s=1 (peak), ~0.81 fully sliding
@@ -5414,7 +5414,6 @@ const SEGS = {
   segAir:  [()=>settings.airUp?'up':'down', [['down','Down · slammed'],['up','Aired up']], v=>{ if((v==='up')!==settings.airUp) toggleAir(); }],
   segLimiter:[()=>settings.limiter, [['stock','Stock · throttle cut'],['hard','Tuned · hard cut']], v=>{ settings.limiter=v; saveSettings(); }],
   segTurbo:[()=>settings.turbo, [['real','Real flutter'],['crazy','Fast flutter'],['flutter','Short flutter'],['bov','Blow-off valve']], v=>{ settings.turbo=v; saveSettings(); startAudio(); }],
-  segCarbySound:[()=>build.carbySound==='barra'?'barra':'stock', [['stock','Stock'],['barra','Barra']], v=>{ build.carbySound=v; ENG.limit=baseLim()+(ECU.rev||0); toMyBuild(); startAudio(); }],   // XR6 Carby only (test build)
   segGate:[()=>build.gate==='screamer'?'on':'off', [['on','On'],['off','Off · stock gate']], v=>{ build.gate=v==='on'?'screamer':'internal'; toMyBuild(); startAudio(); }],
   segOpp:[()=>settings.opp||'club', [['off','None'],['easy','Easy'],['club','Club'],['hard','Hard'],['pro','Pro mod']], v=>{ settings.opp=v; saveSettings(); }],
   segTod:[()=>settings.tod||'sunset', [['day','Day'],['sunset','Golden hour'],['dusk','Dusk'],['night','Night']], v=>{ settings.tod=v; saveSettings(); applyTod(); }],
@@ -5427,7 +5426,7 @@ const SEGS = {
   segScreen:[()=>!settings.landscape?'follow':settings.flip?'flip':'land', [['land','Landscape'],['flip','Landscape flipped'],['follow','Follow phone']], v=>{ settings.landscape=v!=='follow'; settings.flip=v==='flip'; saveSettings(); layout(); }],
   segPreset:[()=>touchLayout.preset, [['spread','Spread'],['compact','Compact']], v=>applyPreset(v)],
 };
-function refreshSegs(){ const rcs=$('rowCarbySound'); if(rcs) rcs.hidden=!isXr6Carby(); for(const [id,[get,opts,set]] of Object.entries(SEGS)){ const el=$(id); if(!el) continue;
+function refreshSegs(){ for(const [id,[get,opts,set]] of Object.entries(SEGS)){ const el=$(id); if(!el) continue;
   if(!el.children.length){ for(const [v,l] of opts){ const b=document.createElement('button'); b.textContent=l; b.dataset.v=v; b.onclick=()=>{ set(v); refreshSegs(); }; el.appendChild(b); } }
   const cur=get(); [...el.children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===cur)); } }
 let menuTab='drive'; function setMenuTab(t){ menuTab=t; $('menu').dataset.tab=t; document.querySelectorAll('#menuTabs button').forEach(b=>{ b.setAttribute('role','tab'); b.setAttribute('aria-selected',b.dataset.t===t); }); }
