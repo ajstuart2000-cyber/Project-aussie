@@ -67,6 +67,8 @@ body.photo .hud,body.photo #touch{display:none!important}
 body.pad #touch{display:none!important}
 .padfocus{outline:3px solid #ffb000!important;outline-offset:2px;box-shadow:0 0 0 6px rgba(255,176,0,.25)!important;border-radius:6px}
 body.photo #c{touch-action:none}
+body.photo #toast{display:block!important}   /* photo mode still shows toasts (Time, Weather, the Hide HUD hint) */
+body.photo.photoclean #photobar{display:none!important}   /* photo mode 'Hide HUD': tap the screen to bring the controls back */
 #photobar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:6;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;padding:10px 14px;max-width:calc(100% - 24px)}
 #photobar .ptip{opacity:.7;font-size:12px}
 #photobar .pfov{display:flex;gap:8px;align-items:center;font-size:12px}
@@ -616,7 +618,7 @@ body.narrow .gside{width:auto;align-items:flex-end}
   </div>
 </div>
 
-<div id="photobar" class="panel" hidden><span class="ptip">Drag to orbit · pinch or scroll to zoom</span><label class="pfov">Lens <input type="range" id="pFov" min="18" max="95" value="50"></label><button class="btn" id="pTod">Time</button><button class="btn" id="pWx">Weather</button><button class="btn primary" id="pExit">Done</button></div>
+<div id="photobar" class="panel" hidden><span class="ptip">Drag to orbit · pinch or scroll to zoom</span><label class="pfov">Lens <input type="range" id="pFov" min="18" max="95" value="50"></label><button class="btn" id="pTod">Time</button><button class="btn" id="pWx">Weather</button><button class="btn" id="pHud">Hide HUD</button><button class="btn primary" id="pExit">Done</button></div>
 <div id="rpbar" class="panel" hidden style="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:30;display:flex;gap:8px;padding:8px 10px;flex-wrap:wrap;justify-content:center"><button class="btn" id="rpPlay">Pause</button><button class="btn" id="rpCamB">Trackside</button><button class="btn" id="rpSlow">1×</button><button class="btn" id="rpRew">⟲ Start</button><button class="btn primary" id="rpExit">Done</button></div>
 <!-- settings / pause -->
 <div class="sheet" id="menu" hidden data-tab="drive">
@@ -2280,8 +2282,8 @@ async function ensureSynthV8(pk='synthV8'){ const D=V8PACKS[pk];
   if(!v8Mod) v8Mod=AC.audioWorklet.addModule(URL.createObjectURL(new Blob([V8_SRC],{type:'application/javascript'}))); await v8Mod;
   const node=new AudioWorkletNode(AC,'v8-synth',{numberOfInputs:0,outputChannelCount:[1],processorOptions:Object.assign({voices},D.opt)});
   node.port.onmessage=e=>{ if(!v8LimOn||ENG.sound!==pk) return; sndLim.cut=e.data===2; if(!limSettled()) return; const PL=popLv(), K=PL>=3?1.5:PL>=2?1.25:1;   // the synth tells us the instant each cut starts (2) and the spark comes back (1)
-    if(D.gm){ if(e.data===1&&PL>0) limPops(1,K*1.15); return; }   // Holdens: one clean pop on every bounce (a stock LS just cuts, no pop)
-    if(e.data===1) limPops(1+(Math.random()<.3),K); else if(PL>=2&&Math.random()<.2) limCrackle(K); };   /* a pop on every bounce, sometimes a double */
+    if(D.gm){ if(e.data===1&&limPopOk()) limPops(1,K*1.15); return; }   // Holdens: one clean pop on every bounce (none with pops Off)
+    if(e.data===1){ if(limPopOk()) limPops(1+(Math.random()<.3),K); } else if(PL>=2&&Math.random()<.2) limCrackle(K); };   /* a pop on every bounce, sometimes a double; none with pops Off */
   const hp=AC.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=35; const lp=AC.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=6500;
   const bus=AC.createGain(); bus.gain.value=0; const lope=AC.createGain(); const eqBass=AC.createBiquadFilter(); eqBass.type='lowshelf'; eqBass.frequency.value=120;
   const eqLo=AC.createBiquadFilter(); eqLo.type='peaking'; eqLo.frequency.value=320; const eqMid=AC.createBiquadFilter(); eqMid.type='peaking'; eqMid.frequency.value=1100; eqMid.Q.value=.55;
@@ -2492,6 +2494,8 @@ const LIM_POPS={ au6:{fire:[.14,.4,.9,1.18], cut:[.04,.3,.8,1.08]}, eco:{fire:[.
   ts:{fire:[.04,.58,1.06,1.63,1.98,2.46,3.0,3.35], cut:[.25,.73,1.36,1.80,2.13,2.67,3.12,3.65]},
   t:{fire:[.507,.967,1.443,1.907,2.377,2.853,3.325,3.793,4.267,4.737,5.21,5.673,6.137,6.615,7.09], cut:[.222,.695,1.155,1.635,2.095,2.565,3.042,3.51,3.98,4.458,4.922,5.4,5.858,6.322,6.805,7.275]},
   carby:(()=>{ const T=2.55,p=.052,fire=[],cut=[]; for(let x=0;x<T-1e-4;x+=p){ cut.push(+x.toFixed(4)); fire.push(+Math.min(T-.001,x+p*.5).toFixed(4)); } return {fire,cut}; })() };
+let limPopAt=-9;   // limiter pops: every car but the XR6 Carby and the XR6T (owner: its limiter already has enough going on), unless pops are Off; on 'Car default' they pop at the Mild level
+const limPopOn=()=>modKey('pops')!=='off'&&!isXr6Carby()&&build.engine!=='xr6t', limPopOk=()=>{ if(!limPopOn()||!AC) return false; const t=AC.currentTime; if(t-limPopAt<.15) return false; limPopAt=t; return true; };   // fast bounces are thinned to at most one pop per 0.15 s so they never machine-gun
 function limPops(n,K){ let bt=AC.currentTime; for(let j=0;j<n;j++){ bang(bt,.7*K*(j?.5+Math.random()*.4:1)); bt+=.035+Math.random()*.06; } }
 function limCrackle(K){ let bt=AC.currentTime; const n=1+(Math.random()<.5); for(let j=0;j<n;j++){ bang(bt,.35*K*(.7+Math.random()*.5)); bt+=.04+Math.random()*.07; } }
 let flutBuf=null, flutLoading=null;
@@ -2541,7 +2545,7 @@ function zfFart(amount){ // ZF upshift: spark cut on the shift, unburnt fuel pop
   if(amount>.55 && popLv()>=2) backfire(1+(Math.random()<.5), .5*amount);
 }
 function limiterHit(){ if(!sfx.nb) return; const t=AC.currentTime; // hard-cut bounce: each cut bangs in the pipe
-  if(popLv()>=1&&limSettled()) bang(t,(ENG.turbo?.35:.5)*(1+.3*camLv())); else noiseBurst(t,.04,'bandpass',ENG.sound==='v8'?220:320,160,1.2,ENG.turbo?.10:.18);
+  if(limSettled()&&limPopOk()) bang(t,(ENG.turbo?.35:.5)*(1+.3*camLv())); else noiseBurst(t,.04,'bandpass',ENG.sound==='v8'?220:320,160,1.2,ENG.turbo?.10:.18);
 }
 function tyrePop(){ if(!sfx.nb) return; const t=AC.currentTime; noiseBurst(t,.5,'lowpass',1800,120,.8,1.3); noiseBurst(t,.08,'highpass',3000,2000,.6,.5); }
 function thud(a){ if(!sfx.nb) return; noiseBurst(AC.currentTime,.35,'lowpass',200,90,1,Math.min(1.2,a)); }
@@ -2579,8 +2583,8 @@ function updateAudio(){
     if(recLim!==o||naMixV<=.45) continue; const PL=popLv(), K=(PL>=3?1.5:PL>=2?1.25:1)*Math.min(1,naMixV*1.2), hit=c=>(c>p0&&c<=p1)||(c+L>p0&&c+L<=p1);
     sndLim.at=performance.now(); for(const c of (P.cut.length?P.cut:P.fire.map(f=>f-.11))) if(hit(c)) sndLim.cut=true; for(const c of P.fire) if(hit(c)) sndLim.cut=false;   // the recording's own bounce drives the tacho
     if(!limSettled()) continue;
-    if(o===carbyLim||o===brLim) continue;   // carby_limiter.wav already carries the bounce; firing synth pops/flames every 52 ms was spawning ~200 BufferSources/s and dropping frames
-    for(const c of P.fire) if(hit(c)) limPops(1+(Math.random()<.35*K)+(K>1&&Math.random()<.4),K);
+    if(o===carbyLim) continue;   // no limiter pops on the Carby (carby_limiter.wav already carries the bounce; firing synth pops/flames every 52 ms was spawning ~200 BufferSources/s and dropping frames)
+    for(const c of P.fire) if(hit(c)&&limPopOk()) limPops(o===brLim?1+(Math.random()<.3):1+(Math.random()<.35*K)+(K>1&&Math.random()<.4),K);   // a pop as the spark comes back on each bounce (Barra: sometimes a double)
     if(PL>=2) for(const c of P.cut) if(hit(c)) limCrackle(K); }
   // ghost cams at idle: the real recording, blending into the live engine between ~1300 and 1900 rpm
   const camKey = build.engine==='au8' ? (camLv()>=1?'au8cam':null) : ENG.sound==='ecotec' ? (camLv()>=1?'ecocam':null) : isGM()&&(ENG.lope||camLv()>=1) ? (ENG.sound==='synthLS1'?'ls1':'ls3') : camLv()>=1&&isSynth() ? (isV8Synth()?'v8':ENG.turbo?'t':'na') : null, camBase = camKey==='t'?1100:820;
@@ -2703,7 +2707,7 @@ function gearUp(){ if(!manual) return; if(car.gear<RATIOS.length-1){ if(input.th
 function gearDown(){ if(!manual) return; if(car.gear>0){ const ng=car.gear-1; if(ng>=2){ const w=Math.abs(car.vLong)/WR*60/(2*Math.PI); if(w*RATIOS[ng]*FINAL>6300) return; } car.gear=ng; car.shiftT=.18; } }
 function autoShift(up){ if(up){ if(car.gear<RATIOS.length-1){ if(input.thr>.6&&car.rpm>3300&&(build.vehicle||'falcon')==='falcon'&&!isGM()) zfFart(Math.min(1,car.rpm/6000));   /* the ZF fart is a Falcon thing: Commodores (6L80/4L60) shift clean, no pops going up the gears */ if(build.gate==='screamer'&&car.boost>.5*ENG.boost) screamDump(.7*car.boost/ENG.boost); if(ENG.turbo&&car.boost>.5*ENG.boost&&input.thr>.6) turboRelease(.45*car.boost/ENG.boost,true); car.gear++; car.shiftT=.18; shiftClunk(); } } else if(car.gear>2){ car.gear--; car.shiftT=.18; } }
 let liftArm=false, revCounter=0;
-function liftCheck(thr){ if(thr>.6) liftArm=true; else if(liftArm && thr<.3){ liftArm=false; if(isXr6Carby()&&car.rpm>5000&&!rollCruise()) playCarbyShot(car.rpm>6400?'decel':'crackle',1); else if(car.rpm>3400 && popLv()>=2 && !rollCruise()) setTimeout(()=>backfire((popLv()>=3?4:2)+Math.floor(Math.random()*3),.85),60+Math.random()*80); if(ENG.turbo && car.boost>.22*ENG.boost) turboRelease(Math.min(1,car.boost/ENG.boost)); } }
+function liftCheck(thr){ if(thr>.6) liftArm=true; else if(liftArm && thr<.3){ liftArm=false; if(isXr6Carby()&&car.rpm>5000&&!rollCruise()&&modKey('pops')!=='off') playCarbyShot(car.rpm>6400?'decel':'crackle',1); else if(car.rpm>3400 && popLv()>=2 && !rollCruise()) setTimeout(()=>backfire((popLv()>=3?4:2)+Math.floor(Math.random()*3),.85),60+Math.random()*80); if(ENG.turbo && car.boost>.22*ENG.boost) turboRelease(Math.min(1,car.boost/ENG.boost)); } }
 // ---- tyre model: combined-slip magic formula with a peak and a sliding fall-off ----
 const MF_C=1.4, MF_B=Math.tan(Math.PI/(2*MF_C));
 const MF = s => Math.sin(MF_C*Math.atan(MF_B*s));            // 1.0 at s=1 (peak), ~0.81 fully sliding
@@ -5444,19 +5448,20 @@ window.__paBack=function(){ if(state!=='drive') return false;
   return true; };
 let photo=null; const phPtr=new Map();
 function enterPhoto(){ if(state!=='drive') return; closeMenu(); photo={prev:camMode, yaw:car.h+2.4, pitch:.16, dist:6.5, fov:50, pinch:0}; camMode=9; document.body.classList.add('photo'); $('photobar').hidden=false; $('pFov').value=50; }
-function exitPhoto(){ if(!photo) return; camMode=photo.prev; photo=null; phPtr.clear(); document.body.classList.remove('photo'); $('photobar').hidden=true; camInit=false; last=performance.now(); }
+function exitPhoto(){ if(!photo) return; camMode=photo.prev; photo=null; phPtr.clear(); document.body.classList.remove('photo','photoclean'); $('photobar').hidden=true; camInit=false; last=performance.now(); }
 function photoCam(){ const P=photo, cy=(car.y||0)+.6, cp=Math.cos(P.pitch);
   camera.position.set(car.x+Math.sin(P.yaw)*cp*P.dist, Math.max((car.y||0)+.12,cy+Math.sin(P.pitch)*P.dist), car.z+Math.cos(P.yaw)*cp*P.dist);
   camera.lookAt(car.x,cy,car.z); camera.fov=P.fov; camera.updateProjectionMatrix(); }
 { const cv=$('c');
-  cv.addEventListener('pointerdown',e=>{ if(!photo) return; phPtr.set(e.pointerId,{x:e.clientX,y:e.clientY}); try{ cv.setPointerCapture(e.pointerId); }catch(_){} if(phPtr.size===2){ const [a,b]=[...phPtr.values()]; photo.pinch=Math.hypot(a.x-b.x,a.y-b.y); } });
+  cv.addEventListener('pointerdown',e=>{ if(!photo) return; phPtr.set(e.pointerId,{x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,t0:performance.now()}); try{ cv.setPointerCapture(e.pointerId); }catch(_){} if(phPtr.size===2){ const [a,b]=[...phPtr.values()]; photo.pinch=Math.hypot(a.x-b.x,a.y-b.y); } });
   cv.addEventListener('pointermove',e=>{ if(!photo||!phPtr.has(e.pointerId)) return; const o=phPtr.get(e.pointerId), dx=e.clientX-o.x, dy=e.clientY-o.y; o.x=e.clientX; o.y=e.clientY;
     if(phPtr.size===1){ photo.yaw-=dx*.008; photo.pitch=clamp(photo.pitch+dy*.006,-.05,1.35); }
     else if(phPtr.size===2){ const [a,b]=[...phPtr.values()], d=Math.hypot(a.x-b.x,a.y-b.y); if(photo.pinch>0) photo.dist=clamp(photo.dist*photo.pinch/d,2.4,30); photo.pinch=d; } });
-  const up=e=>{ phPtr.delete(e.pointerId); if(photo) photo.pinch=0; }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+  const up=e=>{ const o=phPtr.get(e.pointerId); if(o&&photo&&e.type==='pointerup'&&phPtr.size===1&&Math.hypot(e.clientX-o.x0,e.clientY-o.y0)<10&&performance.now()-o.t0<350) document.body.classList.remove('photoclean');   /* a tap (not a drag) brings the photo controls back */
+    phPtr.delete(e.pointerId); if(photo) photo.pinch=0; }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
   cv.addEventListener('wheel',e=>{ if(!photo) return; e.preventDefault(); photo.dist=clamp(photo.dist*(1+e.deltaY*.0012),2.4,30); },{passive:false});
   $('replayBtn').onclick=enterReplay; $('rpExit').onclick=exitReplay; $('rpPlay').onclick=()=>{ RP.play=!RP.play; rpLabel(); }; $('rpCamB').onclick=()=>{ RP.cam=(RP.cam+1)%4; RP.camT=0; RP.autoCam=false; RP.spot=null; rpLabel(); }; $('rpSlow').onclick=()=>{ RP.speed=RP.speed===1?.5:RP.speed===.5?.25:1; rpLabel(); }; $('rpRew').onclick=()=>{ RP.t=0; RP.spot=null; };
-  $('photoBtn').onclick=enterPhoto; $('pExit').onclick=exitPhoto; $('pFov').oninput=e=>{ if(photo) photo.fov=+e.target.value; };
+  $('photoBtn').onclick=enterPhoto; $('pExit').onclick=exitPhoto; $('pHud').onclick=()=>{ document.body.classList.add('photoclean'); toast('Tap the screen to bring the controls back'); }; $('pFov').oninput=e=>{ if(photo) photo.fov=+e.target.value; };
   $('pTod').onclick=()=>{ const o=['day','sunset','dusk','night']; settings.tod=o[(o.indexOf(settings.tod||'sunset')+1)%4]; saveSettings(); applyTod(); refreshSegs(); toast({day:'Day',sunset:'Golden hour',dusk:'Dusk',night:'Night'}[settings.tod]); };
   $('pWx').onclick=()=>{ const o=['clear','cloudy','rain']; settings.weather=o[(o.indexOf(settings.weather||'clear')+1)%3]; saveSettings(); applyTod(); refreshSegs(); toast({clear:'Clear',cloudy:'Overcast',rain:'Rain'}[settings.weather]); }; }
 $('resume').onclick=closeMenu; $('setBtn').onclick=()=>{ startAudio(); openMenu(); };
@@ -5550,6 +5555,7 @@ function enterDrive(v){ camera.clearViewOffset(); showTips();
   prevPos={x:car.x,z:car.z,d:0,inPad:false,inMP:false}; nearest(); prevPos.d=car.d;
   if(v==='free'||(MAP&&MAP.kind==='roam')) freeTripReset();
   resetLap(); lap.prevIdx=car.idx; skids.clear(); drift.pts=0; freshTyres(); run.on=false; camInit=false; camMode=0; placeButtons(); last=performance.now();
+  try{ renderer.compileAsync(world,camera).catch(()=>{}); }catch(e){}   // build every shader in the scene now, not the first time a new camera angle (photo mode, cam views) sees it: on a phone each late compile froze the game for seconds
 }
 
 /* ================= controller ================= */
@@ -5614,7 +5620,7 @@ function frame(now){
   if(state==='drive'){
     if(RP.on&&!menuOpen) rpTick(dt);
     if(!menuOpen&&!editing&&!photo&&!RP.on){ readInput(dt); acc+=dt; const H=1/240; while(acc>=H){ step(H); acc-=H; } rpRecord(dt); chunkTick(dt); lapTick(dt); sprintTick(dt); mapTick(dt); hesiTick(dt); try{ cityTick(dt); streetTick(dt); dmgTick(dt); meetTick(dt); }catch(e){ if(!window.__stErr){ window.__stErr=1; console.warn(e); } }   /* new street systems never take the whole game down */ dragTick(dt); scoreTick(dt); tyreFx(dt); }
-    smoke.update(dt); sparks.update(dt); crowdTick(dt); smoke.mat.uniforms.uScale.value=appH*renderer.getPixelRatio()/1.6/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)));
+    if(!photo){ smoke.update(dt); sparks.update(dt); }   /* photo mode freezes the smoke and sparks where they are */ crowdTick(dt); smoke.mat.uniforms.uScale.value=appH*renderer.getPixelRatio()/1.6/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)));
     { const pw=car.pw||0; carRoot.rotation.order='YXZ'; car.slopeV=(car.slopeV||0)+((car.slope||0)-(car.slopeV||0))*Math.min(1,dt*10); carRoot.rotation.x=-pw-Math.atan(car.slopeV); carRoot.position.set(car.x+Math.sin(car.h)*WRZ*(1-Math.cos(pw)),(car.y||0)-WRZ*Math.sin(pw),car.z+Math.cos(car.h)*WRZ*(1-Math.cos(pw))); carRoot.rotation.y=car.h; }   // nose up, pivoting on the rear tyres
     const sp1=Math.min(1,car.spin), popRoll=(tyre.popped[0]?-.022:0)+(tyre.popped[1]?.022:0), popPitch=(tyre.popped[0]||tyre.popped[1])?-.012:0;
     body.rotation.x+=((-car.ax*.0045 - .014*sp1*car.load + popPitch)-body.rotation.x)*Math.min(1,dt*8);
