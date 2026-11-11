@@ -1351,9 +1351,9 @@ function bakeStatic(root, shadowMats){
   for(const [mat,geos] of by){ const mg=mergeGeometries(geos,false); geos.forEach(g=>g.dispose()); if(!mg) continue; const m=new THREE.Mesh(mg,mat); m.castShadow=shadowMats?shadowMats.has(mat):false; root.add(m); }
   return root;
 }
-// bonnet off: a BF-style Barra 4.0 straight six in the bay, cast-alloy cam cover with the black DOHC 4.0 / DUAL VCT coil cover and the VCT nose up front, extractors on the driver's side, and a carby on an Aussiespeed-style 4-barrel manifold on the passenger (intake) side with the air cleaner on top (BA/BF bay, body space)
+// bonnet off: a Barra 4.0 straight six in the bay like the real XR6 Carby, red cam cover with the black DOHC 4.0 / DUAL VCT coil cover and the VCT nose up front, extractors on the driver's side, and a carby on an Aussiespeed-style 4-barrel manifold on the passenger (intake) side with a big pancake air cleaner sitting up high over it (BA/BF bay, body space)
 function addCarbyOpen(g){
-  const alu=new THREE.MeshStandardMaterial({color:'#b9bcc0',metalness:.9,roughness:.32}), cast=new THREE.MeshStandardMaterial({color:'#8f9398',metalness:.6,roughness:.6}),
+  const red=new THREE.MeshStandardMaterial({color:'#c4140e',metalness:.35,roughness:.3}), alu=new THREE.MeshStandardMaterial({color:'#b9bcc0',metalness:.9,roughness:.32}), cast=new THREE.MeshStandardMaterial({color:'#8f9398',metalness:.6,roughness:.6}),
         blk=new THREE.MeshStandardMaterial({color:'#0b0b0c',roughness:.7}), fil=new THREE.MeshStandardMaterial({color:'#141416',roughness:.8}), lid=new THREE.MeshStandardMaterial({color:'#1a1a1d',metalness:.5,roughness:.4}),
         iron=new THREE.MeshStandardMaterial({color:'#3a3c40',metalness:.5,roughness:.6}), hdr=new THREE.MeshStandardMaterial({color:'#7d7770',metalness:.75,roughness:.4});
   // coil cover lettering, moulded into the black plastic like the factory one (canvas: left = driver's side, top = firewall end)
@@ -1372,9 +1372,9 @@ function addCarbyOpen(g){
   const tube=(pts,r,m,seg=16,closed=false)=>E.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)),closed),seg,r,6,closed),m));
   // tall iron block on a rear sump, tall alloy head
   box(.17,.08,L-.12,iron,X,.4,ZC-.04); box(.205,.015,L-.02,iron,X,.448,ZC); box(.19,.265,L-.02,iron,X,.588,ZC); box(.215,.14,L,cast,X,.79,ZC);
-  // cam cover: long low cast-alloy lid, taller VCT nose over the front of the head, black coil cover with the moulded lettering over the rest, oil filler on it at the back on the driver's side
+  // cam cover: long low red lid, taller VCT nose over the front of the head, black coil cover with the moulded lettering over the rest, oil filler on it at the back on the driver's side
   box(.225,.01,L+.005,alu,X,.862,ZC);
-  oct(.235,.075,L-.17,cast,X,.895,R+(L-.17)/2); oct(.24,.11,.17,cast,X,.91,F-.085);
+  oct(.235,.075,L-.17,red,X,.895,R+(L-.17)/2); oct(.24,.11,.17,red,X,.91,F-.085);
   for(const [bx,bz] of [[-.085,-.03],[.085,-.03],[-.085,-.14],[.085,-.14]]) cyl(.009,.012,alu,X+bx,.966,F+bz,null,8);
   cyl(.016,.04,blk,X-.05,.915,F+.018,'z',10); cyl(.016,.04,blk,X+.05,.915,F+.018,'z',10);   // VCT solenoids on the nose
   oct(.2,.065,L-.2,blk,X,.935,R+.015+(L-.2)/2); box(.176,.004,L-.215,plas,X,.968,R+.015+(L-.2)/2);
@@ -1382,16 +1382,18 @@ function addCarbyOpen(g){
   // intake side (passenger side): Aussiespeed-style 4-barrel manifold, six runners fanning in to a centre plenum 220 mm off the head, carby on top
   box(.012,.06,L-.04,cast,X+.113,.79,ZC);
   for(let i=0;i<6;i++){ const z=cz(i); tube([[X+.11,.79,z],[X+.165,.792,ZC+(z-ZC)*.9],[X+.215,.8,ZC+(z-ZC)*.45]],.022,cast,10); }
-  box(.17,.08,.23,cast,X+.245,.8,ZC); box(.17,.012,.17,cast,X+.245,.846,ZC);
-  const C=new THREE.Group(); C.position.set(X+.245,.852,ZC); E.add(C);
+  box(.17,.08,.23,alu,X+.2,.8,ZC); box(.17,.012,.17,alu,X+.2,.846,ZC);
+  const C=new THREE.Group(); C.position.set(X+.2,.852,ZC); E.add(C);
   const body=new THREE.Mesh(new THREE.BoxGeometry(.14,.1,.15),alu); body.position.y=.05; C.add(body);
   const bowl=new THREE.Mesh(new THREE.BoxGeometry(.13,.06,.035),alu); bowl.position.set(0,.04,.09); C.add(bowl);
   const lk=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,.12,8),blk); lk.rotation.z=Math.PI/2; lk.position.set(-.02,.06,-.08); C.add(lk);
-  const base=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.02,16),lid); base.position.y=.11; C.add(base);
-  const core=new THREE.Mesh(new THREE.CylinderGeometry(.145,.145,.13,16),fil); core.position.y=.185; C.add(core);
-  const pg=new THREE.BoxGeometry(.012,.13,.02); for(let i=0;i<52;i++){ const a=i/52*Math.PI*2, p=new THREE.Mesh(pg,fil); p.position.set(Math.cos(a)*.15,.185,Math.sin(a)*.15); p.rotation.y=-a; C.add(p); }   /* pleats (merged below) */
-  const top=new THREE.Mesh(new THREE.CylinderGeometry(.165,.165,.022,16),lid); top.position.y=.26; C.add(top);
-  const nut=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.03,6),alu); nut.position.y=.28; C.add(nut);
+  const sp=new THREE.Mesh(new THREE.CylinderGeometry(.065,.07,.05,14),alu); sp.position.y=.125; C.add(sp);   // alloy spacer lifts the cleaner clear of the cam cover
+  const A=new THREE.Group(); A.position.x=-.04; C.add(A);   // big low pancake cleaner, sitting in toward the middle of the engine
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(.205,.205,.018,20),lid); base.position.y=.159; A.add(base);
+  const core=new THREE.Mesh(new THREE.CylinderGeometry(.185,.185,.08,20),fil); core.position.y=.208; A.add(core);
+  const pg=new THREE.BoxGeometry(.012,.08,.02); for(let i=0;i<64;i++){ const a=i/64*Math.PI*2, p=new THREE.Mesh(pg,fil); p.position.set(Math.cos(a)*.19,.208,Math.sin(a)*.19); p.rotation.y=-a; A.add(p); }   /* pleats (merged below) */
+  const top=new THREE.Mesh(new THREE.CylinderGeometry(.21,.21,.02,20),lid); top.position.y=.258; A.add(top);
+  const nut=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.03,6),alu); nut.position.y=.278; A.add(nut);
   cyl(.007,.28,blk,X+.33,.9,ZC-.16,'z',8);   // fuel line from the carby back along the bay
   // exhaust side (driver's side): flange along the head, 6 extractor primaries sweeping down and back into the collector
   box(.012,.05,L-.04,hdr,X-.113,.79,ZC);
@@ -1407,7 +1409,7 @@ function addCarbyOpen(g){
   { const P=[[X,.5,.088],[X+.16,.6,.038],[X,.69,.058],[X-.13,.68,.048]];   // flat belt: straight runs on the outside tangents between the pulleys
     for(let i=0;i<P.length;i++){ const [x1,y1,r1]=P[i], [x2,y2,r2]=P[(i+1)%P.length], dx=x2-x1, dy=y2-y1, D=Math.hypot(dx,dy), ux=dx/D, uy=dy/D, s=(r1-r2)/D, c=Math.sqrt(1-s*s), nx=c*uy+s*ux, ny=-c*ux+s*uy;
       const ax=x1+nx*r1, ay=y1+ny*r1, bx=x2+nx*r2, by=y2+ny*r2, b=box(Math.hypot(bx-ax,by-ay),.006,.02,blk,(ax+bx)/2,(ay+by)/2,F+.05); b.rotation.z=Math.atan2(by-ay,bx-ax); } }
-  bakeStatic(E, new Set([alu,cast,lid,fil,iron,hdr,plas])); }   // one draw per material; small black bits do not cast shadows
+  bakeStatic(E, new Set([red,alu,cast,lid,fil,iron,hdr,plas])); }   // one draw per material; small black bits do not cast shadows
 // NA with a carby: the air cleaner stack poking up through a round hole in the bonnet
 function addCarbyPoke(g){
   g.updateMatrixWorld(true); const box=new THREE.Box3().setFromObject(g); if(box.isEmpty()) return;
@@ -2794,9 +2796,9 @@ async function applyLivery(force){
   const gF=st!=='none'?glassSpan(1):null, gR=st!=='none'&&st!=='pops'?glassSpan(0):null, wsY=gF?gF[0]-.07:B.max.y-hgt*.09, rwY=gR?gR[0]-.07:B.max.y-hgt*.12;
   const banner=(t,fg,bg,k)=>decalMat('bn'+k,()=>bannerTex(t,fg,bg),{r:.5});
   if(st==='pops'){ // the real XR6 Carby's decals (used with the owner's permission): banner across the top of the windscreen, comp number up the passenger-side edge
-    { const h=livCast(V(0,wsY+.01,B.max.z+out),V(0,0,-1),true);   // banner sits higher up the screen and is laid on dead level: projected straight back along the car (not along the glass normal, whose triangle under the centre line leans ~1° and whose curve bent the ends down), same size on the glass
+    { const h=livCast(V(0,wsY+.01,B.max.z+out),V(0,0,-1),true);   // banner sits higher up the screen and is laid on dead level: projected straight back along the car (not along the glass normal, whose triangle under the centre line leans ~1° and whose curve bent the ends down); 1.0 wide so the whole POPS PERFORMANCE fits inside the glass with a margin each side
       if(h){ const iS=stance.matrixWorld.clone().invert(), nz=Math.abs(h.face.normal.clone().transformDirection(h.object.matrixWorld).transformDirection(iS).z)||1, n=V(0,0,1).transformDirection(stance.matrixWorld).transformDirection(h.object.matrixWorld.clone().invert());
-        livDecal({point:h.point,object:h.object,face:{normal:n}},1.28,.17*nz,.8,banner('POPS PERFORMANCE','#fff','','pops'),Y,[h.object]); } }
+        livDecal({point:h.point,object:h.object,face:{normal:n}},1.0,.15*nz,.8,banner('POPS PERFORMANCE','#fff','','pops'),Y,[h.object]); } }
     livAt(B,V(.5,wsY-.24,B.max.z+out),V(0,0,-1),.08,.2,.8,decalMat('pops110v',()=>canvasDecal(128,320,(x,w,h)=>{ x.fillStyle='#f4f4f0'; x.fillRect(0,0,w,h); x.fillStyle='#111'; x.translate(w/2,h/2); x.rotate(-Math.PI/2); x.textAlign='center'; x.textBaseline='middle'; x.font='900 108px Arial Black, Impact, sans-serif'; x.fillText('110',0,6); }),{r:.5}),Y,true); }
   else if(st!=='none'){ const wind=st==='burnout'?banner('SKID CREW WA','#fff','#111','skid'):banner('PROJECT AUSSIE','#fff','#141414','br');
     livAt(B,V(0,wsY,B.max.z+out),V(0,0,-1),1.25,.15,.8,wind,Y,true);
