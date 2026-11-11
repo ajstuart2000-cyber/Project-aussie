@@ -705,7 +705,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries, toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const $ = id => document.getElementById(id);
 const store = {
@@ -1352,6 +1352,56 @@ function bakeStatic(root, shadowMats){
   return root;
 }
 // bonnet off: a Barra 4.0 straight six in the bay like the owner's reference (red-cover XR6), all-red cam cover with two raised rails, the six coil packs standing in a row down the middle and the big flat nose over the cam gears, dark head and block, extractors on the driver's side, and a carby on an Aussiespeed-style 4-barrel manifold on the passenger (intake) side with a 14 x 3 inch pancake air cleaner on top (BA/BF bay, body space)
+// Barra cam cover, hand-modelled: flange, sculpted body with a side crease and cast ribs, raised centre spine carrying the coil packs, bolt bosses down both sides,
+// stepped nose over the cam gears / VCT with its raised panel and bolts, rear taper, oil filler neck and cap, PCV elbows, cast 'DOHC 24 VALVE' / 'DUAL VCT' lettering
+function addBarraCover(E,red,blk,alu,lid,X,R,F){
+  const L=F-R, ZC=(F+R)/2, Y=.86, N=.2, add=(geo,m,x=0,y=0,z=0)=>{ const o=new THREE.Mesh(geo,m); o.position.set(x,y,z); E.add(o); return o; };
+  const cyl=(r,h,m,x,y,z,seg=12)=>add(new THREE.CylinderGeometry(r,r,h,seg),m,x,y,z);
+  const flat=geo=>{ geo.setAttribute('uv',new THREE.Float32BufferAttribute(new Float32Array(geo.attributes.position.count*2),2)); geo.setIndex([...Array(geo.attributes.position.count).keys()]); return geo; };
+  // loft through stations [z, half profile (outer foot -> centre, last point on the centre line), height scale, width scale]; creased normals, capped ends
+  const loft=(st,m,y0)=>{ const P=[], tri=(a,b,c)=>P.push(...a,...b,...c);
+    const prof=st.map(([z,h,hs,ws])=>{ const full=h.map(([a,b])=>[-a,b]).concat(h.slice(0,-1).reverse()); return full.map(([a,b])=>[X+a*ws,y0+b*hs,z]); }), n=prof[0].length;
+    for(let s=0;s<prof.length-1;s++) for(let i=0;i<n-1;i++){ const a0=prof[s][i],a1=prof[s][i+1],b0=prof[s+1][i],b1=prof[s+1][i+1]; tri(a0,b0,a1); tri(a1,b0,b1); }
+    for(const [s,dir] of [[0,-1],[prof.length-1,1]]) for(const [a,b,c] of THREE.ShapeUtils.triangulateShape(prof[s].map(p=>new THREE.Vector2(p[0],p[1])),[])){
+      const A=prof[s][a],B=prof[s][b],C=prof[s][c], nz=(B[0]-A[0])*(C[1]-A[1])-(B[1]-A[1])*(C[0]-A[0]); if(nz*dir>0) tri(A,B,C); else tri(A,C,B); }
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(P,3)); return add(flat(toCreasedNormals(geo,Math.PI/5)),m); };
+  const rrect=(w,d,r)=>{ const s=new THREE.Shape(), x=w/2, y=d/2; s.moveTo(-x+r,-y); s.lineTo(x-r,-y); s.quadraticCurveTo(x,-y,x,-y+r); s.lineTo(x,y-r); s.quadraticCurveTo(x,y,x-r,y); s.lineTo(-x+r,y); s.quadraticCurveTo(-x,y,-x,y-r); s.lineTo(-x,-y+r); s.quadraticCurveTo(-x,-y,-x+r,-y); return s; };
+  const slab=(w,d,r,t,m,x,y,z,bev=0)=>{ const g=new THREE.ExtrudeGeometry(rrect(w,d,r),{depth:t,curveSegments:3,bevelEnabled:bev>0,bevelSize:bev,bevelThickness:bev,bevelSegments:1}).rotateX(-Math.PI/2); g.setIndex([...Array(g.attributes.position.count).keys()]); return add(g,m,x,y,z); };
+  // side flange
+  slab(.262,L+.01,.02,.016,red,X,Y,ZC);
+  // main body: near-upright wall with a cast crease, angled upper wall, shoulder, side decks, raised centre spine; tapered down at the back
+  const B=[[.118,0],[.116,.036],[.12,.04],[.12,.046],[.112,.05],[.104,.072],[.096,.079],[.088,.083],[.06,.086],[.052,.088],[.047,.1],[.042,.105],[.036,.106],[0,.106]];
+  loft([[R+.004,B,.5,.93],[R+.014,B,.74,.96],[R+.03,B,.92,.99],[R+.045,B,1,1],[F-N+.006,B,1,1]],red,Y+.016);
+  // stepped nose over the cam gears: wider, a touch lower than the spine, rounded down at the front
+  const Nh=[[.127,0],[.128,.06],[.126,.076],[.121,.087],[.113,.094],[.1,.096],[0,.096]];
+  loft([[F-N,Nh,1,1],[F-.045,Nh,1,1],[F-.03,Nh,.985,.998],[F-.016,Nh,.94,.99],[F-.006,Nh,.86,.975],[F-.001,Nh,.76,.965]],red,Y+.016);
+  slab(.15,.125,.012,.004,red,X,Y+.112,F-.12,.002);   // raised panel on the nose
+  for(const [bx,bz] of [[-.098,-.065],[.098,-.065],[-.098,-.18],[.098,-.18]]){ cyl(.012,.008,red,X+bx,Y+.113,F+bz,10); cyl(.0075,.006,alu,X+bx,Y+.119,F+bz,6); }
+  for(const sx of [-1,1]){ cyl(.011,.01,red,X+sx*.112,Y+.021,F-.006,10); cyl(.007,.006,alu,X+sx*.112,Y+.029,F-.006,6); }
+  add(new THREE.CylinderGeometry(.03,.03,.006,16).scale(1.45,1,.85),red,X,Y+.124,F-N-.035);   // oval boss where the spine meets the nose
+  // bolt bosses down both sides of the body (half buried in the wall), bolt heads on top; cast ribs on the upper wall between them
+  const th=Math.atan2(.008,.022);
+  for(const sx of [-1,1]){
+    for(let i=0;i<5;i++){ const z=R+.06+i*(L-N-.09)/4; cyl(.011,.034,red,X+sx*.117,Y+.033,z,10); cyl(.0075,.006,alu,X+sx*.117,Y+.053,z,6); }
+    for(let i=0;i<4;i++){ const z=R+.06+(i+.5)*(L-N-.09)/4, r=add(new THREE.BoxGeometry(.007,.03,.006),red,X+sx*.105,Y+.08,z); r.rotation.z=sx*th; }
+  }
+  // coil packs on the spine: black body, wider cap, connector head off to the passenger side
+  for(let i=0;i<6;i++){ const z=R+.075+i*(L-N-.13)/5; cyl(.02,.042,blk,X,Y+.143,z,16); cyl(.023,.01,blk,X,Y+.168,z,16); add(new THREE.BoxGeometry(.03,.016,.022),blk,X+.028,Y+.16,z); }
+  // oil filler neck and black cap on the driver's side deck
+  const oz=F-.43; cyl(.027,.022,red,X-.07,Y+.112,oz,14); cyl(.032,.016,blk,X-.07,Y+.131,oz,8); cyl(.024,.004,blk,X-.07,Y+.141,oz,12);
+  // PCV / breather elbows: one mid on the passenger side, one at the back on the driver's side
+  for(const [px,pz,dz] of [[.07,F-.38,-1],[-.06,R+.06,-1]]){ cyl(.012,.014,red,X+px,Y+.107,pz,10);
+    add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[0,0,0],[0,.02,0],[0,.03,.008*dz],[0,.032,.03*dz]].map(p=>new THREE.Vector3(X+px+p[0],Y+.113+p[1],pz+p[2]))),8,.0055,8),alu);
+    const h=cyl(.008,.014,blk,X+px,Y+.145,pz+.03*dz,8); h.rotation.x=Math.PI/2; }
+  // cast lettering: a small canvas texture on the driver's side deck and on a raised pad on the passenger side wall
+  const cv=document.createElement('canvas'); cv.width=512; cv.height=128; const c=cv.getContext('2d'); c.fillStyle='#c4140e'; c.fillRect(0,0,512,128);
+  c.font='bold 46px Arial, sans-serif'; c.textAlign='center'; c.textBaseline='middle';
+  for(const [t,y] of [['DOHC 24 VALVE',32],['DUAL VCT',96]]){ c.fillStyle='#5e0805'; c.fillText(t,258,y+3); c.fillStyle='#ff5a48'; c.fillText(t,255,y-2); c.fillStyle='#d8261c'; c.fillText(t,256,y); }
+  const tx=new THREE.CanvasTexture(cv); tx.colorSpace=THREE.SRGBColorSpace; tx.anisotropy=4; const tm=new THREE.MeshStandardMaterial({map:tx,metalness:.35,roughness:.3});
+  const label=(w,h,v0,v1)=>{ const g=new THREE.PlaneGeometry(w,h), uv=g.attributes.uv; for(let i=0;i<uv.count;i++) uv.setY(i,uv.getY(i)>.5?v1:v0); return g; };
+  add(label(.17,.026,.5,1).rotateX(-Math.PI/2).rotateY(-Math.PI/2),tm,X-.074,Y+.1025,F-N-.09).rotation.z=-Math.atan2(.003,.032);
+  slab(.014,.13,.004,.03,red,X+.124,Y+.06,F-N-.1); add(label(.12,.024,0,.5).rotateY(Math.PI/2),tm,X+.1315,Y+.075,F-N-.1);
+  return tm; }
 function addCarbyOpen(g){
   const red=new THREE.MeshStandardMaterial({color:'#c4140e',metalness:.35,roughness:.3}), alu=new THREE.MeshStandardMaterial({color:'#b9bcc0',metalness:.9,roughness:.32}),
         blk=new THREE.MeshStandardMaterial({color:'#0b0b0c',roughness:.7}), fil=new THREE.MeshStandardMaterial({color:'#141416',roughness:.8}), lid=new THREE.MeshStandardMaterial({color:'#1a1a1d',metalness:.5,roughness:.4}),
@@ -1373,16 +1423,7 @@ function addCarbyOpen(g){
   const bp=[[-.1,0],[-.12,.04],[-.12,.11],[-.1,.15],[-.1,.28]]; loft([[R+.01,bp.concat(bp.map(([a,b])=>[-a,b]).reverse())],[F-.01,bp.concat(bp.map(([a,b])=>[-a,b]).reverse())]],iron,X,.44);
   for(const sx of [-1,1]){ for(let i=0;i<5;i++) box(.01,.13,.014,iron,X+sx*.104,.655,cz(i)+.049); box(.008,.012,L-.06,iron,X+sx*.123,.515,ZC); }
   box(.17,.08,L-.12,iron,X,.4,ZC-.04); box(.205,.015,L-.02,iron,X,.448,ZC); box(.15,.06,.25,iron,X,.33,ZC-.18); box(.215,.14,L,iron,X,.79,ZC);
-  // cam cover, all red: faceted sides stepping in from the flange to a raised flat top, a valley down the middle with the six coil packs standing in it,
-  // the wider taller nose over the cam gears with its flat panel, and the low taper at the back
-  const N=.19, cp=(w,h,tw,vw,vd)=>{ const S=[[w,0],[w,.012],[w-.01,.016],[tw+.022,h*.72],[tw,h],[vw+.01,h],[vw,h-vd]]; return S.map(([a,b])=>[-a,b]).concat(S.reverse()); };
-  const Rp=cp(.118,.078,.072,.03,.03);
-  loft([[R,cp(.11,.05,.06,.03,.015)],[R+.05,Rp],[F-N-.02,Rp],[F-N+.03,cp(.132,.098,.1,.03,0)],[F-.03,cp(.132,.098,.1,.03,0)],[F,cp(.126,.07,.088,.03,0)]],red,X,.86);
-  box(.16,.01,.11,red,X,.962,F-N/2-.01);
-  for(const [bx,bz] of [[-.09,-.035],[.09,-.035],[-.09,-N+.04],[.09,-N+.04]]) cyl(.009,.012,alu,X+bx,.96,F+bz,null,8);
-  for(const sx of [-1,1]) for(let i=0;i<4;i++) cyl(.007,.008,alu,X+sx*.056,.94,R+.08+i*.12,null,8);
-  for(let i=0;i<6;i++){ const z=R+.075+i*(L-N-.13)/5; cyl(.021,.05,blk,X,.933,z,null,12); box(.02,.014,.022,blk,X+.026,.948,z); }   // coil packs in the valley, all behind the nose
-  cyl(.026,.024,blk,X-.06,.95,R+.075+2.5*(L-N-.13)/5,null,14); cyl(.022,.006,lid,X-.06,.965,R+.075+2.5*(L-N-.13)/5,null,14);   // oil filler on the driver's side
+  addBarraCover(E,red,blk,alu,lid,X,R,F);   // hand-modelled cam cover with its coil packs, filler, PCV and lettering
   // intake side (passenger side): Aussiespeed-style 4-barrel manifold, six runners fanning in to a centre plenum 220 mm off the head, carby on top
   box(.012,.06,L-.04,alu,X+.113,.79,ZC);
   for(let i=0;i<6;i++){ const z=cz(i); tube([[X+.11,.79,z],[X+.165,.792,ZC+(z-ZC)*.9],[X+.215,.8,ZC+(z-ZC)*.45]],.022,alu,10); }
