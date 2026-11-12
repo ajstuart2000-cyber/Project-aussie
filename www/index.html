@@ -297,7 +297,7 @@ body.tiny .lapno{font-size:11px;margin-bottom:1px}
 body.tiny .big{font-size:13px}
 body.tiny .k{font-size:9px}
 body.tiny #freehud .tip{display:none}
-body.tiny .venues{grid-template-columns:repeat(5,1fr);gap:6px}
+body.tiny .venues{grid-template-columns:repeat(6,1fr);gap:6px}
 body:not(.tipson) .hud .tip{display:none}
 .hud .tip{animation:tipIn .4s ease}
 @keyframes tipIn{from{opacity:0}to{opacity:1}}
@@ -476,6 +476,27 @@ body.tiny.shopping .brand,body.tiny.shopping .pa-card,body.tiny.shopping .pa-cas
 body.narrow .gtop{flex-direction:row}
 body.narrow .gside{width:auto;align-items:flex-end}
 
+/* Career events board (Gold Ring Series + Night Rounds, ported from Project Aussie Build 15) */
+#cevBox{width:min(760px,100%)!important;display:block!important}
+#cevBox .cevIn{display:grid;gap:8px}
+.cevTabs{display:flex;gap:8px;flex-wrap:wrap}
+.cevTabs button{flex:1;min-width:150px;padding:8px 10px;border-radius:6px;border:1px solid rgba(239,230,216,.18);background:rgba(239,230,216,.05);color:var(--bone);font:800 15px var(--f-display);letter-spacing:.06em;cursor:pointer}
+.cevTabs button[aria-pressed=true]{border-color:var(--gold,#f2b51b);background:rgba(242,181,27,.16);color:#f2c21b}
+.cevTabs button:disabled{opacity:.45;cursor:default}
+.cevTop{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.cevTop .tag{font-size:12px;opacity:.7}
+.cevList{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.cev{border:1px solid rgba(239,230,216,.14);border-radius:6px;padding:8px 10px;background:rgba(239,230,216,.04);display:grid;gap:3px;font-size:12px;line-height:1.3}
+.cev .n{font:800 16px var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.cev .st{font:700 11px var(--f-mono,monospace);letter-spacing:.08em}
+.cev.locked{opacity:.5}.cev.cleared .st{color:#7bd88f}.cev.open .st{color:#f2c21b}
+.cev .dim{opacity:.7}
+.cev button{justify-self:end;padding:5px 12px}
+body.tiny .cev .bl{display:none}
+#tiltG{position:absolute;pointer-events:auto;width:132px;height:44px;border-radius:10px;background:rgba(13,17,24,.55);border:1.5px solid rgba(239,230,216,.35);color:var(--bone);font:800 11px var(--f-display);letter-spacing:.08em;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;box-sizing:border-box;overflow:hidden}
+#tiltG i{position:absolute;left:50%;top:6px;bottom:6px;width:3px;margin-left:-1.5px;background:#f2c21b;border-radius:2px;transform-origin:50% 50%}
+#tiltG b{position:absolute;left:50%;bottom:3px;height:4px;background:rgba(196,85,44,.9);border-radius:2px}
+#tiltG span{position:relative;opacity:.8;margin-top:22px}
 </style>
 
 <div id="app">
@@ -548,6 +569,7 @@ body.narrow .gside{width:auto;align-items:flex-end}
   <div class="tb" id="tA" data-k="A">AIR</div>
   <div class="tb" id="tC" data-k="C">CAM</div>
   <div class="tb sq" id="tM" data-k="M">☰</div>
+  <div id="tiltG" title="Tap to set straight ahead"><i></i><b></b><span>TILT · TAP TO CENTRE</span></div>
 </div>
 <div class="panel" id="editbar" hidden>
   <div class="t">Drag buttons where you want them</div>
@@ -606,6 +628,7 @@ body.narrow .gside{width:auto;align-items:flex-end}
       <button class="venue" id="mDrag"><b>Drag</b><span>Kwinana Motorplex, Red Dirt Dragway out bush, or the old airstrip. Water box, tree, timeslip.</span></button>
       <button class="venue" id="mHesi"><b>No Hesi</b><span>Freeway loop through live traffic. Near misses build a chain, risk pays, crashes cost it all.</span></button>
       <button class="venue" id="mTrack"><b>Track</b><span>Red Gum, Wanneroo and Collie circuits, or the Zig Zag and Mundaring touge.</span></button>
+      <button class="venue" id="mCareer"><b>Career</b><span>Gold Ring Series and the Night Rounds: 12 events with goals, prizes and unlocks.</span></button>
     </div>
     <div class="row" id="rowFree"><span class="label">Map</span><div class="seg" id="segFreeMap"></div></div>
     <div class="row" id="rowBurn"><span class="label">Pad</span><div class="seg" id="segBurnSpot"></div></div>
@@ -642,10 +665,12 @@ body.narrow .gside{width:auto;align-items:flex-end}
       <div class="row" data-tab="sound"><span class="label">Screamer pipe</span><div class="seg" id="segGate"></div></div>
       <div class="row touch-only" data-tab="ctl"><span class="label">Screen</span><div class="seg" id="segScreen"></div></div>
       <div class="row touch-only" data-tab="ctl"><span class="label">Buttons</span><div class="seg" id="segPreset"></div><button class="btn sm" id="editBtn">Move buttons</button></div>
+      <div class="row touch-only" data-tab="ctl"><span class="label">Touch steering</span><div class="seg" id="segSteerIn"></div></div>
+      <div class="row touch-only" data-tab="ctl"><span class="label">Vibration</span><div class="seg" id="segVibe"></div></div>
       <div class="row" data-tab="ctl"><span class="label">Controller</span><span class="ctlmap">RT gas · LT brake · left stick steer · right stick look around · A handbrake · B shift up · X shift down · LB clutch · Y camera · RB reset · ▲ fresh tyres · ▼ stability · View air ride · Menu pause</span></div>
       <div class="row" data-tab="about"><label class="label" for="gameNameIn">Game name</label><input id="gameNameIn" maxlength="32" autocomplete="off"></div>
       <div class="row" data-tab="about"><span class="label">AU Falcon model</span><span style="font-size:12px;opacity:.8;line-height:1.4">Based on <a href="https://sketchfab.com/3d-models/ford-falcon-au-vi-sedan-and-ute-fefef8767ba1493a983920db5cb5dc77" target="_blank" rel="noopener">"Ford Falcon (AU) VI Sedan And Ute"</a> by <a href="https://sketchfab.com/iori308408" target="_blank" rel="noopener">Nieve5677</a>, <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Simplified for the game.</span></div>
-      <div class="row" data-tab="about"><span class="label">Version</span><details class="ctlmap"><summary>Project Aussie 1.0.8 · Cops on/off switch (Settings › Driving), crash damage now dents the panels instead of turning the paint black, and the car is fully repaired whenever you are back in the garage; bigger car in the garage with the car switcher and rename on the car card · 1.0.7: new menu look, fuller Perth with a Langley Park market and car park at spawn, winding Wheatbelt roads with gravel tracks, a distinct design for every skid pad, roads cleared of stray objects and invisible walls, and cleaner road joins</summary>v129 · Perth street racing (hold the brake and rev past 4,000 at a standstill to race the car beside you) and a patrol car that chases you for speeding, skidding or racing in front of it</summary>v128 · Career mode: start with $2,500 and a tired AU Forte, earn cash from burnouts, the Burnout Series, drags, laps and Hesi chains, and pay for cars and every upgrade (turn it off any time for the free sandbox)</summary>v127 · Wanneroo and Collie dressed up: brake boards before the big corners, marshal posts, a pit lane with pit wall and numbered garages, paddock trucks, a crowd in the stand</summary>v126 · Burnout Series: five judged rounds across every pad against a field of seven, points table after each run, Skid Arena final worth 1.5×</summary>v125 · Perth comes alive: city traffic that keeps left, queues and stops at working traffic lights on every city intersection · AU tray rebuilt like a real cab-chassis tray</summary>v124 · AU body kit: bonnet scoop, XR wing or Tickford high wing, XR side skirts and a front lip (sedan and ute) · new AU Tickford preset</summary>v123 · Burnout tyres wear out visibly: tread goes, cords show (with a warning), rubber chunks fly off, then it pops</summary>v122 · AU ute: swap the tub for an alloy or black steel flat tray, plus a tonneau, sports bar, toolbox or a load of tyres and an esky · new AU Tray Back preset</summary>v121 · Turbo LS and XR6T/F6 2-step: revs climb with the loading-up recording and only hit the 2-step at the end of it; boost builds slowly on the gauge</summary>v120 · Turbo LS: the game's added turbo whistle and spool sit well back (the LS turbo's own sound already has its turbo) and drop out under the real 2-step recording</summary>v119 · Stock LS1/LS3 and the turbo LS1: no pop on every limiter bounce and a much smoother wind-down when you lift</summary>v118 · Stock LS no overrun pops · v117 · Ecotec mid-range (2,000–4,000 rpm) rebuilt from a real stock VT V6 pulling 0–100, voiced to match its limiter · cammed Ecotecs get a real lumpy cammed idle · v116 · Ecotec re-voiced to its limiter's tone · v115 · Ecotec top end matched to the limiter · v114 · AU XR8 and AU six voiced from the real cars inside the engine synth (no more pasted-on loops), six uses the synth's own limiter · free roam: no more getting stuck on the wall at hairpins · v113 · Real AU sounds · v112 · Every burnout pad is its own design: Kwinana's long lane falling from the chute, Red Dirt's mound and hay bales, the Airstrip apron and containers, a walled Red Gum pad, a long Skid Arena with a tunnel run-in · v111 · Drag rival matched to the car you're in (easy is easy again) · real Ecotec limiter and mid-range load sound · v110 · Motorplex-style ramp starts on every burnout pad · Perth rebuilt: connected streets, paved junctions and crossings, no buildings on roads · v109 · AU Falcon sedan and ute in the car shop · v108 · Calmer default decel pops on V8s · v91 · Limiter pops and bangs only on the limiter: never while pulling up through the revs or on a gear change · v90 · Limiters: the tacho now bounces in time with whatever limiter sound is playing · 2-step / anti-lag: the engine sound cuts on every cut the tacho shows, so it bounces at the set revs · v89 · 5.7 LS1 turbo (VS LS1 Turbo preset) with the real loading and 2-step from a turbo LS clip, then the engine holds the 2-step · v88 · New LS1 (VS) and LS3 (VF) engine sounds from real Commodore clips, real cam idles, quicker Holden limiter with one pop per bounce, new Boss V8 turbo engine · v87 · Speed limiter raised to 330 km/h for every build, less aero drag so big builds get there · v86 · Gear changes: no dose, ZF fart louder, flutter waits for it · v85 · Original screamer sound and opening restored (new whistle kept) · v84 · Mufflers now change the engine sound (tone, rasp on every pulse, drive, volume; drone and dump hiss), XR6T stock-gate limiter from real bounces · v83 · Roll racing from 60 km/h over the 1/2 mile, Red Dirt and the Airstrip stretched to 2 km, every run brings you back to the start · v82 · Screamer pipe rebuilt from two real XR6T in-car clips: shut while it spools, snaps open at target boost · v81 · Turbo whistle rebuilt off a real F6: builds with boost, ducks out while the screamer is open, returns as it spools down · v80 · XR6T exhaust tone reshaped to a real stock XR6T with an exhaust · v79 · Turbo dose on every lift, cut from a real FG XR6T · v78 · Coilover suspension with camber, ride height, springs and sway bars · body kits and wings (ducktail, GT, drag, time attack, splitter, diffuser, flares) · custom exhaust tips, pipe size and merge · cats, injectors, ignition, big brakes · v77 · XR8 limiter pops and crackle, locked to the V8's own bounce · v76 · XR6T limiter pops, crackle on the cut with a pop tune · v75 · NA limiter pops in time with the bounce · v74 · Cleaner tabbed menus, slimmer race HUD, tips fade out · v73 · Graphics overhaul: drifting clouds, Day/Golden hour/Dusk/Night, weather with rain, wet roads and lightning, worn asphalt, fuller trees, graphics presets, photo mode · v72 · No Hesi mode with live traffic, Grip steering style · v71 Red Dirt Dragway, Airstrip drags, Skid Arena, pads at every strip · v70 Perth pinned to real coordinates: Narrows, Kings Park, Mounts Bay Rd, CBD grid, Riverside Dr, Causeway, WACA, Optus Stadium · v69 East Perth rebuilt from street view: Riverside Dr, Langley Park, Terrace Rd, Adelaide Tce, Causeway, WACA · v68 clutch-kick 360s (auto or manual) · v67 Perth rebuilt to the real layout: Elizabeth Quay, Narrows, skyline landmarks · v66 new maps: Perth free roam, Zig Zag + Mundaring touge, Wanneroo + Collie circuits · v65 real kW per mod for every engine, turbo and bottom-end limits, 7 more gearboxes · v64 no speed cap once tuned, wider diff range, calmer high-speed and drag steering · v63 exhaust notes, cam chop, blow-off valves, ECU tune + dyno · v62 Skidder steers like Classic until you throw it · v61 Skidder power rotation: 360s on gas and lock alone · v60 Skidder has no drift hold, free to 360 with or without the assist · v59 tip-ins work at burnout speeds · v58 Skidder does real tip-ins: swing out, hang sideways, swing back · v57 hectic linkable Skidder tip-ins, 10 new engine mod categories · v56 steering styles: Classic, Skidder, Drift, with tuning · v55 no more black flashes, single-pipe flames on six-cylinders · v54 softer glare, realistic exhaust flames · bloom, sky reflections, night mode, exhaust flames, drag rival + timeslip, wheelstand cam, thicker smoke, jumping crowd, shift clunk, tyre chatter</details></div>
+      <div class="row" data-tab="about"><span class="label">Version</span><details class="ctlmap"><summary>Project Aussie 1.0.8 test · merged with Project Aussie Build 15: Career board with the Gold Ring Series and the Night Rounds (Eighth Mile Rematch, Forty Roll, Smoke Show, Night Series Decider), tilt steering (Settings › Controls › Touch steering) and vibration (Settings › Controls › Vibration) · 1.0.8: Cops on/off switch (Settings › Driving), crash damage now dents the panels instead of turning the paint black, and the car is fully repaired whenever you are back in the garage; bigger car in the garage with the car switcher and rename on the car card · 1.0.7: new menu look, fuller Perth with a Langley Park market and car park at spawn, winding Wheatbelt roads with gravel tracks, a distinct design for every skid pad, roads cleared of stray objects and invisible walls, and cleaner road joins</summary>v129 · Perth street racing (hold the brake and rev past 4,000 at a standstill to race the car beside you) and a patrol car that chases you for speeding, skidding or racing in front of it</summary>v128 · Career mode: start with $2,500 and a tired AU Forte, earn cash from burnouts, the Burnout Series, drags, laps and Hesi chains, and pay for cars and every upgrade (turn it off any time for the free sandbox)</summary>v127 · Wanneroo and Collie dressed up: brake boards before the big corners, marshal posts, a pit lane with pit wall and numbered garages, paddock trucks, a crowd in the stand</summary>v126 · Burnout Series: five judged rounds across every pad against a field of seven, points table after each run, Skid Arena final worth 1.5×</summary>v125 · Perth comes alive: city traffic that keeps left, queues and stops at working traffic lights on every city intersection · AU tray rebuilt like a real cab-chassis tray</summary>v124 · AU body kit: bonnet scoop, XR wing or Tickford high wing, XR side skirts and a front lip (sedan and ute) · new AU Tickford preset</summary>v123 · Burnout tyres wear out visibly: tread goes, cords show (with a warning), rubber chunks fly off, then it pops</summary>v122 · AU ute: swap the tub for an alloy or black steel flat tray, plus a tonneau, sports bar, toolbox or a load of tyres and an esky · new AU Tray Back preset</summary>v121 · Turbo LS and XR6T/F6 2-step: revs climb with the loading-up recording and only hit the 2-step at the end of it; boost builds slowly on the gauge</summary>v120 · Turbo LS: the game's added turbo whistle and spool sit well back (the LS turbo's own sound already has its turbo) and drop out under the real 2-step recording</summary>v119 · Stock LS1/LS3 and the turbo LS1: no pop on every limiter bounce and a much smoother wind-down when you lift</summary>v118 · Stock LS no overrun pops · v117 · Ecotec mid-range (2,000–4,000 rpm) rebuilt from a real stock VT V6 pulling 0–100, voiced to match its limiter · cammed Ecotecs get a real lumpy cammed idle · v116 · Ecotec re-voiced to its limiter's tone · v115 · Ecotec top end matched to the limiter · v114 · AU XR8 and AU six voiced from the real cars inside the engine synth (no more pasted-on loops), six uses the synth's own limiter · free roam: no more getting stuck on the wall at hairpins · v113 · Real AU sounds · v112 · Every burnout pad is its own design: Kwinana's long lane falling from the chute, Red Dirt's mound and hay bales, the Airstrip apron and containers, a walled Red Gum pad, a long Skid Arena with a tunnel run-in · v111 · Drag rival matched to the car you're in (easy is easy again) · real Ecotec limiter and mid-range load sound · v110 · Motorplex-style ramp starts on every burnout pad · Perth rebuilt: connected streets, paved junctions and crossings, no buildings on roads · v109 · AU Falcon sedan and ute in the car shop · v108 · Calmer default decel pops on V8s · v91 · Limiter pops and bangs only on the limiter: never while pulling up through the revs or on a gear change · v90 · Limiters: the tacho now bounces in time with whatever limiter sound is playing · 2-step / anti-lag: the engine sound cuts on every cut the tacho shows, so it bounces at the set revs · v89 · 5.7 LS1 turbo (VS LS1 Turbo preset) with the real loading and 2-step from a turbo LS clip, then the engine holds the 2-step · v88 · New LS1 (VS) and LS3 (VF) engine sounds from real Commodore clips, real cam idles, quicker Holden limiter with one pop per bounce, new Boss V8 turbo engine · v87 · Speed limiter raised to 330 km/h for every build, less aero drag so big builds get there · v86 · Gear changes: no dose, ZF fart louder, flutter waits for it · v85 · Original screamer sound and opening restored (new whistle kept) · v84 · Mufflers now change the engine sound (tone, rasp on every pulse, drive, volume; drone and dump hiss), XR6T stock-gate limiter from real bounces · v83 · Roll racing from 60 km/h over the 1/2 mile, Red Dirt and the Airstrip stretched to 2 km, every run brings you back to the start · v82 · Screamer pipe rebuilt from two real XR6T in-car clips: shut while it spools, snaps open at target boost · v81 · Turbo whistle rebuilt off a real F6: builds with boost, ducks out while the screamer is open, returns as it spools down · v80 · XR6T exhaust tone reshaped to a real stock XR6T with an exhaust · v79 · Turbo dose on every lift, cut from a real FG XR6T · v78 · Coilover suspension with camber, ride height, springs and sway bars · body kits and wings (ducktail, GT, drag, time attack, splitter, diffuser, flares) · custom exhaust tips, pipe size and merge · cats, injectors, ignition, big brakes · v77 · XR8 limiter pops and crackle, locked to the V8's own bounce · v76 · XR6T limiter pops, crackle on the cut with a pop tune · v75 · NA limiter pops in time with the bounce · v74 · Cleaner tabbed menus, slimmer race HUD, tips fade out · v73 · Graphics overhaul: drifting clouds, Day/Golden hour/Dusk/Night, weather with rain, wet roads and lightning, worn asphalt, fuller trees, graphics presets, photo mode · v72 · No Hesi mode with live traffic, Grip steering style · v71 Red Dirt Dragway, Airstrip drags, Skid Arena, pads at every strip · v70 Perth pinned to real coordinates: Narrows, Kings Park, Mounts Bay Rd, CBD grid, Riverside Dr, Causeway, WACA, Optus Stadium · v69 East Perth rebuilt from street view: Riverside Dr, Langley Park, Terrace Rd, Adelaide Tce, Causeway, WACA · v68 clutch-kick 360s (auto or manual) · v67 Perth rebuilt to the real layout: Elizabeth Quay, Narrows, skyline landmarks · v66 new maps: Perth free roam, Zig Zag + Mundaring touge, Wanneroo + Collie circuits · v65 real kW per mod for every engine, turbo and bottom-end limits, 7 more gearboxes · v64 no speed cap once tuned, wider diff range, calmer high-speed and drag steering · v63 exhaust notes, cam chop, blow-off valves, ECU tune + dyno · v62 Skidder steers like Classic until you throw it · v61 Skidder power rotation: 360s on gas and lock alone · v60 Skidder has no drift hold, free to 360 with or without the assist · v59 tip-ins work at burnout speeds · v58 Skidder does real tip-ins: swing out, hang sideways, swing back · v57 hectic linkable Skidder tip-ins, 10 new engine mod categories · v56 steering styles: Classic, Skidder, Drift, with tuning · v55 no more black flashes, single-pipe flames on six-cylinders · v54 softer glare, realistic exhaust flames · bloom, sky reflections, night mode, exhaust flames, drag rival + timeslip, wheelstand cam, thicker smoke, jumping crowd, shift clunk, tyre chatter</details></div>
     </div>
   </div>
 </div>
@@ -668,6 +693,8 @@ body.narrow .gside{width:auto;align-items:flex-end}
     <div class="foot"><button class="btn ghost" id="tuneReset">Reset to default</button><button class="btn primary" id="tuneDone">Done</button></div>
   </div>
 </div>
+
+<div class="sheet" id="cevSheet" hidden><div class="box panel" id="cevBox"></div></div>
 
 <div class="panel" id="slip" hidden>
   <div class="slipHead"><b>Kwinana Motorplex</b><span id="slipSub">1/4 mile · lane L</span></div>
@@ -723,6 +750,9 @@ const settings = Object.assign({ gfx:'auto', weather:'clear', donut:'on', venue:
 if(!settings.gfxV2){ settings.gfx='auto'; settings.gfxV2=1; }   // everyone starts on auto quality once
 if(!settings.turboV3){ settings.turbo='real'; settings.turboV3=1; settings.turboV2=1; }
 const saveSettings = ()=>store.set('barra.settings', settings);
+let EVX=null;   // the career event being run (Gold Ring Series / Night Rounds), or null for normal play
+const TILT={g:null,have:false,askT:0,centre:0,v:0,roll:0};   // tilt steering (from Project Aussie Build 13)
+const HAP={t:-1e9,imp:0,gear:null,limT:0,n:0,last:0};      // vibration (from Project Aussie Build 14)
 // Steering styles. Classic is the original feel; Skidder throws the car around for 360s and tip-ins and catches it when you
 // let go; Drift adds lock, counter-steers for you and holds the car inside a set angle so it doesn't spin.
 // Clutch kick tip-in help (clutch-kick 360, rear grip drop, the 50 km/h+ throw). Off as a test: a kick only keeps the revs and wheelspin up. Set true to bring it back.
@@ -1113,6 +1143,8 @@ function placeButtons(){
     el.style.fontSize=Math.max(11, Math.min(18, s*.2))+'px'; el.style.opacity=touchLayout.op; }
   const showShift = settings.manual || editing;
   $('tU').hidden = $('tD').hidden = $('tK').hidden = !showShift;
+  const tilt = tiltMode() && !editing; $('tL').hidden = $('tR').hidden = tilt;
+  const G=$('tiltG'); if(G){ G.style.display=tilt?'flex':'none'; if(tilt){ const a=touchLayout.btn.L, b=touchLayout.btn.R; G.style.left=(((a[0]+b[0])/2)*appW-66)+'px'; G.style.top=(Math.max(a[1],b[1])*appH-22)+'px'; } }
 }
 const saveTouch = ()=>store.set('barra.touch', touchLayout);
 let editing=false, selBtn='G';
@@ -3054,7 +3086,7 @@ function repairCar(){ resetDamage(); }
 function dmgReset(){ DMG.dented=[]; DMG.broken=[]; DMG.hp=0; DMG.pull=0; DMG.zones={f:0,r:0,l:0,s:0}; DMG.box=null; dmgHud(); }
 function dmgHud(){ let el=document.getElementById('dmgHud'); if(!el){ el=document.createElement('div'); el.id='dmgHud'; el.style.cssText='position:fixed;top:calc(env(safe-area-inset-top) + 40px);left:50%;transform:translateX(-50%);z-index:40;background:rgba(20,23,28,.85);font:700 12px var(--f-mono,monospace);padding:3px 10px;border-radius:999px;border:1px solid #2b3038;pointer-events:none;display:none'; document.body.appendChild(el); } if(state!=='drive'){ el.style.display='none'; return; } el.style.display=DMG.hp>.02?'block':'none'; el.textContent='Damage '+Math.round(DMG.hp*100)+'%'; el.style.color=DMG.hp>.6?'var(--bad)':'#ffcf5a'; }
 
-function bounce(nx,nz,wallHit){ const vn=car.vx*nx+car.vz*nz; if(vn>0){ car.vx-=nx*vn*1.3; car.vz-=nz*vn*1.3; if(vn>1.5){ car.vx*=.8; car.vz*=.8; car.r*=.5; } thud(vn/12); shake=Math.min(1,vn/10); if(vn>2.5) try{ carDamage(nx,nz,(vn-2.5)/11); }catch(e){} if(vn>1.2&&wallHit) burnWall(); } }
+function bounce(nx,nz,wallHit){ const vn=car.vx*nx+car.vz*nz; if(vn>0){ try{ hapKnock(vn); }catch(e){} car.vx-=nx*vn*1.3; car.vz-=nz*vn*1.3; if(vn>1.5){ car.vx*=.8; car.vz*=.8; car.r*=.5; } thud(vn/12); shake=Math.min(1,vn/10); if(vn>2.5) try{ carDamage(nx,nz,(vn-2.5)/11); }catch(e){} if(vn>1.2&&wallHit) burnWall(); } }
 function confineBoxes(list){ if(list.some(b=>inZone(b,car.x,car.z))) return; let best=null;
   for(const b of list){ const [cx,cz]=nearZone(b,car.x,car.z,1.1), d=(cx-car.x)**2+(cz-car.z)**2; if(!best||d<best.d) best={d,cx,cz}; }
   const nx0=car.x-best.cx, nz0=car.z-best.cz, nl=Math.hypot(nx0,nz0)||1; car.x=best.cx; car.z=best.cz; bounce(nx0/nl,nz0/nl,true); }
@@ -3429,29 +3461,32 @@ function lapTick(dt){
 const DRAG_MARKS=[['60 ft',18.29],['330 ft',100.58],['1/8 mile',201.17],['1000 ft',304.8],['1/4 mile',402.34]];
 const dragS={ st:'box', t:0, heat:0, treeT:0, green:null, launch:null, splits:{}, trap:null, foul:false, best:store.get('barra.dragBest'), bestRun:store.get('barra.dragGhost'), rec:[], stagedT:0, ghostT:0 };
 function dragReset(keepSlip){ Object.assign(dragS,{st:'box',t:0,treeT:0,green:null,launch:null,splits:{},trap:null,foul:false,rec:[],stagedT:0,roll:false,doneT:0,retQ:false,t100:null,t200:null}); setTree(0); drawBoard('— —','READY'); oppPlan(); const sl=document.getElementById('slip'); if(sl&&!keepSlip) sl.hidden=true;
-  if(settings.dragStart==='roll') rollSetup(); else if($('dragName')) $('dragName').textContent='Drag strip · 1/4 mile'+(opp.on&&opp.name?` · vs ${opp.name}`:''); }
+  if(dStartNow()==='roll') rollSetup(); else if($('dragName')) $('dragName').textContent=(EVX?cevBrief(EVX):'Drag strip · 1/4 mile')+(opp.on&&opp.name?` · vs ${opp.name}`:''); }
 /* roll racing: roll up side by side at 60 km/h, the race is on at the start line, first to the line wins */
-const ROLL_V=60/3.6, rollLen=()=>(STRIP_DEF[ACT]?.len||700)>=1500?804.67:402.34;
+const ROLL_V=60/3.6, rollLen=()=>EVX&&EVX.kind==='roll'?(EVX.dist==='h'?804.67:402.34):(STRIP_DEF[ACT]?.len||700)>=1500?804.67:402.34;
+const rollV=()=>EVX&&EVX.kind==='roll'?EVX.roll/3.6:ROLL_V;   // career roll races run from 40, 60 or 100 km/h
 function rollSetup(){ const D=dragS; D.roll=true; D.st='roll'; placeAt(MP.x-LANE,MP.z-64,0); setTree(1);
   opp.rd=null; opp.rv=0; opp.fin=null; opp.rollT=0; const P=(opp.pro=(settings.opp||'club')==='pro')?750:Math.max(150,modKW())*(OPP_K[settings.opp]||1)*(.85+Math.random()*.25); opp.rP=P*1000*.85; opp.rgo=opp.pro?.03+Math.random()*.06:({easy:.3,hard:.05}[settings.opp]??.12)+Math.random()*({easy:.35,hard:.12}[settings.opp]??.3);
-  const L=rollLen(); if($('dragName')) $('dragName').textContent=`Roll race · 60 km/h · ${L>500?'1/2 mile':'1/4 mile'}`+(opp.on&&opp.name?` · vs ${opp.name}`:'');
-  D.best=store.get('barra.rollBest'+(D.key||'')+(L>500?'h':'q')); toast(`Roll race · it holds 60 for you · floor it at the line, not before`,'var(--amber)'); }
+  if(EVX&&EVX.opp){ const Lv=CEV_LVL[EVX.opp]; opp.pro=false; opp.rP=Math.max(150,modKW())*Lv.P*(.95+Math.random()*.1)*1000*.85; opp.rgo=Lv.go[0]+Math.random()*Lv.go[1]; }
+  const L=rollLen(), RK=Math.round(rollV()*3.6); if($('dragName')) $('dragName').textContent=(EVX?cevBrief(EVX):`Roll race · ${RK} km/h · ${L>500?'1/2 mile':'1/4 mile'}`)+(opp.on&&opp.name?` · vs ${opp.name}`:'');
+  D.best=EVX&&RK!==60?null:store.get('barra.rollBest'+(D.key||'')+(L>500?'h':'q')); toast(`Roll race · it holds ${RK} for you · floor it at the line, not before`,'var(--amber)'); }
 function dragAutoReturn(dt,fz,sp){ const D=dragS; D.doneT=(D.doneT||0)+dt; const end=STRIP_DEF[ACT]?.len||700;
   if(!D.retQ && ((D.doneT>2.5&&sp<4) || D.doneT>10 || fz>end-40)){ D.retQ=true;   // finished: back to the start line for another go
-    setTimeout(()=>{ if(settings.venue!=='drag'||state!=='drive') return; placeFor('drag'); if(opp.on) buildOpp(); dragReset(true); for(let k=0;k<4;k++) skids.lift(k); toast(D.roll||settings.dragStart==='roll'?'Back to the start · rolling up again':'Back to the start · burnout box'); },400); } }
+    setTimeout(()=>{ if(settings.venue!=='drag'||state!=='drive') return; placeFor('drag'); if(opp.on) buildOpp(); dragReset(true); for(let k=0;k<4;k++) skids.lift(k); toast(D.roll||dStartNow()==='roll'?'Back to the start · rolling up again':'Back to the start · burnout box'); },400); } }
 function rollTick(dt){ const D=dragS; D.t+=dt; const fz=car.z-MP.z+Math.cos(car.h)*WF, sp=Math.hypot(car.vx,car.vz), kmh=sp*3.6;
   if(D.st==='roll'){
     const alsHold=input.als>.5;   // rolling anti-lag: hold ALS + gas to load up boost on the roll; let go of ALS at the line
-    if(input.thr<.85||alsHold){ const c=Math.cos(car.h), s2=Math.sin(car.h), vl=car.vx*s2+car.vz*c, nv=vl+Math.min(ROLL_V-vl, 4*dt, Math.max(-6*dt,(ROLL_V-vl)*dt*3))*(ROLL_V>vl?1:1); car.vx+=(nv-vl)*s2; car.vz+=(nv-vl)*c; car.wR=nv/WR; }   // cruise up to 60 and hold it
+    if(input.thr<.85||alsHold){ const RV=rollV(), RA=Math.max(4,RV*RV/110), c=Math.cos(car.h), s2=Math.sin(car.h), vl=car.vx*s2+car.vz*c, nv=vl+Math.min(RV-vl, RA*dt, Math.max(-6*dt,(RV-vl)*dt*3));   /* the pace car pulls harder for a 100 km/h roll so you're up to speed inside the staging lane */ car.vx+=(nv-vl)*s2; car.vz+=(nv-vl)*c; car.wR=nv/WR; }   // cruise up to 60 and hold it
     else if(fz<-1){ D.st='done'; D.foul=true; D.doneT=0; setTree(-1); toast('Jumped it · you go at the line','var(--bad)'); }
     setTree(fz<-45?2:fz<-30?3:fz<-15?4:5);
     if(fz>=0&&alsHold&&input.thr>.6){ car.alsT=1.1; if(ENG.turbo){ car.spike=.5; boostHit(.9); } }   // still on the anti-lag as you cross: the boost is already there
     if(fz>=0){ D.st='run'; D.launch=D.green=D.t; setTree(6); D.lineSpd=kmh; D.splits={}; D.rec=[]; opp.rd=0; opp.rv=sp; opp.rollT=0;
-      if(Math.abs(kmh-60)>12){ D.foul=true; toast(`Crossed the line at ${kmh.toFixed(0)} · not a fair roll`,'var(--bad)'); } else toast('GO!','var(--good)'); } }
+      if(Math.abs(kmh-rollV()*3.6)>12){ D.foul=true; toast(`Crossed the line at ${kmh.toFixed(0)} · not a fair roll`,'var(--bad)'); } else toast('GO!','var(--good)'); } }
   if(D.st==='run'){ const et=D.t-D.launch, L=rollLen();
     if(D.splits.q==null&&fz>=402.34) D.splits.q=et; if(D.t100==null&&kmh>=100) D.t100=et; if(D.t200==null&&kmh>=200) D.t200=et;
     if(fz>=L){ D.splits.fin=et; D.trap=kmh; D.st='done'; D.doneT=0; drawBoard(et.toFixed(3),kmh.toFixed(1)+' km/h');
-      const bk='barra.rollBest'+(D.key||'')+(L>500?'h':'q'); if(!D.foul&&(D.best==null||et<D.best)){ D.best=et; store.set(bk,et); toast(`New best roll ${et.toFixed(3)} s`,'var(--amber)'); }
+      const bk='barra.rollBest'+(D.key||'')+(L>500?'h':'q'); if(!D.foul&&!(EVX&&Math.round(rollV()*3.6)!==60)&&(D.best==null||et<D.best)){ D.best=et; store.set(bk,et); toast(`New best roll ${et.toFixed(3)} s`,'var(--amber)'); }
+      if(EVX&&EVX.kind==='roll'){ const win=!D.foul&&(opp.fin==null||et<opp.fin); setTimeout(()=>cevFinish(win,D.foul?'Not a fair roll · loss':win?(opp.fin==null?`Win · ${et.toFixed(3)} s`:`Win by ${(opp.fin-et).toFixed(3)} s`):`Loss by ${(et-opp.fin).toFixed(3)} s`,et),1500); }
       if(opp.on){ const win=!D.foul&&(opp.fin==null||et<opp.fin); setTimeout(()=>toast(D.foul?'Foul · loss':win?(opp.fin==null?'Win · you had them covered':`Win by ${(opp.fin-et).toFixed(3)} s`):`Loss by ${(et-opp.fin).toFixed(3)} s`,win?'var(--good)':'var(--bad)'),900); }
       else toast(`${et.toFixed(3)} s @ ${kmh.toFixed(0)} km/h`); } }
   if(D.st==='done') dragAutoReturn(dt,fz,sp); }
@@ -3471,18 +3506,23 @@ function dragTick(dt){
     if(staged && sp<.3){ D.stagedT+=dt; if(D.stagedT>.7){ D.st='tree'; D.treeT=0; } } else D.stagedT=0;
     if(fz>.45 && D.st!=='tree'){ toast('Rolled through the beams · back up to the line','var(--bad)'); } }
   if(D.st==='tree'){ D.treeT+=dt; const t=D.treeT;
-    const stage = t<.5?2 : t<1?3 : t<1.5?4 : t<2?5 : 6; setTree(stage); if(stage===6&&D.green==null){ D.green=D.t; D.ghostT=0; if(opp.on) opp.start=D.t+opp.rt; }
+    const stage = EVX&&EVX.tree==='pro' ? (t<.5?2 : t<.9?5 : 6) : (t<.5?2 : t<1?3 : t<1.5?4 : t<2?5 : 6); setTree(stage);   /* Pro tree: all three ambers at once, green 0.4 s later */ if(stage===6&&D.green==null){ D.green=D.t; D.ghostT=0; if(opp.on) opp.start=D.t+opp.rt; }
     if(fz>.4){ D.launch=D.t; D.foul = D.green==null; D.st='run'; if(D.foul){ setTree(-1); toast('Red light!','var(--bad)'); } } }
   if(D.st==='run'){ const et=D.t-D.launch;
     D.rec.push(+(car.z-MP.z).toFixed(2));
     for(const [lbl,dist] of DRAG_MARKS) if(D.splits[lbl]==null && fz-.4>=dist){ D.splits[lbl]=et; if(lbl==='1/8 mile') D.eighthSpd=sp*3.6; }
-    if(D.splits['1/4 mile']!=null){ D.trap=sp*3.6; D.st='done'; const ET=D.splits['1/4 mile'], rt=D.foul?null:D.launch-D.green;
+    if(EVX&&EVX.kind==='drag'&&EVX.dist==='e'&&D.splits['1/8 mile']!=null){ D.trap=sp*3.6; D.st='done'; const ET=D.splits['1/8 mile'];   // career eighth-mile race: the stripe is at 1/8
+      drawBoard(ET.toFixed(3), D.trap.toFixed(1)+' km/h'); toast(`${ET.toFixed(3)} s @ ${D.trap.toFixed(0)} km/h${D.foul?' · red light':''}`, D.foul?'var(--bad)':'var(--bone)');
+      const mine=D.foul?Infinity:(D.launch-D.green)+ET, theirs=opp.rt+opp.splits['1/8 mile'], win=opp.on?mine<theirs:!D.foul;
+      setTimeout(()=>cevDragDone(win,mine,theirs,ET),1300); }
+    else if(D.splits['1/4 mile']!=null){ D.trap=sp*3.6; D.st='done'; const ET=D.splits['1/4 mile'], rt=D.foul?null:D.launch-D.green;
       drawBoard(ET.toFixed(3), D.trap.toFixed(1)+' km/h');
       if(!D.foul && (D.best==null||ET<D.best)){ D.best=ET; store.set('barra.dragBest'+(D.key||''),ET); D.bestRun=D.rec.slice(); store.set('barra.dragGhost'+(D.key||''),D.bestRun); toast(`New best ${ET.toFixed(3)} s`,'var(--amber)'); }
       else toast(`${ET.toFixed(3)} s @ ${D.trap.toFixed(0)} km/h${D.foul?' · red light':''}`, D.foul?'var(--bad)':'var(--bone)');
       const mine=D.foul?Infinity:(D.launch-D.green)+ET, theirs=opp.rt+opp.E, win=opp.on?mine<theirs:true;
       if(opp.on) setTimeout(()=>toast(D.foul?'Red light · loss':win?`Win by ${(theirs-mine).toFixed(3)} s`:`Loss by ${(mine-theirs).toFixed(3)} s`, win?'var(--good)':'var(--bad)'),1300);
-      setTimeout(()=>{ if(dragS.st==='done') showSlip(win,theirs-mine); },1700); } }
+      if(EVX&&EVX.kind==='drag') setTimeout(()=>cevDragDone(win,mine,theirs,ET),1300);
+      else setTimeout(()=>{ if(dragS.st==='done') showSlip(win,theirs-mine); },1700); } }
   if(D.st==='done') dragAutoReturn(dt,fz,sp);
   if(D.green!=null) D.ghostT+=dt;
 }
@@ -3512,14 +3552,15 @@ function oppNewEngine(){ if(!AC||!master) return; if(opp.au&&opp.au.g){ opp.au.g
 const oppV=t=>t<=0?0:t<=opp.E?opp.Vf*(1-Math.exp(-t/opp.tau)):Math.max(0,opp.Vt-12*(t-opp.E));
 const oppD=t=>{ if(t<=0) return 0; if(t<=opp.E) return opp.Vf*(t-opp.tau*(1-Math.exp(-t/opp.tau))); const u=Math.min(t-opp.E,opp.Vt/12); return 402.34+opp.Vt*u-6*u*u; };
 const OPP_K={easy:.72,club:1,hard:1.2};   // rival difficulty: power against yours (Pro mod is a fixed 750 kW monster)
-function oppPlan(){ opp.lvl=settings.opp||'club'; opp.on=opp.lvl!=='off'; opp.start=null; opp.splits={}; if(!opp.on) return;
+function oppPlan(){ opp.lvl=EVX&&EVX.kind!=='burnout'?(EVX.opp?'club':'off'):(settings.opp||'club'); opp.on=opp.lvl!=='off'; opp.start=null; opp.splits={}; if(!opp.on) return;
   let E,Vt; opp.pro=opp.lvl==='pro';
   if(opp.pro){ E=8.05+Math.random()*.3; Vt=(268+Math.random()*12)/3.6; opp.rt=.02+Math.random()*.07; }
   else { const hp=Math.max(150,modKW())*1.341*.85, lb=(M+80)*2.2046;           // the classic ET-from-power rule of thumb, with a traction tax
     E=5.825*Math.pow(lb/hp,1/3)*1.02; Vt=234*Math.pow(hp/lb,1/3)*1.609/3.6*.97;
     if(dragS.best&&dragS.best>E*.9&&dragS.best<E*1.15) E=dragS.best*(.985+Math.random()*.045); else E*=.97+Math.random()*.06;   // your best only counts if it was set in something like this car: a PB from a faster build was making the rival unbeatable
     opp.rt=.08+Math.random()*.22;
-    const LK={easy:[1.14,.18],hard:[.955,-.05]}[opp.lvl]; if(LK){ E*=LK[0]; Vt/=LK[0]; opp.rt=Math.max(.02,opp.rt+LK[1]); } }
+    const LK={easy:[1.14,.18],hard:[.955,-.05]}[opp.lvl]; if(LK){ E*=LK[0]; Vt/=LK[0]; opp.rt=Math.max(.02,opp.rt+LK[1]); }
+    if(EVX&&EVX.opp){ const Lv=CEV_LVL[EVX.opp], E0=E; E=cevPar()*CEV_REAL*Lv.k*(.995+Math.random()*.01); Vt=1.65*402.34/E; opp.rt=Lv.rt[0]+Math.random()*Lv.rt[1]; } }
   Vt=clamp(Vt,402.34/E*1.08,2*402.34/E*.97);
   let lo=.05,hi=40; for(let i=0;i<80;i++){ const tau=(lo+hi)/2, Vf=Vt/(1-Math.exp(-E/tau)), d=Vf*(E-tau*(1-Math.exp(-E/tau))); if(d>402.34) lo=tau; else hi=tau; }
   opp.tau=(lo+hi)/2; opp.Vf=Vt/(1-Math.exp(-E/opp.tau)); opp.E=E; opp.Vt=Vt;
@@ -3599,7 +3640,7 @@ function tyreLook(i,wr){ const w=wheels.find(w=>!w.front&&(i===0?w.left:!w.left)
   const k=clamp((wr-.55)/.4,0,1); w.tire.material.color.set('#0b0b0c').lerp(new THREE.Color('#5b4a3a'),k*.85); w.tire.material.roughness=.95-.25*k;
   if(wr>.8&&!tyre.cords[i]){ tyre.cords[i]=1; toast(`${i===0?'Left':'Right'} rear: cords showing`,'var(--amber)'); }
   if(wr>.85&&Math.random()<.35){ const s=Math.sin(car.h), c=Math.cos(car.h), lx=(i===0?1:-1)*.8, x=car.x+c*lx+s*WRZ, z=car.z-s*lx+c*WRZ; chunk(x,z); } }
-function popTyre(i){ tyre.popped[i]=1; tyrePop(); shake=1; const w=wheels.find(w=>!w.front&&(i===0?w.left:!w.left)); if(w&&w.tire){ w.tire.scale.set(1,.8,.8); w.grp.position.y=WY-.065; }
+function popTyre(i){ tyre.popped[i]=1; tyrePop(); try{ hapBlow(); }catch(e){} shake=1; const w=wheels.find(w=>!w.front&&(i===0?w.left:!w.left)); if(w&&w.tire){ w.tire.scale.set(1,.8,.8); w.grp.position.y=WY-.065; }
   const s=Math.sin(car.h), c=Math.cos(car.h), lx=(i===0?1:-1)*.75, x=car.x+c*lx+s*WRZ, z=car.z-s*lx+c*WRZ;
   for(let k=0;k<60;k++) smoke.emit(x,.3,z,(Math.random()-.5)*6,1+Math.random()*2,(Math.random()-.5)*6);
   toast(`${i===0?'Left':'Right'} rear popped!`,'var(--amber)'); }
@@ -3635,7 +3676,9 @@ function scoreTick(dt){
       if(droveOff && !run.offMsg){ run.offMsg=true; toast('Drove off the pad · run complete','var(--good)'); }
       if(run.t>=90 || (run.quietT>4 && run.t>6) || droveOff){ const r=runScore(true); run.on=false; run.last=r; drift.pts=0;
         if(r.total>burnBest){ burnBest=r.total; store.set('barra.judged',r.total); }
-        toast(`Judges: ${r.total} / 100${r.total>=burnBest?' · best':''}`,'var(--amber)'); setTimeout(()=>earn(r.total*28,'burnout'),900); if(settings.burnSpot==='series') setTimeout(()=>SERIES.record(r.total),1400); } }
+        toast(`Judges: ${r.total} / 100${r.total>=burnBest?' · best':''}`,'var(--amber)');
+        if(EVX&&EVX.kind==='burnout'){ const ok=r.total>=EVX.t; setTimeout(()=>cevFinish(ok,`Judges: ${r.total} / 100 · needed ${EVX.t}`,r.total),1400); }
+        else { setTimeout(()=>earn(r.total*28,'burnout'),900); if(settings.burnSpot==='series') setTimeout(()=>SERIES.record(r.total),1400); } } }
     $('drift').classList.toggle('on',run.on); $('driftPts').textContent=run.on?Math.round(drift.pts):'';
     return;
   }
@@ -3701,7 +3744,35 @@ function readInput(dt){
     // LB clutch (button 4): analogue if the bumper reports a value, otherwise 0 or 1. Deadzoned so rest is fully engaged (clutch out).
     const cl=padBtn01(gp.buttons[4],.12); if(cl>0||gp.buttons[4]?.pressed) input.clutch=cl;
     if(gp.buttons[10]?.pressed||gp.buttons[11]?.pressed) input.als=1; if(gp.buttons[5]?.pressed) input.nos=1; }   // RB = nitrous, click either stick = 2-step / anti-lag
+  if(tiltMode()){ const tv=tiltSteer(); TILT.v+=(tv-TILT.v)*Math.min(1,14*dt); if(!(lf||rt)&&!(gp&&Math.abs(gp.axes[0]||0)>.08)) input.steer=-TILT.v; tiltGauge(); }   // tilt steering: lower the right edge to steer right
 }
+/* ---------------- tilt steering (ported from Project Aussie Build 13): full lock at 28°, 2.5° dead zone, gentle near centre, smoothed ---------------- */
+const TILT_FULL=28, TILT_DZ=2.5;
+const tiltMode=()=>settings.steerIn==='tilt'||settings.steerIn==='tiltrev';
+addEventListener('devicemotion',e=>{ const g=e.accelerationIncludingGravity; if(!g||g.x==null||g.y==null) return; TILT.g=[+g.x,+g.y,+(g.z||0)]; TILT.have=true; });
+function tiltRollDeg(){ const g=TILT.g; if(!g) return null; const n=Math.hypot(g[0],g[1],g[2]); if(n<1) return null;
+  const a=((screen.orientation&&typeof screen.orientation.angle==='number')?screen.orientation.angle:(+window.orientation||0))*Math.PI/180;
+  let sx=g[0]*Math.cos(a)-g[1]*Math.sin(a), sy=g[0]*Math.sin(a)+g[1]*Math.cos(a);   // gravity in screen axes
+  if(appRot===1){ const t=sx; sx=-sy; sy=t; } else if(appRot===-1){ const t=sx; sx=sy; sy=-t; }   // the game rotates itself in a portrait browser
+  return Math.asin(clamp(-sx/n,-1,1))*180/Math.PI; }
+function tiltFromRoll(roll){ const r=roll-TILT.centre, m=Math.abs(r); if(m<=TILT_DZ) return 0; let v=clamp((m-TILT_DZ)/(TILT_FULL-TILT_DZ),0,1); v=v*(.55+.45*v); v*=Math.sign(r); return settings.steerIn==='tiltrev'?-v:v; }
+function tiltSteer(){ const r=tiltRollDeg(); if(r==null) return 0; TILT.roll=r; return tiltFromRoll(r); }
+function tiltCentre(){ const r=tiltRollDeg(); TILT.centre=r==null?0:r; TILT.v=0; toast(r==null?'No tilt sensor':'Tilt centred · this is straight ahead'); }
+function tiltAsk(){ try{ if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function') DeviceMotionEvent.requestPermission().catch(()=>{}); }catch(e){} TILT.askT=performance.now(); setTimeout(()=>{ if(tiltMode()) tiltCentre(); },350); }
+function tiltGauge(){ const G=$('tiltG'); if(!G||G.style.display==='none') return; const sp=G.querySelector('span'), i=G.querySelector('i'), b=G.querySelector('b');
+  const none=!TILT.have&&performance.now()-TILT.askT>1500; sp.textContent=none?'NO TILT SENSOR':'TILT · TAP TO CENTRE';
+  i.style.transform=`rotate(${clamp((TILT.roll-TILT.centre)*(settings.steerIn==='tiltrev'?-1:1),-45,45)}deg)`; const v=TILT.v; b.style.left=(v<0?50+v*45:50)+'%'; b.style.width=Math.abs(v)*45+'%'; }
+$('tiltG').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); if(!editing) tiltCentre(); });
+/* ---------------- vibration (ported from Project Aussie Build 14): gear ticks, limiter ticks, knocks, blowouts; 5-400 ms, 50 ms apart ---------------- */
+const hapOn=()=>settings.vibe!==false&&typeof navigator.vibrate==='function';
+function hapPulse(ms,amp,important){ if(!hapOn()||state!=='drive'||menuOpen||photo||RP.on) return false; const now=performance.now(); if(!important&&now-HAP.t<50) return false;
+  HAP.t=now; ms=Math.round(clamp(ms*(.6+.4*amp),5,400)); try{ navigator.vibrate(ms); }catch(e){ return false; } HAP.n++; HAP.last=ms; return true; }
+function hapKnock(vn){ if(vn<2.2||HAP.imp>0) return; HAP.imp=.25; const t=clamp((vn-2.2)/10,0,1); hapPulse(20+70*t,.3+.7*t,true); }   // small bumps don't buzz, big hits buzz longer
+function hapBlow(){ hapPulse(220,1,true); }
+function hapTick(dt){ HAP.imp=Math.max(0,HAP.imp-dt);
+  if(HAP.gear!=null&&car.gear!==HAP.gear&&Math.abs(car.gear-HAP.gear)===1) hapPulse(18,.45); HAP.gear=car.gear;
+  const lim=input.thr>.2&&car.rpm>ENG.limit-450&&performance.now()-(car.limAt||0)<160;
+  if(lim){ HAP.limT-=dt; if(HAP.limT<=0){ HAP.limT=.11; hapPulse(12,.25); } } else HAP.limT=0; }
 function resetCar(){ const v=settings.venue; if(MAP){ if(MAP.H&&MAP.H.chain>0){ MAP.H.chain=0; MAP.H.mult=1; toast('Reset · chain lost','var(--bad)'); } resetMap(); for(let k=0;k<4;k++) skids.lift(k); return; } if(burnVenue()){ placeFor(v); freshTyres(); run.on=false; return; } if(v==='drag'){ placeFor('drag'); dragReset(); return; } if(v==='sprint'){ placeFor('sprint'); sprint.reset(); return; } nearest(); placeCar(car.idx,0); if(lap.running) lap.invalid=true; skids.lift(0); skids.lift(1); skids.lift(2); skids.lift(3); }
 function toggleAir(){ settings.airUp=!settings.airUp; saveSettings(); airHiss(); toast(settings.airUp?'Air ride up':'Air ride down · slammed'); refreshSegs(); }
 function setManual(m){ manual=settings.manual=m; saveSettings(); if(!m&&car.gear===1) car.gear=2; placeButtons(); refreshSegs(); }
@@ -5494,6 +5565,8 @@ const SEGS = {
   segEsc:  [()=>car.tc?'on':'off', [['on','On'],['off','Off']], v=>{ car.tc=v==='on'; }],
   segScreen:[()=>!settings.landscape?'follow':settings.flip?'flip':'land', [['land','Landscape'],['flip','Landscape flipped'],['follow','Follow phone']], v=>{ settings.landscape=v!=='follow'; settings.flip=v==='flip'; saveSettings(); layout(); }],
   segPreset:[()=>touchLayout.preset, [['spread','Spread'],['compact','Compact']], v=>applyPreset(v)],
+  segSteerIn:[()=>settings.steerIn||'buttons', [['buttons','Buttons'],['tilt','Tilt the phone'],['tiltrev','Tilt (reversed)']], v=>{ settings.steerIn=v; saveSettings(); for(const k in touch) touch[k]=0; TILT.v=0; if(tiltMode()) tiltAsk(); placeButtons(); }],
+  segVibe:[()=>settings.vibe===false?'off':'on', [['on','On'],['off','Off']], v=>{ settings.vibe=v==='on'; saveSettings(); if(settings.vibe){ try{ navigator.vibrate&&navigator.vibrate(60); }catch(e){} } else { try{ navigator.vibrate&&navigator.vibrate(0); }catch(e){} } }],
 };
 function refreshSegs(){ for(const [id,[get,opts,set]] of Object.entries(SEGS)){ const el=$(id); if(!el) continue;
   if(!el.children.length){ for(const [v,l] of opts){ const b=document.createElement('button'); b.textContent=l; b.dataset.v=v; b.onclick=()=>{ set(v); refreshSegs(); }; el.appendChild(b); } }
@@ -5505,7 +5578,7 @@ function openMenu(){ setMenuTab(menuTab); menuOpen=true; $('menu').hidden=false;
   document.querySelectorAll('#menu .drive-only').forEach(e=>e.hidden=state!=='drive'); for(const k in touch) touch[k]=0; refreshSegs(); }
 function closeMenu(){ menuOpen=false; $('menu').hidden=true; last=performance.now(); }
 // Android Back button hook (called from MainActivity): returns true if the game handled it, false to let the app exit
-window.__paBack=function(){ if(state!=='drive') return false;
+window.__paBack=function(){ if(cevBack()) return true; if(state!=='drive') return false;
   if(photo){ exitPhoto(); return true; }
   if(editing){ $('ebDone').onclick(); return true; }
   if(!$('tuneSheet').hidden){ $('tuneDone').onclick(); return true; }
@@ -5557,7 +5630,7 @@ $('gameNameIn').addEventListener('input',e=>{ settings.gameName=e.target.value.s
 applyGameName();
 
 /* ================= state transitions ================= */
-function enterGarage(){ freshTyres(); if(DMG.hp>.02){ const c=repairCost(); if(CAREER.on){ const pay=Math.min(CAREER.cash,c); CAREER.cash-=pay; careerSave(); cashHud(); toast(`Panel beater: −${money(pay)}`,'var(--bad)'); } else toast('Panel beater fixed it up','var(--good)'); } resetDamage(); state='garage'; document.body.classList.remove('drive'); garage.add(carRoot); ghostRoot&&(ghostRoot.visible=false);
+function enterGarage(){ EVX=null; cevRecapClose(); freshTyres(); if(DMG.hp>.02){ const c=repairCost(); if(CAREER.on){ const pay=Math.min(CAREER.cash,c); CAREER.cash-=pay; careerSave(); cashHud(); toast(`Panel beater: −${money(pay)}`,'var(--bad)'); } else toast('Panel beater fixed it up','var(--good)'); } resetDamage(); state='garage'; document.body.classList.remove('drive'); garage.add(carRoot); ghostRoot&&(ghostRoot.visible=false);
   car.vx=car.vz=car.r=0; car.vLong=0; car.steer=0; car.gear=1; settings.airUp=false; openShop(false); renderBuild(); }
 let venuePick=settings.venue;
 let modePick=settings.mode||'track';
@@ -5565,7 +5638,7 @@ function markVenue(){ for(const [id,v] of [['mFree','free'],['mBurn','burnout'],
   $('rowFree').hidden=modePick!=='free'; $('rowBurn').hidden=modePick!=='burnout'; $('rowTrack').hidden=modePick!=='track'; $('rowOpp').hidden=modePick!=='drag'; $('rowStrip').hidden=modePick!=='drag'; $('rowStart').hidden=modePick!=='drag'; }
 function showVenue(){ modePick=settings.mode||'track'; $('venueSheet').hidden=false; markVenue(); refreshSegs(); }
 $('mFree').onclick=()=>{ modePick='free'; markVenue(); }; $('mBurn').onclick=()=>{ modePick='burnout'; markVenue(); };
-$('mDrag').onclick=()=>{ modePick='drag'; markVenue(); }; $('mHesi').onclick=()=>{ modePick='hesi'; markVenue(); }; $('mTrack').onclick=()=>{ modePick='track'; markVenue(); };
+$('mDrag').onclick=()=>{ modePick='drag'; markVenue(); }; $('mCareer').onclick=()=>{ cevBoard(); }; $('mHesi').onclick=()=>{ modePick='hesi'; markVenue(); }; $('mTrack').onclick=()=>{ modePick='track'; markVenue(); };
 /* ---------------- Burnout Series: five rounds across every pad, a field of eight, points add up, the Skid Arena final counts 1.5× ---------------- */
 const SERIES={ rounds:[{spot:'mp',name:'Kwinana Snake Pit'},{spot:'mp_red',name:'Red Dirt Dragway'},{spot:'mp_air',name:'Meckering Airstrip'},{spot:'pad',name:'Red Gum pad'},{spot:'arena',name:'Skid Arena final',x:1.5}],
   field:[['SMOKN',74],['KAOS',70],['NO TYRZ',66],['LMT HIT',63],['DRTY 6',60],['BOOSTD',57],['CHUFFA',52]],
@@ -5593,19 +5666,104 @@ const SERIES={ rounds:[{spot:'mp',name:'Kwinana Snake Pit'},{spot:'mp_red',name:
         <button id="serQuit" style="padding:10px 14px;border-radius:10px;border:1px solid #3a404a;background:#1d2128;color:#efe6d8">${s.done?'Close':'Stay here'}</button>
         <button id="serNext" style="padding:10px 14px;border-radius:10px;border:0;background:#c4552c;color:#fff;font-weight:700">${s.done?'New series':'Next round · '+this.rounds[i+1].name}</button></div></div>`;
     document.getElementById('serQuit').onclick=()=>{ box.remove(); };
-    document.getElementById('serNext').onclick=()=>{ box.remove(); if(s.done) this.st={round:0,scores:{YOU:[]},done:false}; else s.round=i+1; this.load(); this.save(); freshTyres(); enterDrive(venueFor('burnout')); toast(`Series round ${this.st.round+1} · ${this.rounds[this.st.round].name}`,'var(--amber)'); }; } };
-const burnSpotNow=()=>settings.burnSpot==='series'?SERIES.spot():(settings.burnSpot||'pad');
+    document.getElementById('serNext').onclick=()=>{ box.remove(); EVX=null; if(s.done) this.st={round:0,scores:{YOU:[]},done:false}; else s.round=i+1; this.load(); this.save(); freshTyres(); enterDrive(venueFor('burnout')); toast(`Series round ${this.st.round+1} · ${this.rounds[this.st.round].name}`,'var(--amber)'); }; } };
+const burnSpotNow=()=>EVX&&EVX.kind==='burnout'?'pad':settings.burnSpot==='series'?SERIES.spot():(settings.burnSpot||'pad');
+const dStartNow=()=>EVX&&EVX.kind!=='burnout'?(EVX.kind==='roll'?'roll':'tree'):(settings.dragStart||'tree');
 const venueFor=m=>m==='hesi'?'m_hesi':m==='free'?(settings.freeMap==='perth'?'m_perth':(isMapV(settings.freeMap)&&BUILD_MAP[settings.freeMap])?settings.freeMap:'free'):m==='burnout'?({arena:'pad',mp_red:'mp',mp_air:'mp'}[burnSpotNow()]||burnSpotNow()):m==='drag'?'drag':(settings.trackType||'circuit');
+/* ---------------- Career events: the Gold Ring Series and the Night Rounds (ported from Project Aussie Builds 8 and 15) ----------------
+   12 events built only on modes this game already has (drag tree, roll race, burnout pad). Win the Gold Ring Final and the
+   Night Rounds open: Eighth Mile Rematch, Forty Roll, Smoke Show, then the Night Series Decider. First clear pays the prize,
+   repeats pay a fifth (into the Career mode wallet). Progress saves in 'barra.cev'. ET goals and the rival are set against the
+   car you bring (this game has many cars and builds, Project Aussie had one stock BF), so every car gets the same challenge. */
+const CEV_ROUNDS=[{id:'gold',name:'Gold Ring Series',tab:'GOLD RING',tag:'Red Dirt club nights · eight events · beat them in order to reach the Final'},
+  {id:'night',name:'Night Rounds',tab:'NIGHT ROUNDS',tag:'Unlocked by the Gold Ring Final · four harder events under the lights'}];
+const CEV_LVL={ easy:{n:'Easy',k:1.06,rt:[.55,.2],P:.72,go:[.35,.3]}, club:{n:'Club',k:1.03,rt:[.45,.15],P:.8,go:[.2,.25]},
+  hard:{n:'Hard',k:1.0,rt:[.4,.1],P:.88,go:[.1,.15]}, full:{n:'Full attack',k:.985,rt:[.33,.09],P:.95,go:[.04,.08]} };   // rival: ET factor, reaction (incl. roll-out), roll-race power share and roll reaction
+const CEV_REAL=.955;   // a clean full-throttle run in a healthy car does about 93-98% of the drag rival's ET-from-power rule (measured: AU .93, XR6T .94, VN .955, VE .98)
+const CEV_REPEAT=5;
+const CEV=[
+  {id:'pad_opener',r:'gold',name:'Pad Opener',venue:'Red Gum burnout pad',blurb:'Warm up the crowd. One run on the pad, inside the lines.',kind:'burnout',t:55,prize:400,req:[]},
+  {id:'sportsman_quarter',r:'gold',name:'Sportsman Quarter',venue:'Red Dirt Dragway',blurb:'Club night heads-up race on the full tree. Beat the rival to the stripe.',kind:'drag',dist:'q',tree:'full',opp:'easy',prize:600,req:[]},
+  {id:'pro_eighth',r:'gold',name:'Pro Tree Eighth',venue:'Red Dirt Dragway',blurb:'Short track, Pro tree: all three ambers at once, green 0.4 s later. Reaction counts.',kind:'drag',dist:'e',tree:'pro',opp:'club',prize:800,req:['sportsman_quarter']},
+  {id:'sixty_roll',r:'gold',name:'Sixty Roll',venue:'Red Dirt Dragway',blurb:'Paced side by side at 60 km/h, then flat out for half a mile.',kind:'roll',dist:'h',roll:60,opp:'club',prize:800,req:['sportsman_quarter']},
+  {id:'crowd_pleaser',r:'gold',name:'Crowd Pleaser',venue:'Red Gum burnout pad',blurb:'The judges want variety: donuts, roll-backs and a long, clean run.',kind:'burnout',t:72,prize:900,req:['pad_opener']},
+  {id:'ironbark_time_trial',r:'gold',name:'Ironbark Time Trial',venue:'Red Dirt Dragway',blurb:'Solo quarter mile against the clock. A clean launch and tidy shifts get it done.',kind:'drag',dist:'q',tree:'full',etK:1.025,prize:1000,req:['pro_eighth']},
+  {id:'ton_roll',r:'gold',name:'Ton Roll',venue:'Red Dirt Dragway',blurb:'100 km/h rolling start over a quarter mile. Stay flat, stay straight.',kind:'roll',dist:'q',roll:100,opp:'hard',prize:1000,req:['sixty_roll']},
+  {id:'gold_ring_final',r:'gold',name:'Gold Ring Final',venue:'Red Dirt Dragway',blurb:'Series final. Quarter mile, Pro tree, and the rival launches as hard as it can.',kind:'drag',dist:'q',tree:'pro',opp:'full',prize:2500,req:['ironbark_time_trial','ton_roll','crowd_pleaser']},
+  // --- Night Rounds (Project Aussie Build 15): open after the Gold Ring Final ---
+  {id:'floodlight_eighth',r:'night',name:'Eighth Mile Rematch',venue:'Red Dirt Dragway',blurb:'Eighth mile rematch on the Pro tree. The rival launches flat out, so a sharp reaction wins it.',kind:'drag',dist:'e',tree:'pro',opp:'full',prize:1200,req:['gold_ring_final']},
+  {id:'forty_roll',r:'night',name:'Forty Roll',venue:'Red Dirt Dragway',blurb:'Paced at only 40 km/h, so the launch out of the roll matters. Half a mile, flat out.',kind:'roll',dist:'h',roll:40,opp:'full',prize:1200,req:['gold_ring_final']},
+  {id:'smoke_show',r:'night',name:'Smoke Show',venue:'Red Gum burnout pad',blurb:'The crowd wants the full show: a long stand, donuts both ways and a clean finish.',kind:'burnout',t:80,prize:1500,req:['gold_ring_final']},
+  {id:'night_decider',r:'night',name:'Night Series Decider',venue:'Red Dirt Dragway',blurb:'Solo quarter mile, tighter clock than the Time Trial. Shifting it yourself is the way under.',kind:'drag',dist:'q',tree:'full',etK:1.0,prize:3000,req:['floodlight_eighth','forty_roll','smoke_show']},
+];
+const cevLoad=()=>{ const s=store.get('barra.cev'); return s&&s.cleared?Object.assign({best:{}},s):{cleared:{},best:{}}; };
+let CEVS=cevLoad(); const cevSave=()=>store.set('barra.cev',CEVS);
+const cevGet=id=>CEV.find(e=>e.id===id), cevDone=id=>(CEVS.cleared[id]||0)>0, cevOpen=e=>e.req.every(cevDone);
+const cevIn=r=>CEV.filter(e=>e.r===r), cevRound=e=>CEV_ROUNDS.find(R=>R.id===(e.r||'gold'))||CEV_ROUNDS[0];
+const cevRoundOpen=r=>r==='gold'||cevDone('gold_ring_final');
+function cevPar(){ const hp=Math.max(150,modKW())*1.341*.85, lb=(M+80)*2.2046; return 5.825*Math.pow(lb/hp,1/3)*1.02; }   // the drag rival's ET-from-power rule, without luck or your PB
+function cevTarget(e){ return e.kind==='burnout'?e.t:e.etK?+(cevPar()*CEV_REAL*e.etK).toFixed(2):null; }
+const cevDistTxt=e=>e.dist==='e'?'1/8 mile':e.dist==='h'?'1/2 mile':'1/4 mile';
+function cevRules(e){ return e.kind==='burnout'?'Burnout pad · judged out of 100':e.kind==='roll'?`${e.roll} km/h rolling start · ${cevDistTxt(e)} · vs rival`:`${cevDistTxt(e)} · ${e.tree==='pro'?'Pro tree':'Full tree'}${e.opp?' · vs rival':' · solo'}`; }
+function cevGoal(e,t){ t=t??cevTarget(e); return e.kind==='burnout'?`Score ${t}+ from the judges`:e.etK?`ET under ${t.toFixed(2)} s in this car`:`Beat the rival (${CEV_LVL[e.opp].n})`; }
+const cevBrief=e=>`${cevRound(e).name} · ${e.name} · ${cevRules(e)}`;
+let cevTab=null, cevFrom=null;
+function cevBoard(round){ const box=$('cevBox'); if(!box) return; cevFrom=!$('venueSheet').hidden?'venue':null; $('venueSheet').hidden=true; cevRecapClose();
+  round=round||cevTab||(cevDone('gold_ring_final')?'night':'gold'); if(!cevRoundOpen(round)) round='gold'; cevTab=round; const R=CEV_ROUNDS.find(x=>x.id===round), list=cevIn(round);
+  const tabs=CEV_ROUNDS.map(x=>{ const L=cevIn(x.id), n=L.filter(e=>cevDone(e.id)).length, open=cevRoundOpen(x.id); return `<button data-r="${x.id}" aria-pressed="${x.id===round}" ${open?'':'disabled'}>${x.tab} · ${open?`${n}/${L.length}`:'LOCKED'}</button>`; }).join('');
+  const wallet=CAREER.on?`Wallet ${money(CAREER.cash)}`:'Free play · prizes go to your wallet when Career mode is on (Car shop)';
+  const champ=round==='gold'?cevDone('gold_ring_final'):cevDone('night_decider');
+  const cards=list.map((e,i)=>{ const done=cevDone(e.id), open=cevOpen(e), st=done?`CLEARED${CEVS.cleared[e.id]>1?' ×'+CEVS.cleared[e.id]:''}`:open?'OPEN':'LOCKED';
+    const need=open?'':`<span class="dim">Needs: ${e.req.filter(id=>!cevDone(id)).map(id=>cevGet(id).name).join(', ')}</span>`;
+    const best=CEVS.best[e.id]!=null?`<span class="dim">Best: ${e.kind==='burnout'?CEVS.best[e.id]+' pts':CEVS.best[e.id].toFixed(3)+' s'}</span>`:'';
+    return `<div class="cev ${done?'cleared':open?'open':'locked'}"><span class="st">EVENT ${i+1} OF ${list.length} · ${st}</span><span class="n">${e.name}</span><span class="dim">${e.venue} · ${cevRules(e)}</span><span class="bl">${e.blurb}</span><span><b>Goal:</b> ${cevGoal(e)}</span><span><b>Prize:</b> ${money(e.prize)}${done?` · repeat ${money(Math.round(e.prize/CEV_REPEAT))}`:''}</span>${best}${need}${open?`<button class="btn primary" data-go="${e.id}">${done?'Run again':'Start'} ▶</button>`:''}</div>`; }).join('');
+  box.innerHTML=`<div class="cevIn"><div class="cevTop"><h2>${R.name}</h2><span class="tag">${champ?(round==='gold'?'GOLD RING CHAMPION · ':'NIGHT ROUNDS CHAMPION · '):''}${wallet}</span></div><div class="cevTabs">${tabs}</div><div class="tag" style="font-size:12px;opacity:.7">${R.tag}</div><div class="cevList">${cards}</div><div class="foot"><button class="btn ghost" id="cevBack">Back</button></div></div>`;
+  box.querySelectorAll('.cevTabs button').forEach(b=>b.onclick=()=>cevBoard(b.dataset.r));
+  box.querySelectorAll('button[data-go]').forEach(b=>b.onclick=()=>cevStart(b.dataset.go));
+  $('cevBack').onclick=cevBoardClose; $('cevSheet').hidden=false; }
+function cevBoardClose(){ $('cevSheet').hidden=true; if(cevFrom==='venue'){ $('venueSheet').hidden=false; markVenue(); } else if(state==='drive'){ closeMenu(); } cevFrom=null; }
+function cevStart(id){ const e=cevGet(id); if(!e||!cevOpen(e)) return; EVX=Object.assign({},e,{t:cevTarget(e)});
+  $('cevSheet').hidden=true; $('venueSheet').hidden=true; $('menu').hidden=true; cevRecapClose(); startAudio(); tryLandscapeLock(); menuOpen=false; cevFrom=null;
+  enterDrive(e.kind==='burnout'?'pad':'drag'); freshTyres();
+  setTimeout(()=>toast(`${e.name} · ${cevGoal(e,EVX.t)}`,'var(--amber)'),1200); }
+function cevDragDone(win,mine,theirs,ET){ const e=EVX; if(!e) return; const D=dragS;
+  if(e.etK){ const ok=!D.foul&&ET<=e.t; cevFinish(ok,D.foul?'Red light · no time':`${ET.toFixed(3)} s · needed under ${e.t.toFixed(2)}`,ET); }
+  else cevFinish(win,D.foul?'Red light · loss':win?`Win by ${(theirs-mine).toFixed(3)} s · ET ${ET.toFixed(3)}`:`Loss by ${(mine-theirs).toFixed(3)} s · ET ${ET.toFixed(3)}`,D.foul?null:ET); }
+function cevFinish(ok,line,val){ const e=EVX; if(!e) return; const first=!cevDone(e.id), before=new Set(CEV.filter(cevOpen).map(x=>x.id)); let pay=0;
+  if(ok){ CEVS.cleared[e.id]=(CEVS.cleared[e.id]||0)+1; pay=first?e.prize:Math.round(e.prize/CEV_REPEAT); }
+  if(val!=null&&ok){ const b=CEVS.best[e.id]; if(b==null||(e.kind==='burnout'?val>b:val<b)) CEVS.best[e.id]=e.kind==='burnout'?val:+val.toFixed(3); }
+  cevSave(); if(pay) earn(pay,`${e.name}${first?' · first clear':' · repeat'}`);
+  const unlocked=ok?CEV.filter(x=>cevOpen(x)&&!before.has(x.id)).map(x=>x.name):[];
+  const champ=ok&&first&&e.id==='gold_ring_final'?'GOLD RING SERIES CHAMPION':ok&&first&&e.id==='night_decider'?'NIGHT ROUNDS CHAMPION':'';
+  window.__cevLast={id:e.id,ok,line,val,pay,unlocked,champ};
+  cevRecap(e,ok,line,pay,unlocked,champ,first); }
+function cevRecapClose(){ const b=document.getElementById('cevRecap'); if(b) b.remove(); }
+function cevRecap(e,ok,line,pay,unlocked,champ,first){ cevRecapClose(); const box=document.createElement('div'); box.id='cevRecap';
+  box.style.cssText='position:fixed;inset:0;display:grid;place-items:center;background:rgba(8,9,11,.6);z-index:60;font-family:inherit';
+  const cash=ok?(CAREER.on?`+${money(pay)}${first?' · first clear':' · repeat clear'}`:`Prize ${money(pay)} · Career mode is off, so no cash`):'No prize this time';
+  box.innerHTML=`<div style="background:#14171c;color:#efe6d8;border:1px solid #2b3038;border-top:3px solid #f2b51b;border-radius:10px;padding:16px 18px;min-width:280px;max-width:92vw;max-height:92vh;overflow:auto">
+    <div style="opacity:.7;font-size:12px;letter-spacing:.08em">${cevRound(e).name.toUpperCase()} · ${e.name.toUpperCase()}</div>
+    <div style="font:900 26px 'Big Shoulders Display',Impact,sans-serif;letter-spacing:.04em;color:${ok?'#7bd88f':'#ff7a6b'}">${champ||(ok?'Cleared':'Not this time')}</div>
+    <div style="margin:4px 0">${line}</div><div style="opacity:.85">${cash}</div>
+    ${unlocked.length?`<div style="margin-top:6px;color:#f2c21b">Unlocked: ${unlocked.join(', ')}</div>`:''}
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;flex-wrap:wrap">
+      <button id="cevLeave" class="btn ghost">Leave event</button><button id="cevAgain" class="btn">Run again</button><button id="cevToBoard" class="btn primary">Career board</button></div></div>`;
+  document.body.appendChild(box); if(state==='drive'){ menuOpen=true; for(const k in touch) touch[k]=0; }
+  $('cevAgain').onclick=()=>{ cevRecapClose(); menuOpen=false; last=performance.now(); };
+  $('cevLeave').onclick=()=>{ EVX=null; cevRecapClose(); menuOpen=false; last=performance.now(); toast('Left the event · free play here','var(--amber)'); if(settings.venue==='drag'){ placeFor('drag'); buildOpp(); dragReset(); } };
+  $('cevToBoard').onclick=()=>{ cevRecapClose(); menuOpen=true; cevBoard(); }; }
+function cevBack(){ if(document.getElementById('cevRecap')){ $('cevAgain').onclick(); return true; } if(!$('cevSheet').hidden){ cevBoardClose(); return true; } return false; }
+
 $('changeMode').onclick=()=>{ $('menu').hidden=true; menuOpen=true; showVenue(); };
 $('freshBtn').onclick=()=>{ freshTyres(); toast('Fresh tyres fitted'); closeMenu(); };
 $('vCancel').onclick=()=>{ $('venueSheet').hidden=true; if(state==='drive') closeMenu(); };
-$('vGo').onclick=()=>{ $('venueSheet').hidden=true; settings.mode=modePick; tryLandscapeLock(); menuOpen=false; enterDrive(venueFor(modePick)); };
+$('vGo').onclick=()=>{ $('venueSheet').hidden=true; EVX=null; cevRecapClose(); settings.mode=modePick; tryLandscapeLock(); menuOpen=false; enterDrive(venueFor(modePick)); };
 $('driveBtn').onclick=()=>{ startAudio(); showVenue(); };
 function tryLandscapeLock(){ if(!isTouch||!settings.landscape) return; const el=document.documentElement;
   try{ const p=el.requestFullscreen?el.requestFullscreen({navigationUI:'hide'}):null; if(p&&p.then) p.then(()=>screen.orientation?.lock?.('landscape')).then(()=>setTimeout(layout,300)).catch(()=>{}); }catch(e){} }
 function enterDrive(v){ camera.clearViewOffset(); showTips();
   settings.venue=v; saveSettings(); state='drive'; document.body.classList.add('drive'); world.add(carRoot); rpClear(); setMap(v);
-  const bs=burnSpotNow(); setStrip(v==='drag'?(settings.dragStrip||'kwi'):v==='mp'?({mp_red:'red',mp_air:'air'}[bs]||'kwi'):'kwi'); setPad(v==='pad'&&bs==='arena'?'arena':'round');
+  const bs=burnSpotNow(); setStrip(v==='drag'?(EVX&&EVX.kind!=='burnout'?'red':(settings.dragStrip||'kwi')):v==='mp'?({mp_red:'red',mp_air:'air'}[bs]||'kwi'):'kwi'); setPad(v==='pad'&&bs==='arena'?'arena':'round');
   $('dragName').textContent=`${STRIP_DEF[ACT].name} · 1/4 mile`;
   placeFor(v); if(window.__sprintLine) window.__sprintLine.visible = v==='sprint';
   if(v==='pad'||v==='mp'){ car.tc=false; const pn=v==='mp'?STRIP_DEF[ACT].name+' pad':PADK==='arena'?'Skid Arena':'Red Gum pad'; $('padName').textContent=pn; toast(pn+' · stability control off'); }
@@ -5684,7 +5842,7 @@ function frame(now){
   pollPad();
   if(state==='drive'){
     if(RP.on&&!menuOpen) rpTick(dt);
-    if(!menuOpen&&!editing&&!photo&&!RP.on){ readInput(dt); acc+=dt; const H=1/240; while(acc>=H){ step(H); acc-=H; } rpRecord(dt); chunkTick(dt); lapTick(dt); sprintTick(dt); mapTick(dt); hesiTick(dt); try{ cityTick(dt); streetTick(dt); dmgTick(dt); meetTick(dt); }catch(e){ if(!window.__stErr){ window.__stErr=1; console.warn(e); } }   /* new street systems never take the whole game down */ dragTick(dt); scoreTick(dt); tyreFx(dt); }
+    if(!menuOpen&&!editing&&!photo&&!RP.on){ readInput(dt); acc+=dt; const H=1/240; while(acc>=H){ step(H); acc-=H; } rpRecord(dt); chunkTick(dt); lapTick(dt); sprintTick(dt); mapTick(dt); hesiTick(dt); try{ cityTick(dt); streetTick(dt); dmgTick(dt); meetTick(dt); }catch(e){ if(!window.__stErr){ window.__stErr=1; console.warn(e); } }   /* new street systems never take the whole game down */ dragTick(dt); scoreTick(dt); tyreFx(dt); try{ hapTick(dt); }catch(e){} }
     if(!photo){ smoke.update(dt); sparks.update(dt); }   /* photo mode freezes the smoke and sparks where they are */ crowdTick(dt); smoke.mat.uniforms.uScale.value=appH*renderer.getPixelRatio()/1.6/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)));
     { const pw=car.pw||0; carRoot.rotation.order='YXZ'; car.slopeV=(car.slopeV||0)+((car.slope||0)-(car.slopeV||0))*Math.min(1,dt*10); carRoot.rotation.x=-pw-Math.atan(car.slopeV); carRoot.position.set(car.x+Math.sin(car.h)*WRZ*(1-Math.cos(pw)),(car.y||0)-WRZ*Math.sin(pw),car.z+Math.cos(car.h)*WRZ*(1-Math.cos(pw))); carRoot.rotation.y=car.h; }   // nose up, pivoting on the rear tyres
     const sp1=Math.min(1,car.spin), popRoll=(tyre.popped[0]?-.022:0)+(tyre.popped[1]?.022:0), popPitch=(tyre.popped[0]||tyre.popped[1])?-.012:0;
